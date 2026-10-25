@@ -1,0 +1,8 @@
+- insert:
+    - id: agnes-media
+      name: 'dsh-agnes-media'
+      config:
+        baseURL: https://api.agnes-ai.cn/v1
+        apiKeyEnv: AGNES_API_KEY
+        videoModel: agnes-video-2.5-flash
+        imageModel: agnes-image-2.5-flash

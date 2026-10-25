@@ -1,0 +1,63 @@
+﻿{
+  "name": "dsh-agnes-media",
+  "version": "0.2.0",
+  "description": "Agnes image and video models inside a DeepSeek Harness sidebar panel, with durable background tasks and history.",
+  "type": "module",
+  "license": "MIT",
+  "author": "dsh-agnes-media contributors",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "agnes",
+    "image-generation",
+    "video-generation",
+    "sidebar-panel"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR-GITHUB-NAME/dsh-agnes-media.git"
+  },
+  "homepage": "https://github.com/YOUR-GITHUB-NAME/dsh-agnes-media#readme",
+  "bugs": {
+    "url": "https://github.com/YOUR-GITHUB-NAME/dsh-agnes-media/issues"
+  },
+  "engines": {
+    "node": ">=20",
+    "dsh": ">=0.2.1-rc.3"
+  },
+  "scripts": {
+    "check": "node --check index.js && node --check client.js",
+    "prepack": "npm run check"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "docs/panel.jpg"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-locale"
+      ]
+    }
+  }
+}

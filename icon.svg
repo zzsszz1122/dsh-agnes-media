@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="agnes-media-film" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="10" width="56" height="44" rx="10" fill="url(#agnes-media-film)"/>
+  <rect x="4" y="18" width="56" height="4" fill="#ffffff" fill-opacity="0.4"/>
+  <rect x="4" y="42" width="56" height="4" fill="#ffffff" fill-opacity="0.4"/>
+  <rect x="12" y="10" width="4" height="8" rx="1.5" fill="#ffffff" fill-opacity="0.55"/>
+  <rect x="48" y="10" width="4" height="8" rx="1.5" fill="#ffffff" fill-opacity="0.55"/>
+  <rect x="12" y="46" width="4" height="8" rx="1.5" fill="#ffffff" fill-opacity="0.55"/>
+  <rect x="48" y="46" width="4" height="8" rx="1.5" fill="#ffffff" fill-opacity="0.55"/>
+  <path d="M27 25.5v13l11-6.5z" fill="#ffffff"/>
+  <circle cx="52" cy="50" r="7" fill="#ffffff"/>
+  <path d="M52 46.4l1.1 2.5 2.5 1.1-2.5 1.1-1.1 2.5-1.1-2.5-2.5-1.1 2.5-1.1z" fill="#8b5cf6"/>
+</svg>
