@@ -1,4 +1,4 @@
-﻿# dsh-agnes-media · Agnes 创作室
+# dsh-agnes-media · Agnes 创作室
 
 **在 DeepSeek Harness 侧边栏里直接生图、生视频，任务跑在宿主进程，关掉页面也不中断。**
 
@@ -60,15 +60,23 @@ DeepSeek Harness 的模型调用统一走 `POST /v1/chat/completions`，而 Agne
 
 **界面**
 
-- 左侧栏独立入口，「生图 / 生视频」两个页签，带提示词示例。
+- 左侧栏独立入口，顶部四个页签：**生视频 / 生图 / 画布 / 短剧模式**。
 - 结果区支持预览、下载（宿主接口支持 `Range` 拖动）、新窗口打开、复制链接。
 - 顶部显示 Key 状态与接口地址；未配置时给出配置指引。
 - 生成历史缩略图常驻，可单条删除。
 
+**画布与短剧模式（0.3.0 新增）**
+
+- **画布**：节点图编辑，拖拽排版、滚轮缩放、空白拖拽平移；点节点上的「连线」再点目标节点即建立「尾帧 → 首帧」链路（SVG 连线，自动保存）。
+- **短剧模式**：集/场/镜头线性编排，镜头列表 + 提示词/时长/镜头语言编辑 + 时间线总时长；「一键生成」按顺序执行，失败停在该镜，可从选中镜头续跑。
+- **尾帧接首帧**：上游完成后由宿主用 ffmpeg 抽尾帧，下一镜以 `mode: keyframe` + `first_frame`（base64）提交；需要本机安装 ffmpeg（或设置 `AGNES_FFMPEG` / 插件 `config.ffmpegPath`）。缺失时画布会提示「ffmpeg 未安装」，该镜之后的链路会标记为被阻塞而不是静默降级。
+- **上下文装配**：全局风格 + 角色卡 + 场景卡 + 承接说明 + 本镜提示词 + 镜头语言 + 禁止项，由宿主统一拼装后提交。
+
 **本地存储**
 
 - 结果与索引保存在 `<DSH 主目录>/agnes-media/`（`history.json` + `media/`）。
-- 保留最近 **80** 条，超出自动清理最旧记录。单个结果文件上限 512MB。
+- 项目数据在 `agnes-media/projects/<projectId>/`：`project.json`、`shots/*.json`、`canvas.json`、`assets/frames/`。
+- 保留最近 **80** 条历史，超出自动清理最旧记录。单个结果文件上限 512MB。
 - 不上传任何第三方。
 
 ---
@@ -107,6 +115,7 @@ DeepSeek Harness 的模型调用统一走 `POST /v1/chat/completions`，而 Agne
     apiKeyEnv: AGNES_API_KEY
     videoModel: agnes-video-2.5-flash
     imageModel: agnes-image-2.5-flash
+    ffmpegPath: '' # 可选；留空依次尝试 AGNES_FFMPEG 与 PATH
 ```
 
 ---
@@ -122,6 +131,15 @@ DeepSeek Harness 的模型调用统一走 `POST /v1/chat/completions`，而 Agne
 | POST | `/agnes-media/api/video` | 创建生视频任务（后台执行） |
 | POST | `/agnes-media/api/history/delete` | 删除一条历史及其文件 |
 | GET | `/agnes-media/api/media/:id?download=1` | 结果文件，支持 `HEAD` 与 `Range` |
+| GET/POST | `/agnes-media/api/projects` | 项目列表 / 新建 |
+| GET/PATCH/DELETE | `/agnes-media/api/projects/:id` | 项目详情（含镜头、画布、ffmpeg 状态）/ 更新 / 删除 |
+| GET | `/agnes-media/api/projects/:id/canvas` · PUT 同路径 | 读取 / 保存画布节点、连线、视口 |
+| POST | `/agnes-media/api/projects/:id/chain` | 顺序执行链路（`{shotIds?, from?, force?}`） |
+| GET/POST | `/agnes-media/api/projects/:id/shots` | 镜头列表 / 新建 |
+| PATCH/DELETE | `/agnes-media/api/projects/:id/shots/:shotId` | 更新 / 删除镜头 |
+| POST | `/agnes-media/api/projects/:id/shots/:shotId/first-frame` | 上传手动首帧（base64 data URI） |
+| GET | `/agnes-media/api/projects/:id/shots/:shotId/tail` | 读取该镜尾帧（jpg） |
+| GET | `/agnes-media/api/projects/:id/timeline` | 时间线与总时长 |
 
 所有路由挂在 `/agnes-media/api` 前缀下，由宿主进程提供，需要已登录的 DSH Web 会话。
 
@@ -131,6 +149,7 @@ DeepSeek Harness 的模型调用统一走 `POST /v1/chat/completions`，而 Agne
 
 - DeepSeek Harness **0.2.1-rc.3** 实测通过，最低版本由 `package.json` 的 `engines.dsh` 声明。
 - Node.js **≥ 20**（依赖全局 `fetch` 与 `AbortSignal.timeout`）。
+- 链路功能需要 **ffmpeg**（抽尾帧）；缺失时其余功能不受影响。
 - 客户端只使用宿主注入的 `react` 与 `slots` / `locale` 服务，不额外打包前端依赖，零运行时依赖。
 
 ---
@@ -158,13 +177,21 @@ DeepSeek Harness 的模型调用统一走 `POST /v1/chat/completions`，而 Agne
 **改了代码没反应**
 `client.js` 属前端，刷新页面即可；`index.js` 属宿主，必须重启 DSH。
 
+**画布提示「ffmpeg 未安装」**
+链路需要 ffmpeg 抽尾帧。安装 ffmpeg 并加入 PATH，或在插件行的 `config` 里设置 `ffmpegPath`，或设置环境变量 `AGNES_FFMPEG`。未安装时仍可生成单镜，但下游无法自动接首帧。
+
+**链路停在中途**
+上游失败或缺少尾帧时，链路会停在当前镜并把后续标为阻塞。安装 ffmpeg / 重试该镜后，用「从此镜续跑」继续，已完成的镜头不会重跑。
+
 ---
 
 ## 已知限制
 
-- 只支持文生图、文生视频（`mode: text`）。图生视频需要公网可访问的参考图，暂未开放。
+- 文生图、文生视频（`mode: text`）稳定可用；链路用 `mode: keyframe` + base64 首帧，**待上游队列恢复后完成真实两镜串联验收**（参数已按接口文档实现并有模拟测试覆盖）。
+- 链路串行执行（单并发），一个项目同时只允许一条链路在跑。
 - 单任务最长 40 分钟。
 - 历史最多 80 条，超出的最旧记录连同文件一起删除。
+- 画布暂不支持框选/多选与分组。
 
 ---
 

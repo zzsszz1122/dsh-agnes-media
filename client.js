@@ -67,6 +67,42 @@ window.__ModuleLoader__.load({
       'example.image.3': '黄昏里的等距视角温馨书店，暖色台灯',
       'note.seconds': '秒',
       'note.source': '来源',
+      'tab.canvas': '画布',
+      'tab.drama': '短剧模式',
+      'canvas.hint': '拖拽节点排版；从右侧输出口拖到左侧输入口，建立「尾帧 → 首帧」链路。',
+      'canvas.project': '项目',
+      'canvas.newProject': '新建项目',
+      'canvas.projectName': '项目名称',
+      'canvas.create': '创建',
+      'canvas.addShot': '添加镜头',
+      'canvas.runAll': '生成链路',
+      'canvas.runFrom': '从此镜续跑',
+      'canvas.connect': '连线',
+      'canvas.connecting': '选择目标镜头…',
+      'canvas.firstFrame': '上传首帧',
+      'canvas.ffmpegMissing': 'ffmpeg 未安装，尾帧无法自动抽取',
+      'canvas.empty': '还没有镜头，点「添加镜头」开始',
+      'drama.hint': '线性编排：每镜承接上一镜尾帧，可按顺序一键生成。',
+      'drama.addShot': '添加镜头',
+      'drama.runAll': '一键生成',
+      'drama.runFrom': '从选中镜头续跑',
+      'drama.save': '保存',
+      'drama.prompt': '提示词',
+      'drama.duration': '时长',
+      'drama.camera': '镜头语言',
+      'drama.continuity': '承接说明（留空自动生成）',
+      'drama.preview': '预览',
+      'drama.timeline': '时间线',
+      'drama.total': '总时长',
+      'drama.shots': '镜头',
+      'drama.empty': '还没有镜头',
+      'drama.noProject': '先创建一个项目',
+      'action.save': '保存',
+      'action.cancel': '取消',
+      'action.refreshList': '刷新',
+      'status.draft': '草稿',
+      'status.blocked': '被阻塞',
+      'status.ready': '已完成',
     }
 
     const EN = {
@@ -119,6 +155,42 @@ window.__ModuleLoader__.load({
       'example.image.3': 'An isometric cozy bookstore at dusk, warm lamps',
       'note.seconds': 's',
       'note.source': 'source',
+      'tab.canvas': 'Canvas',
+      'tab.drama': 'Drama',
+      'canvas.hint': 'Drag nodes to arrange them; drag from the right output port to the left input port to chain tail frame → first frame.',
+      'canvas.project': 'Project',
+      'canvas.newProject': 'New project',
+      'canvas.projectName': 'Project name',
+      'canvas.create': 'Create',
+      'canvas.addShot': 'Add shot',
+      'canvas.runAll': 'Run chain',
+      'canvas.runFrom': 'Continue from here',
+      'canvas.connect': 'Connect',
+      'canvas.connecting': 'Pick a target shot…',
+      'canvas.firstFrame': 'Upload first frame',
+      'canvas.ffmpegMissing': 'ffmpeg is missing; tail frames cannot be extracted',
+      'canvas.empty': 'No shots yet — press “Add shot” to start',
+      'drama.hint': 'Linear editing: every shot continues from the previous tail frame and can be generated in order.',
+      'drama.addShot': 'Add shot',
+      'drama.runAll': 'Generate all',
+      'drama.runFrom': 'Continue from selected',
+      'drama.save': 'Save',
+      'drama.prompt': 'Prompt',
+      'drama.duration': 'Duration',
+      'drama.camera': 'Camera',
+      'drama.continuity': 'Continuity note (auto when empty)',
+      'drama.preview': 'Preview',
+      'drama.timeline': 'Timeline',
+      'drama.total': 'Total',
+      'drama.shots': 'Shots',
+      'drama.empty': 'No shots yet',
+      'drama.noProject': 'Create a project first',
+      'action.save': 'Save',
+      'action.cancel': 'Cancel',
+      'action.refreshList': 'Refresh',
+      'status.draft': 'Draft',
+      'status.blocked': 'Blocked',
+      'status.ready': 'Done',
     }
 
     const IMAGE_SIZES = ['1024x1024', '1024x768', '768x1024', '1280x720', '720x1280', '1536x1536', '2048x2048']
@@ -233,7 +305,881 @@ window.__ModuleLoader__.load({
       .agnes-thumb-badge{position:absolute;left:4px;bottom:4px;font-size:9.5px;line-height:1.4;padding:1px 5px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff}
       .agnes-foot{margin-top:14px;font-size:11px;color:var(--dsw-alias-label-secondary);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
       .agnes-mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px;word-break:break-all}
+      .agnes-view{display:flex;flex-direction:column;gap:10px}
+      .agnes-projbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+      .agnes-view-hint{font-size:11.5px;color:var(--dsw-alias-label-secondary);min-height:16px}
+      .agnes-canvas{position:relative;height:min(62vh,560px);min-height:360px;border:1px solid var(--dsw-alias-border-l1);border-radius:12px;overflow:hidden;background:var(--dsw-alias-bg-layer-1);touch-action:none;cursor:grab}
+      .agnes-canvas-inner{position:absolute;left:0;top:0;transform-origin:0 0;background-image:radial-gradient(rgba(127,127,127,.18) 1px, transparent 1px);background-size:24px 24px}
+      .agnes-canvas-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dsw-alias-label-secondary);font-size:12.5px}
+      .agnes-edges{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+      .agnes-node{position:absolute;background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l1);border-radius:10px;padding:8px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;box-shadow:var(--dsw-shadow-lv1,none)}
+      .agnes-node[data-selected="true"]{border-color:#2563eb;box-shadow:0 0 0 1px #2563eb}
+      .agnes-node[data-status="failed"]{border-color:rgba(239,68,68,.7)}
+      .agnes-node[data-status="ready"]{border-color:rgba(34,197,94,.55)}
+      .agnes-node-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;cursor:grab;user-select:none}
+      .agnes-node-status{font-size:10.5px;color:var(--dsw-alias-label-secondary)}
+      .agnes-node[data-status="failed"] .agnes-node-status{color:#ef4444}
+      .agnes-node[data-status="ready"] .agnes-node-status{color:#22c55e}
+      .agnes-node-prompt{font-size:11.5px;line-height:1.4;color:var(--dsw-alias-label-secondary);max-height:32px;overflow:hidden}
+      .agnes-node-media{width:100%;height:74px;object-fit:cover;border-radius:6px;background:#000}
+      .agnes-node-error{font-size:10px;color:#ef4444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .agnes-node-actions{display:flex;gap:4px;flex-wrap:wrap}
+      .agnes-mini{font-size:10.5px;padding:2px 6px;border-radius:6px;border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;font-family:inherit}
+      .agnes-mini:hover{color:var(--dsw-alias-label-primary)}
+      .agnes-port{position:absolute;top:46px;width:16px;height:16px;border-radius:50%;border:2px solid #2563eb;background:var(--dsw-alias-bg-base);padding:0;cursor:crosshair}
+      .agnes-port-in{left:-9px}
+      .agnes-port-out{right:-9px}
+      .agnes-mini[data-active="true"]{border-color:#2563eb;color:#2563eb}
+      .agnes-drama{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:14px;align-items:start}
+      .agnes-drama-list{display:flex;flex-direction:column;gap:6px;max-height:min(62vh,560px);overflow:auto}
+      .agnes-drama-row{display:grid;grid-template-columns:36px 54px 1fr 42px;gap:6px;align-items:center;text-align:left;padding:7px 8px;border-radius:8px;border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-primary);cursor:pointer;font-family:inherit;font-size:11.5px}
+      .agnes-drama-row[data-active="true"]{border-color:#2563eb;background:rgba(37,99,235,.08)}
+      .agnes-drama-row-status{font-size:10px;color:var(--dsw-alias-label-secondary)}
+      .agnes-drama-row-status[data-status="ready"]{color:#22c55e}
+      .agnes-drama-row-status[data-status="failed"]{color:#ef4444}
+      .agnes-drama-row-prompt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--dsw-alias-label-secondary)}
+      .agnes-drama-row-duration{font-size:10px;color:var(--dsw-alias-label-secondary);text-align:right}
+      .agnes-drama-detail{display:flex;flex-direction:column;gap:12px;min-width:0}
+      .agnes-timeline{display:flex;gap:3px;height:36px;margin-top:4px}
+      .agnes-timeline-clip{flex-basis:0;border-radius:5px;background:var(--dsw-alias-bg-layer-2);border:1px solid var(--dsw-alias-border-l1)}
+      .agnes-timeline-clip[data-status="ready"]{background:rgba(34,197,94,.35)}
+      .agnes-timeline-clip[data-status="failed"]{background:rgba(239,68,68,.35)}
+      .agnes-timeline-clip[data-status="running"]{background:rgba(37,99,235,.35)}
     `
+
+    async function patchJson(path, body) {
+      const response = await fetch(`${API}${path}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      return readJsonResponse(response)
+    }
+
+    async function putJson(path, body) {
+      const response = await fetch(`${API}${path}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      return readJsonResponse(response)
+    }
+
+    async function deleteJson(path) {
+      const response = await fetch(`${API}${path}`, { method: 'DELETE' })
+      return readJsonResponse(response)
+    }
+
+    const loadProjects = () => getJson('/projects').then((data) => data.projects || [])
+    const loadProjectDetail = (id) => getJson(`/projects/${id}`)
+    const saveCanvasApi = (id, canvas) => putJson(`/projects/${id}/canvas`, canvas)
+    const runChainApi = (id, body) => postJson(`/projects/${id}/chain`, body)
+    const addShotApi = (id, input) => postJson(`/projects/${id}/shots`, input)
+    const patchShotApi = (id, shotId, patch) => patchJson(`/projects/${id}/shots/${shotId}`, patch)
+    const deleteShotApi = (id, shotId) => deleteJson(`/projects/${id}/shots/${shotId}`)
+
+    const NODE_W = 232
+    const NODE_H = 168
+
+    function mergeNodes(existing, shots) {
+      const byId = new Map((existing || []).map((node) => [node.id, node]))
+      return (shots || []).map((shot, index) => {
+        const node = byId.get(shot.id)
+        return {
+          id: shot.id,
+          type: 'shot',
+          x: node ? node.x : 40 + (index % 4) * (NODE_W + 48),
+          y: node ? node.y : 70 + Math.floor(index / 4) * (NODE_H + 56),
+          data: {},
+        }
+      })
+    }
+
+    function ProjectToolbar(props) {
+      const { t, projects, projectId, onPick, onCreate, newName, setNewName, extra } = props
+      return h(
+        'div',
+        { className: 'agnes-projbar' },
+        h('label', { className: 'agnes-label', style: { margin: 0 } }, t('canvas.project')),
+        h(
+          'select',
+          {
+            className: 'agnes-select',
+            style: { maxWidth: '220px' },
+            value: projectId,
+            onChange: (event) => onPick(event.target.value),
+          },
+          ...(projects.length
+            ? projects.map((project) => h('option', { key: project.id, value: project.id }, project.name))
+            : [h('option', { key: 'none', value: '' }, '—')]),
+        ),
+        h('input', {
+          className: 'agnes-input',
+          style: { maxWidth: '180px' },
+          placeholder: t('canvas.projectName'),
+          value: newName,
+          onChange: (event) => setNewName(event.target.value),
+        }),
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'agnes-button agnes-ghost',
+            onClick: () => onCreate(newName),
+          },
+          t('canvas.create'),
+        ),
+        ...(extra || []),
+      )
+    }
+
+    function CanvasView({ t }) {
+      const [projects, setProjects] = useState([])
+      const [projectId, setProjectId] = useState('')
+      const [detail, setDetail] = useState(null)
+      const [nodes, setNodes] = useState([])
+      const [edges, setEdges] = useState([])
+      const [viewport, setViewport] = useState({ x: 0, y: 0, zoom: 1 })
+      const [newName, setNewName] = useState('')
+      const [error, setError] = useState('')
+      const [connecting, setConnecting] = useState('')
+      const areaRef = useRef(null)
+      const dragRef = useRef(null)
+      const panRef = useRef(null)
+      const saveTimer = useRef(null)
+
+      const shots = detail ? detail.shots || [] : []
+      const chain = detail && detail.project ? detail.project.chain : null
+
+      useEffect(() => {
+        loadProjects()
+          .then((list) => {
+            setProjects(list)
+            if (list[0]) setProjectId((current) => current || list[0].id)
+          })
+          .catch((err) => setError(String(err)))
+      }, [])
+
+      useEffect(() => {
+        if (!projectId) return undefined
+        let alive = true
+        loadProjectDetail(projectId)
+          .then((data) => {
+            if (!alive) return
+            setDetail(data)
+            setNodes(mergeNodes(data.canvas.nodes, data.shots))
+            setEdges(data.canvas.edges || [])
+            setViewport(data.canvas.viewport || { x: 0, y: 0, zoom: 1 })
+          })
+          .catch((err) => {
+            if (alive) setError(String(err))
+          })
+        return () => {
+          alive = false
+        }
+      }, [projectId])
+
+      const pending = Boolean(
+        detail && (chain?.running || shots.some((shot) => shot.status === 'running' || shot.status === 'queued')),
+      )
+      useEffect(() => {
+        if (!projectId || !pending) return undefined
+        const timer = setInterval(() => {
+          loadProjectDetail(projectId)
+            .then((data) => {
+              setDetail(data)
+              setNodes((current) => mergeNodes(current, data.shots))
+              setEdges(data.canvas.edges || [])
+            })
+            .catch(() => {})
+        }, 2500)
+        return () => clearInterval(timer)
+      }, [projectId, pending])
+
+      const reload = useCallback(async () => {
+        if (!projectId) return
+        const data = await loadProjectDetail(projectId)
+        setDetail(data)
+        setNodes((current) => mergeNodes(current, data.shots))
+        setEdges(data.canvas.edges || [])
+      }, [projectId])
+
+      const scheduleSave = useCallback(
+        (nextNodes, nextEdges, nextViewport) => {
+          if (!projectId) return
+          if (saveTimer.current) clearTimeout(saveTimer.current)
+          saveTimer.current = setTimeout(() => {
+            saveCanvasApi(projectId, { nodes: nextNodes, edges: nextEdges, viewport: nextViewport }).catch(() => {})
+          }, 500)
+        },
+        [projectId],
+      )
+
+      const toCanvasPoint = (event) => {
+        const rect = areaRef.current.getBoundingClientRect()
+        return {
+          x: (event.clientX - rect.left - viewport.x) / viewport.zoom,
+          y: (event.clientY - rect.top - viewport.y) / viewport.zoom,
+        }
+      }
+
+      const onNodeDown = (event, node) => {
+        event.stopPropagation()
+        const point = toCanvasPoint(event)
+        dragRef.current = { id: node.id, dx: point.x - node.x, dy: point.y - node.y, moved: false }
+        try {
+          event.currentTarget.setPointerCapture(event.pointerId)
+        } catch {
+          /* ignore */
+        }
+      }
+
+      const onAreaDown = (event) => {
+        if (event.button !== 0) return
+        panRef.current = {
+          startX: event.clientX,
+          startY: event.clientY,
+          originX: viewport.x,
+          originY: viewport.y,
+        }
+      }
+
+      const onAreaMove = (event) => {
+        if (panRef.current && !dragRef.current) {
+          setViewport((current) => ({
+            ...current,
+            x: panRef.current.originX + (event.clientX - panRef.current.startX),
+            y: panRef.current.originY + (event.clientY - panRef.current.startY),
+          }))
+          return
+        }
+        const drag = dragRef.current
+        if (!drag) return
+        const point = toCanvasPoint(event)
+        const next = nodes.map((node) =>
+          node.id === drag.id ? { ...node, x: point.x - drag.dx, y: point.y - drag.dy } : node,
+        )
+        drag.moved = true
+        drag.latest = next
+        setNodes(next)
+      }
+
+      const onAreaUp = () => {
+        if (panRef.current) {
+          panRef.current = null
+          scheduleSave(nodes, edges, viewport)
+        }
+        const drag = dragRef.current
+        if (drag) {
+          dragRef.current = null
+          if (drag.moved) scheduleSave(drag.latest || nodes, edges, viewport)
+        }
+      }
+
+      const onWheel = (event) => {
+        const factor = event.deltaY > 0 ? 0.9 : 1.1
+        setViewport((current) => ({
+          ...current,
+          zoom: Math.min(2.5, Math.max(0.3, current.zoom * factor)),
+        }))
+      }
+
+      const connectTo = (targetId) => {
+        if (!connecting || connecting === targetId) {
+          setConnecting('')
+          return
+        }
+        const next = [
+          ...edges.filter((edge) => !(edge.from === connecting && edge.to === targetId)),
+          {
+            id: `edg_${Date.now().toString(36)}`,
+            from: connecting,
+            to: targetId,
+            kind: 'sequence',
+            autoFrame: true,
+          },
+        ]
+        setEdges(next)
+        setConnecting('')
+        scheduleSave(nodes, next, viewport)
+      }
+
+      const addShot = async () => {
+        if (!projectId) return
+        try {
+          const data = await addShotApi(projectId, { prompt: '新镜头' })
+          await reload()
+          if (data.shot) setConnecting('')
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const removeShot = async (shotId) => {
+        if (!projectId) return
+        try {
+          await deleteShotApi(projectId, shotId)
+          setEdges((current) => current.filter((edge) => edge.from !== shotId && edge.to !== shotId))
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const runAll = async () => {
+        if (!projectId) return
+        try {
+          await runChainApi(projectId, { shotIds: shots.map((shot) => shot.id) })
+          setError('')
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const runFrom = async (shotId) => {
+        if (!projectId) return
+        try {
+          await runChainApi(projectId, { from: shotId })
+          setError('')
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const createProject = async (name) => {
+        try {
+          const data = await postJson('/projects', { name: name || '未命名项目' })
+          const list = await loadProjects()
+          setProjects(list)
+          setProjectId(data.project.id)
+          setNewName('')
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const pickFirstFrame = (shotId) => {
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.accept = 'image/*'
+        input.onchange = () => {
+          const file = input.files && input.files[0]
+          if (!file) return
+          const reader = new FileReader()
+          reader.onload = () => {
+            postJson(`/projects/${projectId}/shots/${shotId}/first-frame`, {
+              dataUri: String(reader.result),
+            })
+              .then(() => reload())
+              .catch((err) => setError(String(err)))
+          }
+          reader.readAsDataURL(file)
+        }
+        input.click()
+      }
+
+      const nodeById = new Map(nodes.map((node) => [node.id, node]))
+
+      return h(
+        'div',
+        { className: 'agnes-view' },
+        h(ProjectToolbar, {
+          t,
+          projects,
+          projectId,
+          onPick: setProjectId,
+          onCreate: createProject,
+          newName,
+          setNewName,
+          extra: [
+            h(
+              'button',
+              { key: 'add', type: 'button', className: 'agnes-button agnes-ghost', onClick: addShot },
+              t('canvas.addShot'),
+            ),
+            h(
+              'button',
+              {
+                key: 'run',
+                type: 'button',
+                className: 'agnes-button agnes-primary',
+                disabled: !shots.length || Boolean(chain?.running),
+                onClick: runAll,
+              },
+              chain?.running ? t('action.generating') : t('canvas.runAll'),
+            ),
+            detail && detail.ffmpeg === false
+              ? h('span', { key: 'ffmpeg', className: 'agnes-chip', style: { color: '#f59e0b' } }, t('canvas.ffmpegMissing'))
+              : null,
+          ],
+        }),
+        h('div', { className: 'agnes-view-hint' }, t('canvas.hint')),
+        error ? h('div', { className: 'agnes-error' }, error) : null,
+        chain && chain.error ? h('div', { className: 'agnes-error' }, chain.error) : null,
+        h(
+          'div',
+          {
+            className: 'agnes-canvas',
+            ref: areaRef,
+            onPointerDown: onAreaDown,
+            onPointerMove: onAreaMove,
+            onPointerUp: onAreaUp,
+            onPointerLeave: onAreaUp,
+            onWheel,
+          },
+          shots.length === 0
+            ? h('div', { className: 'agnes-canvas-empty' }, t('canvas.empty'))
+            : h(
+                'div',
+                {
+                  className: 'agnes-canvas-inner',
+                  style: {
+                    transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+                  },
+                },
+                h(
+                  'svg',
+                  { className: 'agnes-edges', width: 6000, height: 4000 },
+                  ...edges.map((edge) => {
+                    const from = nodeById.get(edge.from)
+                    const to = nodeById.get(edge.to)
+                    if (!from || !to) return null
+                    const x1 = from.x + NODE_W
+                    const y1 = from.y + 60
+                    const x2 = to.x
+                    const y2 = to.y + 60
+                    const mid = (x1 + x2) / 2
+                    return h(
+                      'g',
+                      { key: edge.id },
+                      h('path', {
+                        d: `M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`,
+                        fill: 'none',
+                        stroke: edge.autoFrame ? '#2563eb' : 'rgba(127,127,127,.6)',
+                        strokeWidth: 2,
+                        strokeDasharray: edge.autoFrame ? 'none' : '6 4',
+                      }),
+                      h('circle', { cx: x2, cy: y2, r: 3, fill: edge.autoFrame ? '#2563eb' : '#888' }),
+                    )
+                  }),
+                ),
+                ...nodes.map((node) => {
+                  const shot = shots.find((entry) => entry.id === node.id)
+                  if (!shot) return null
+                  return h(
+                    'div',
+                    {
+                      key: node.id,
+                      className: 'agnes-node',
+                      'data-status': shot.status || 'draft',
+                      'data-selected': connecting === node.id ? 'true' : 'false',
+                      style: { left: node.x, top: node.y, width: NODE_W },
+                      onClick: () => {
+                        if (connecting && connecting !== shot.id) connectTo(shot.id)
+                      },
+                    },
+                    h(
+                      'div',
+                      {
+                        className: 'agnes-node-head',
+                        onPointerDown: (event) => onNodeDown(event, node),
+                      },
+                      h('b', null, `#${shot.index}`),
+                      h('span', { className: 'agnes-node-status' }, t(`status.${shot.status || 'draft'}`)),
+                    ),
+                    h('div', { className: 'agnes-node-prompt' }, shot.prompt || '—'),
+                    shot.assetUrl
+                      ? h('video', {
+                          className: 'agnes-node-media',
+                          src: shot.assetUrl,
+                          muted: true,
+                          preload: 'metadata',
+                        })
+                      : null,
+                    shot.error || shot.tailError
+                      ? h(
+                          'div',
+                          { className: 'agnes-node-error', title: shot.error || shot.tailError },
+                          shot.error || shot.tailError,
+                        )
+                      : null,
+                    h(
+                      'div',
+                      { className: 'agnes-node-actions' },
+                      h(
+                        'button',
+                        {
+                          type: 'button',
+                          className: 'agnes-mini',
+                          'data-active': connecting === shot.id ? 'true' : 'false',
+                          onClick: (event) => {
+                            event.stopPropagation()
+                            setConnecting(connecting === shot.id ? '' : shot.id)
+                          },
+                        },
+                        t('canvas.connect'),
+                      ),
+                      h(
+                        'button',
+                        { type: 'button', className: 'agnes-mini', onClick: () => runFrom(shot.id) },
+                        t('canvas.runFrom'),
+                      ),
+                      h(
+                        'button',
+                        { type: 'button', className: 'agnes-mini', onClick: () => pickFirstFrame(shot.id) },
+                        t('canvas.firstFrame'),
+                      ),
+                      h(
+                        'button',
+                        { type: 'button', className: 'agnes-mini', onClick: () => removeShot(shot.id) },
+                        '×',
+                      ),
+                    ),
+                    h('button', {
+                      type: 'button',
+                      className: 'agnes-port agnes-port-in',
+                      title: t('canvas.connect'),
+                      onClick: (event) => {
+                        event.stopPropagation()
+                        connectTo(node.id)
+                      },
+                    }),
+                    h('button', {
+                      type: 'button',
+                      className: 'agnes-port agnes-port-out',
+                      title: t('canvas.connect'),
+                      onClick: (event) => {
+                        event.stopPropagation()
+                        setConnecting(connecting === node.id ? '' : node.id)
+                      },
+                    }),
+                  )
+                }),
+              ),
+        ),
+        h(
+          'div',
+          { className: 'agnes-view-hint' },
+          connecting ? t('canvas.connecting') : '',
+          chain && chain.running ? ` · ${t('action.generating')}` : '',
+        ),
+      )
+    }
+
+    function DramaView({ t }) {
+      const [projects, setProjects] = useState([])
+      const [projectId, setProjectId] = useState('')
+      const [detail, setDetail] = useState(null)
+      const [selected, setSelected] = useState('')
+      const [draft, setDraft] = useState(null)
+      const [newName, setNewName] = useState('')
+      const [error, setError] = useState('')
+      const [saving, setSaving] = useState(false)
+
+      const shots = detail ? detail.shots || [] : []
+      const chain = detail && detail.project ? detail.project.chain : null
+      const selectedShot = shots.find((shot) => shot.id === selected)
+
+      useEffect(() => {
+        loadProjects()
+          .then((list) => {
+            setProjects(list)
+            if (list[0]) setProjectId((current) => current || list[0].id)
+          })
+          .catch((err) => setError(String(err)))
+      }, [])
+
+      useEffect(() => {
+        if (!projectId) return undefined
+        let alive = true
+        loadProjectDetail(projectId)
+          .then((data) => {
+            if (!alive) return
+            setDetail(data)
+            if (!data.shots.some((shot) => shot.id === selected) && data.shots[0]) {
+              setSelected(data.shots[0].id)
+            }
+          })
+          .catch((err) => {
+            if (alive) setError(String(err))
+          })
+        return () => {
+          alive = false
+        }
+      }, [projectId])
+
+      const pending = Boolean(
+        detail && (chain?.running || shots.some((shot) => shot.status === 'running' || shot.status === 'queued')),
+      )
+      useEffect(() => {
+        if (!projectId || !pending) return undefined
+        const timer = setInterval(() => {
+          loadProjectDetail(projectId)
+            .then((data) => setDetail(data))
+            .catch(() => {})
+        }, 2500)
+        return () => clearInterval(timer)
+      }, [projectId, pending])
+
+      useEffect(() => {
+        if (!selectedShot) {
+          setDraft(null)
+          return
+        }
+        setDraft({
+          prompt: selectedShot.prompt || '',
+          duration: selectedShot.duration || 5,
+          camera: selectedShot.camera || '',
+          continuity: (selectedShot.context && selectedShot.context.continuity) || '',
+        })
+      }, [selected])
+
+      const reload = useCallback(async () => {
+        if (!projectId) return
+        const data = await loadProjectDetail(projectId)
+        setDetail(data)
+        return data
+      }, [projectId])
+
+      const createProject = async (name) => {
+        try {
+          const data = await postJson('/projects', { name: name || '未命名项目' })
+          const list = await loadProjects()
+          setProjects(list)
+          setProjectId(data.project.id)
+          setNewName('')
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const addShot = async () => {
+        if (!projectId) return
+        try {
+          const data = await addShotApi(projectId, { prompt: '新镜头' })
+          await reload()
+          if (data.shot) setSelected(data.shot.id)
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const saveShot = async () => {
+        if (!projectId || !selectedShot || !draft) return
+        setSaving(true)
+        try {
+          await patchShotApi(projectId, selectedShot.id, {
+            prompt: draft.prompt,
+            duration: Number(draft.duration) || 5,
+            camera: draft.camera,
+            context: { continuity: draft.continuity },
+          })
+          await reload()
+          setError('')
+        } catch (err) {
+          setError(String(err))
+        } finally {
+          setSaving(false)
+        }
+      }
+
+      const runAll = async () => {
+        if (!projectId) return
+        try {
+          await runChainApi(projectId, { shotIds: shots.map((shot) => shot.id) })
+          setError('')
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const runFrom = async () => {
+        if (!projectId || !selectedShot) return
+        try {
+          await runChainApi(projectId, { from: selectedShot.id })
+          setError('')
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const total = shots.reduce((sum, shot) => sum + (Number(shot.duration) || 0), 0)
+
+      return h(
+        'div',
+        { className: 'agnes-view' },
+        h(ProjectToolbar, {
+          t,
+          projects,
+          projectId,
+          onPick: setProjectId,
+          onCreate: createProject,
+          newName,
+          setNewName,
+          extra: [
+            h(
+              'button',
+              { key: 'add', type: 'button', className: 'agnes-button agnes-ghost', onClick: addShot },
+              t('drama.addShot'),
+            ),
+            h(
+              'button',
+              {
+                key: 'run',
+                type: 'button',
+                className: 'agnes-button agnes-primary',
+                disabled: !shots.length || Boolean(chain?.running),
+                onClick: runAll,
+              },
+              chain?.running ? t('action.generating') : t('drama.runAll'),
+            ),
+            h(
+              'button',
+              {
+                key: 'from',
+                type: 'button',
+                className: 'agnes-button agnes-ghost',
+                disabled: !selectedShot || Boolean(chain?.running),
+                onClick: runFrom,
+              },
+              t('drama.runFrom'),
+            ),
+          ],
+        }),
+        h('div', { className: 'agnes-view-hint' }, t('drama.hint')),
+        error ? h('div', { className: 'agnes-error' }, error) : null,
+        chain && chain.error ? h('div', { className: 'agnes-error' }, chain.error) : null,
+        shots.length === 0
+          ? h('div', { className: 'agnes-empty' }, h('b', null, t('drama.empty')))
+          : h(
+              'div',
+              { className: 'agnes-drama' },
+              h(
+                'div',
+                { className: 'agnes-drama-list' },
+                ...shots.map((shot) =>
+                  h(
+                    'button',
+                    {
+                      key: shot.id,
+                      type: 'button',
+                      className: 'agnes-drama-row',
+                      'data-active': shot.id === selected ? 'true' : 'false',
+                      onClick: () => setSelected(shot.id),
+                    },
+                    h('b', null, `#${shot.index}`),
+                    h('span', { className: 'agnes-drama-row-status', 'data-status': shot.status }, t(`status.${shot.status || 'draft'}`)),
+                    h('span', { className: 'agnes-drama-row-prompt' }, shot.prompt || '—'),
+                    h('span', { className: 'agnes-drama-row-duration' }, `${shot.duration || 5}${t('note.seconds')}`),
+                  ),
+                ),
+              ),
+              h(
+                'div',
+                { className: 'agnes-drama-detail' },
+                draft
+                  ? h(
+                      'div',
+                      { className: 'agnes-card' },
+                      h('label', { className: 'agnes-label' }, t('drama.prompt')),
+                      h('textarea', {
+                        className: 'agnes-textarea',
+                        style: { minHeight: '84px' },
+                        value: draft.prompt,
+                        onChange: (event) => setDraft({ ...draft, prompt: event.target.value }),
+                      }),
+                      h(
+                        'div',
+                        { className: 'agnes-row' },
+                        h(
+                          'div',
+                          null,
+                          h('label', { className: 'agnes-label' }, t('drama.duration')),
+                          h(
+                            'select',
+                            {
+                              className: 'agnes-select',
+                              value: String(draft.duration),
+                              onChange: (event) => setDraft({ ...draft, duration: Number(event.target.value) }),
+                            },
+                            ...[4, 5, 6, 8, 10, 12].map((value) =>
+                              h('option', { key: value, value: String(value) }, `${value}${t('note.seconds')}`),
+                            ),
+                          ),
+                        ),
+                        h(
+                          'div',
+                          null,
+                          h('label', { className: 'agnes-label' }, t('drama.camera')),
+                          h('input', {
+                            className: 'agnes-input',
+                            value: draft.camera,
+                            onChange: (event) => setDraft({ ...draft, camera: event.target.value }),
+                          }),
+                        ),
+                      ),
+                      h('label', { className: 'agnes-label', style: { marginTop: '10px' } }, t('drama.continuity')),
+                      h('input', {
+                        className: 'agnes-input',
+                        value: draft.continuity,
+                        onChange: (event) => setDraft({ ...draft, continuity: event.target.value }),
+                      }),
+                      h(
+                        'div',
+                        { className: 'agnes-actions' },
+                        h(
+                          'button',
+                          {
+                            type: 'button',
+                            className: 'agnes-button agnes-primary',
+                            disabled: saving,
+                            onClick: saveShot,
+                          },
+                          t('action.save'),
+                        ),
+                      ),
+                    )
+                  : null,
+                selectedShot && selectedShot.assetUrl
+                  ? h(
+                      'div',
+                      { className: 'agnes-card' },
+                      h('label', { className: 'agnes-label' }, t('drama.preview')),
+                      h('video', {
+                        className: 'agnes-media',
+                        src: selectedShot.assetUrl,
+                        controls: true,
+                        loop: true,
+                        style: { maxHeight: '300px' },
+                      }),
+                    )
+                  : null,
+                h(
+                  'div',
+                  { className: 'agnes-card' },
+                  h('label', { className: 'agnes-label' }, `${t('drama.timeline')} · ${t('drama.total')} ${total}${t('note.seconds')}`),
+                  h(
+                    'div',
+                    { className: 'agnes-timeline' },
+                    ...shots.map((shot) =>
+                      h('span', {
+                        key: shot.id,
+                        className: 'agnes-timeline-clip',
+                        'data-status': shot.status,
+                        style: { flexGrow: Math.max(1, Number(shot.duration) || 5) },
+                        title: shot.prompt || '',
+                      }),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+      )
+    }
 
     function Page(props) {
       const t = props && typeof props.t === 'function' ? props.t : (key) => key
@@ -479,10 +1425,37 @@ window.__ModuleLoader__.load({
               },
               t('tab.image'),
             ),
+            h(
+              'button',
+              {
+                type: 'button',
+                className: 'agnes-tab',
+                'data-active': tab === 'canvas' ? 'true' : 'false',
+                onClick: () => setTab('canvas'),
+              },
+              t('tab.canvas'),
+            ),
+            h(
+              'button',
+              {
+                type: 'button',
+                className: 'agnes-tab',
+                'data-active': tab === 'drama' ? 'true' : 'false',
+                onClick: () => setTab('drama'),
+              },
+              t('tab.drama'),
+            ),
           ),
-          h(
-            'div',
-            { className: 'agnes-grid' },
+          tab === 'canvas'
+            ? h(CanvasView, { t })
+            : tab === 'drama'
+              ? h(DramaView, { t })
+              : h(
+                  React.Fragment,
+                  null,
+                  h(
+                    'div',
+                    { className: 'agnes-grid' },
             h(
               'div',
               null,
@@ -791,6 +1764,7 @@ window.__ModuleLoader__.load({
                   ),
                 ),
           ),
+                ),
         ),
       )
     }

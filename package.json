@@ -1,6 +1,6 @@
 {
   "name": "dsh-agnes-media",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Agnes image and video models inside a DeepSeek Harness sidebar panel, with durable background tasks and history.",
   "type": "module",
   "license": "MIT",
@@ -43,6 +43,7 @@
   "files": [
     "index.js",
     "client.js",
+    "lib/*.js",
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",

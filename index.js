@@ -21,7 +21,11 @@ import { mkdir, readFile, rename, stat, unlink, writeFile } from 'node:fs/promis
 import { homedir } from 'node:os'
 import path from 'node:path'
 
-const VERSION = '0.2.0'
+import { composePrompt, seedFor } from './lib/context.js'
+import { createFrames } from './lib/frames.js'
+import { createProjects } from './lib/projects.js'
+
+const VERSION = '0.3.0'
 
 const DEFAULTS = {
   baseURL: 'https://api.agnes-ai.cn/v1',
@@ -280,6 +284,10 @@ function publicItem(item) {
     updatedAt: item.updatedAt,
     url: item.file ? `${ROUTE_PREFIX}/media/${item.id}` : undefined,
     upstream: item.upstream || undefined,
+    projectId: item.projectId || undefined,
+    shotId: item.shotId || undefined,
+    parentTaskId: item.parentTaskId || undefined,
+    hasFirstFrame: Boolean(item.firstFrameFile),
   }
 }
 
@@ -365,7 +373,7 @@ function createStore() {
 }
 
 /** Background task runner owned by the Host, independent of any browser page. */
-function createTasks(ctx, settings, store) {
+function createTasks(ctx, settings, store, hooks = {}) {
   const running = new Set()
   const cancelled = new Set()
 
@@ -429,9 +437,15 @@ function createTasks(ctx, settings, store) {
         const payload = {
           model: item.model,
           prompt: item.prompt,
-          mode: 'text',
+          mode: item.firstFrameFile ? 'keyframe' : 'text',
           seconds: item.seconds,
           size: item.size,
+        }
+        if (item.firstFrameFile) {
+          if (typeof hooks.frameDataUri !== 'function') {
+            throw new HttpError(500, '首帧功能未初始化')
+          }
+          payload.first_frame = await hooks.frameDataUri(item.firstFrameFile)
         }
         if (typeof item.seed === 'number') payload.seed = item.seed
         const data = await upstreamRetry(
@@ -492,6 +506,13 @@ function createTasks(ctx, settings, store) {
             stage: '',
             note: '',
           })
+          if (typeof hooks.onVideoReady === 'function') {
+            try {
+              await hooks.onVideoReady(store.find(id))
+            } catch {
+              /* a frame problem must not fail the generation */
+            }
+          }
           return
         }
         await update(id, {
@@ -505,6 +526,13 @@ function createTasks(ctx, settings, store) {
     } catch (error) {
       if (!cancelled.has(id)) {
         await update(id, { status: 'failed', error: messageOf(error), note: '' })
+        if (typeof hooks.onVideoFailed === 'function') {
+          try {
+            await hooks.onVideoFailed(store.find(id), error)
+          } catch {
+            /* keep the task failure authoritative */
+          }
+        }
       }
     }
   }
@@ -533,7 +561,7 @@ function createTasks(ctx, settings, store) {
   return { start, resume, cancel }
 }
 
-async function statusRoute(ctx, settings, res) {
+async function statusRoute(ctx, settings, res, frames) {
   const key = await resolveKey(ctx, settings)
   sendJson(res, 200, {
     ok: true,
@@ -544,6 +572,7 @@ async function statusRoute(ctx, settings, res) {
     baseURL: settings.baseURL,
     videoModel: settings.videoModel,
     imageModel: settings.imageModel,
+    ffmpeg: frames ? Boolean(await frames.available()) : false,
     platformURL: 'https://platform.agnes-ai.cn',
   })
 }
@@ -632,26 +661,35 @@ async function mediaRoute(req, res, store, id, download) {
   stream.pipe(res)
 }
 
-function createHandler(ctx, settings, store, tasks) {
+function publicShot(shot) {
+  if (!shot) return undefined
+  const { assetFile, tailFile, ...rest } = shot
+  return rest
+}
+
+function createHandler(ctx, settings, store, tasks, services) {
+  const { projects, frames, startChain } = services
+
   return async (req, res) => {
     try {
       const url = new URL(req.url || '/', 'http://127.0.0.1')
       if (!url.pathname.startsWith(ROUTE_PREFIX)) throw new HttpError(404, '未知接口')
       const rest = url.pathname.slice(ROUTE_PREFIX.length) || '/'
+      const method = req.method || 'GET'
 
-      if (req.method === 'GET' && rest === '/version') {
+      if (method === 'GET' && rest === '/version') {
         sendJson(res, 200, { ok: true, version: VERSION })
         return
       }
-      if (req.method === 'GET' && rest === '/status') {
-        await statusRoute(ctx, settings, res)
+      if (method === 'GET' && rest === '/status') {
+        await statusRoute(ctx, settings, res, frames)
         return
       }
-      if (req.method === 'GET' && rest === '/history') {
+      if (method === 'GET' && rest === '/history') {
         await historyRoute(res, store)
         return
       }
-      if (req.method === 'POST' && rest === '/image') {
+      if (method === 'POST' && rest === '/image') {
         await store.ready
         const body = await readJson(req)
         const prompt = cleanPrompt(body.prompt)
@@ -678,7 +716,7 @@ function createHandler(ctx, settings, store, tasks) {
         sendJson(res, 200, { ok: true, item: publicItem(store.find(item.id)) })
         return
       }
-      if (req.method === 'POST' && rest === '/video') {
+      if (method === 'POST' && rest === '/video') {
         await store.ready
         const body = await readJson(req)
         const prompt = cleanPrompt(body.prompt)
@@ -703,22 +741,221 @@ function createHandler(ctx, settings, store, tasks) {
           updatedAt: Date.now(),
         }
         if (Number.isFinite(seed)) item.seed = seed
+        if (body.projectId) item.projectId = String(body.projectId)
+        if (body.shotId) item.shotId = String(body.shotId)
         await store.add(item)
         tasks.start(item.id)
         sendJson(res, 200, { ok: true, item: publicItem(store.find(item.id)) })
         return
       }
-      if (req.method === 'POST' && rest === '/history/delete') {
+      if (method === 'POST' && rest === '/history/delete') {
         await deleteRoute(req, res, store, tasks)
         return
       }
+
+      /* ---------------------------- projects ---------------------------- */
+
+      if (rest === '/projects') {
+        if (method === 'GET') {
+          sendJson(res, 200, { ok: true, projects: projects.listProjects() })
+          return
+        }
+        if (method === 'POST') {
+          const body = await readJson(req)
+          const project = await projects.createProject(body)
+          sendJson(res, 200, { ok: true, project })
+          return
+        }
+      }
+
+      let match = rest.match(/^\/projects\/([^/]+)$/)
+      if (match) {
+        const projectId = decodeURIComponent(match[1])
+        if (method === 'GET') {
+          const project = projects.getProject(projectId)
+          if (!project) throw new HttpError(404, '项目不存在')
+          sendJson(res, 200, {
+            ok: true,
+            project,
+            shots: projects.listShots(projectId).map(publicShot),
+            canvas: projects.getCanvas(projectId),
+            ffmpeg: await frames.available(),
+          })
+          return
+        }
+        if (method === 'PATCH') {
+          const body = await readJson(req)
+          const project = await projects.updateProject(projectId, body)
+          if (!project) throw new HttpError(404, '项目不存在')
+          sendJson(res, 200, { ok: true, project })
+          return
+        }
+        if (method === 'DELETE') {
+          const removed = await projects.deleteProject(projectId)
+          if (!removed) throw new HttpError(404, '项目不存在')
+          sendJson(res, 200, { ok: true })
+          return
+        }
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/canvas$/)
+      if (match) {
+        const projectId = decodeURIComponent(match[1])
+        if (method === 'GET') {
+          sendJson(res, 200, { ok: true, canvas: projects.getCanvas(projectId) })
+          return
+        }
+        if (method === 'PUT' || method === 'POST') {
+          const body = await readJson(req, 8 * 1024 * 1024)
+          const canvas = await projects.saveCanvas(projectId, body)
+          if (!canvas) throw new HttpError(404, '项目不存在')
+          sendJson(res, 200, { ok: true, canvas })
+          return
+        }
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/chain$/)
+      if (match && method === 'POST') {
+        const projectId = decodeURIComponent(match[1])
+        const body = await readJson(req)
+        const result = await startChain(projectId, body)
+        sendJson(res, 200, { ok: true, ...result })
+        return
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/timeline$/)
+      if (match && method === 'GET') {
+        const projectId = decodeURIComponent(match[1])
+        const project = projects.getProject(projectId)
+        if (!project) throw new HttpError(404, '项目不存在')
+        const shots = projects.listShots(projectId)
+        const totalDuration = shots.reduce((sum, shot) => sum + (Number(shot.duration) || 0), 0)
+        sendJson(res, 200, {
+          ok: true,
+          projectId,
+          totalDuration,
+          readyCount: shots.filter((shot) => shot.status === 'ready' && shot.assetUrl).length,
+          shots: shots.map((shot) => ({
+            id: shot.id,
+            index: shot.index,
+            prompt: shot.prompt,
+            duration: shot.duration,
+            status: shot.status,
+            assetUrl: shot.assetUrl,
+            tailUrl: shot.tailUrl,
+          })),
+        })
+        return
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/shots$/)
+      if (match) {
+        const projectId = decodeURIComponent(match[1])
+        if (method === 'GET') {
+          sendJson(res, 200, {
+            ok: true,
+            shots: projects.listShots(projectId).map(publicShot),
+          })
+          return
+        }
+        if (method === 'POST') {
+          const body = await readJson(req)
+          const shot = await projects.createShot(projectId, body)
+          if (!shot) throw new HttpError(404, '项目不存在')
+          sendJson(res, 200, { ok: true, shot: publicShot(shot) })
+          return
+        }
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/shots\/([^/]+)$/)
+      if (match) {
+        const projectId = decodeURIComponent(match[1])
+        const shotId = decodeURIComponent(match[2])
+        if (method === 'GET') {
+          const shot = projects.getShot(projectId, shotId)
+          if (!shot) throw new HttpError(404, '镜头不存在')
+          sendJson(res, 200, { ok: true, shot: publicShot(shot) })
+          return
+        }
+        if (method === 'PATCH') {
+          const body = await readJson(req)
+          const shot = await projects.updateShot(projectId, shotId, body)
+          if (!shot) throw new HttpError(404, '镜头不存在')
+          sendJson(res, 200, { ok: true, shot: publicShot(shot) })
+          return
+        }
+        if (method === 'DELETE') {
+          const removed = await projects.deleteShot(projectId, shotId)
+          if (!removed) throw new HttpError(404, '镜头不存在')
+          sendJson(res, 200, { ok: true })
+          return
+        }
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/shots\/([^/]+)\/first-frame$/)
+      if (match && method === 'POST') {
+        const projectId = decodeURIComponent(match[1])
+        const shotId = decodeURIComponent(match[2])
+        const shot = projects.getShot(projectId, shotId)
+        if (!shot) throw new HttpError(404, '镜头不存在')
+        const body = await readJson(req, 24 * 1024 * 1024)
+        const dataUri = String(body.dataUri || '')
+        const mimeMatch = /^data:image\/(png|jpeg|jpg|webp);base64,/i.exec(dataUri)
+        const extension = mimeMatch
+          ? mimeMatch[1].toLowerCase() === 'png'
+            ? 'png'
+            : mimeMatch[1].toLowerCase() === 'webp'
+              ? 'webp'
+              : 'jpg'
+          : 'jpg'
+        const relative = `frames/${shotId}-manual.${extension}`
+        await frames.saveDataUri(dataUri, projects.assetPath(projectId, relative))
+        const updated = await projects.updateShot(projectId, shotId, {
+          firstFrame: { source: 'manual', file: relative },
+        })
+        sendJson(res, 200, {
+          ok: true,
+          shot: publicShot(updated),
+          tailUrl: `${ROUTE_PREFIX}/projects/${projectId}/shots/${shotId}/tail`,
+        })
+        return
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/shots\/([^/]+)\/tail$/)
+      if (match && (method === 'GET' || method === 'HEAD')) {
+        const projectId = decodeURIComponent(match[1])
+        const shotId = decodeURIComponent(match[2])
+        const shot = projects.getShot(projectId, shotId)
+        if (!shot || !shot.tailFile) throw new HttpError(404, '该镜头还没有尾帧')
+        const file = projects.assetPath(projectId, shot.tailFile)
+        let info
+        try {
+          info = await stat(file)
+        } catch {
+          throw new HttpError(404, '尾帧文件已被清理')
+        }
+        res.writeHead(200, {
+          'content-type': 'image/jpeg',
+          'content-length': String(info.size),
+          'cache-control': 'private, max-age=31536000, immutable',
+        })
+        if (method === 'HEAD') {
+          res.end()
+          return
+        }
+        const stream = createReadStream(file)
+        stream.on('error', () => res.destroy())
+        stream.pipe(res)
+        return
+      }
+
       const taskMatch = rest.match(/^\/task\/([^/]+)$/)
-      if (req.method === 'GET' && taskMatch) {
+      if (method === 'GET' && taskMatch) {
         await taskRoute(res, store, decodeURIComponent(taskMatch[1]))
         return
       }
       const mediaMatch = rest.match(/^\/media\/([^/]+)$/)
-      if ((req.method === 'GET' || req.method === 'HEAD') && mediaMatch) {
+      if ((method === 'GET' || method === 'HEAD') && mediaMatch) {
         await mediaRoute(
           req,
           res,
@@ -745,9 +982,189 @@ export function apply(ctx, config = {}) {
     videoModel: normalizeModel(config.videoModel) || DEFAULTS.videoModel,
     imageModel: normalizeModel(config.imageModel) || DEFAULTS.imageModel,
   }
+
+  const home = process.env.DSH_HOME || path.join(homedir(), '.dsh')
   const store = createStore()
-  const tasks = createTasks(ctx, settings, store)
-  const handler = createHandler(ctx, settings, store, tasks)
+  const projects = createProjects(path.join(home, 'agnes-media', 'projects'))
+  const frames = createFrames({ ffmpegPath: config.ffmpegPath })
+
+  async function onVideoReady(item) {
+    if (!item || !item.projectId || !item.shotId) return
+    const project = projects.getProject(item.projectId)
+    if (!project) return
+    await projects.updateShot(item.projectId, item.shotId, {
+      status: 'ready',
+      taskId: item.id,
+      assetFile: item.file,
+      assetUrl: `${ROUTE_PREFIX}/media/${item.id}`,
+      error: '',
+    })
+    const tailRelative = `frames/${item.shotId}-tail.jpg`
+    const tailPath = projects.assetPath(item.projectId, tailRelative)
+    const result = await frames.extractTail(store.mediaPath(item.file), tailPath)
+    if (result.ok) {
+      await projects.updateShot(item.projectId, item.shotId, {
+        tailFile: tailRelative,
+        tailUrl: `${ROUTE_PREFIX}/projects/${item.projectId}/shots/${item.shotId}/tail`,
+        tailError: '',
+      })
+    } else {
+      await projects.updateShot(item.projectId, item.shotId, { tailError: result.error })
+    }
+  }
+
+  async function onVideoFailed(item, error) {
+    if (!item || !item.projectId || !item.shotId) return
+    await projects.updateShot(item.projectId, item.shotId, {
+      status: 'failed',
+      error: messageOf(error),
+    })
+  }
+
+  const tasks = createTasks(ctx, settings, store, {
+    frameDataUri: (file) => frames.dataUri(file),
+    onVideoReady,
+    onVideoFailed,
+  })
+
+  async function submitVideo(input) {
+    const item = {
+      id: randomUUID(),
+      kind: 'video',
+      status: 'queued',
+      prompt: input.prompt,
+      model: input.model || settings.videoModel,
+      size: input.size || '720P',
+      seconds: input.seconds || '5',
+      progress: 0,
+      stage: 'queued',
+      note: '',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+    if (Number.isFinite(Number(input.seed))) item.seed = Number(input.seed)
+    if (input.projectId) item.projectId = String(input.projectId)
+    if (input.shotId) item.shotId = String(input.shotId)
+    if (input.parentTaskId) item.parentTaskId = String(input.parentTaskId)
+    if (input.firstFrameFile) item.firstFrameFile = input.firstFrameFile
+    await store.add(item)
+    tasks.start(item.id)
+    return store.find(item.id)
+  }
+
+  async function waitForTask(taskId, timeoutMs = TASK_DEADLINE_MS + 10 * 60 * 1000) {
+    const deadline = Date.now() + timeoutMs
+    while (Date.now() < deadline) {
+      const item = store.find(taskId)
+      if (!item) throw new HttpError(410, '任务记录丢失')
+      if (item.status === 'ready') return item
+      if (item.status === 'failed') throw new HttpError(502, item.error || '任务失败')
+      await sleep(1500)
+    }
+    throw new HttpError(504, '等待任务完成超时')
+  }
+
+  async function waitForShotTail(projectId, shotId) {
+    const deadline = Date.now() + 60000
+    while (Date.now() < deadline) {
+      const shot = projects.getShot(projectId, shotId)
+      if (!shot) return undefined
+      if (shot.status === 'failed') return shot
+      if (shot.tailFile || shot.tailError) return shot
+      await sleep(800)
+    }
+    return projects.getShot(projectId, shotId)
+  }
+
+  const chainLocks = new Set()
+
+  async function startChain(projectId, body = {}) {
+    if (chainLocks.has(projectId)) throw new HttpError(409, '该项目已有链路在执行')
+    const project = projects.getProject(projectId)
+    if (!project) throw new HttpError(404, '项目不存在')
+
+    const allShots = projects.listShots(projectId)
+    let sequence = allShots
+    if (Array.isArray(body.shotIds) && body.shotIds.length > 0) {
+      const byId = new Map(allShots.map((shot) => [shot.id, shot]))
+      sequence = body.shotIds.map((id) => byId.get(String(id))).filter(Boolean)
+    } else if (body.from) {
+      const index = allShots.findIndex((shot) => shot.id === String(body.from))
+      if (index >= 0) sequence = allShots.slice(index)
+    }
+    if (sequence.length === 0) throw new HttpError(400, '没有可执行的镜头')
+
+    chainLocks.add(projectId)
+    const force = body.force === true
+
+    await projects.updateProject(projectId, {
+      chain: { running: true, currentShotId: null, startedAt: Date.now(), finishedAt: null, error: '' },
+    })
+
+    ;(async () => {
+      try {
+        for (let index = 0; index < sequence.length; index += 1) {
+          const current = projects.getShot(projectId, sequence[index].id)
+          if (!current) continue
+          if (!force && current.status === 'ready' && current.assetFile) continue
+
+          await projects.updateProject(projectId, {
+            chain: { running: true, currentShotId: current.id },
+          })
+          await projects.updateShot(projectId, current.id, { status: 'running', error: '' })
+
+          const previous = index > 0 ? projects.getShot(projectId, sequence[index - 1].id) : undefined
+          let firstFrameFile
+          if (current.firstFrame && current.firstFrame.source === 'manual' && current.firstFrame.file) {
+            firstFrameFile = projects.assetPath(projectId, current.firstFrame.file)
+          } else if (previous && previous.tailFile) {
+            firstFrameFile = projects.assetPath(projectId, previous.tailFile)
+          } else if (previous && current.firstFrame?.source !== 'none') {
+            const reason =
+              previous.tailError || '缺少上一镜尾帧（需要 ffmpeg 或为该镜上传首帧）'
+            await projects.updateShot(projectId, current.id, { status: 'blocked', error: reason })
+            throw new HttpError(409, `镜头 ${current.index} 无法衔接：${reason}`)
+          }
+
+          const liveProject = projects.getProject(projectId)
+          const prompt = composePrompt({ project: liveProject, shot: current, previousShot: previous })
+          const seed = seedFor(liveProject, current, index)
+          const task = await submitVideo({
+            prompt,
+            seconds: String(current.duration || 5),
+            size: current.size,
+            seed,
+            projectId,
+            shotId: current.id,
+            firstFrameFile,
+          })
+          await waitForTask(task.id)
+          const settled = await waitForShotTail(projectId, current.id)
+          if (settled && settled.status === 'failed') {
+            throw new HttpError(502, settled.error || '镜头生成失败')
+          }
+        }
+        await projects.updateProject(projectId, {
+          chain: { running: false, currentShotId: null, finishedAt: Date.now(), error: '' },
+        })
+      } catch (error) {
+        await projects.updateProject(projectId, {
+          chain: {
+            running: false,
+            currentShotId: null,
+            finishedAt: Date.now(),
+            error: messageOf(error),
+          },
+        })
+      } finally {
+        chainLocks.delete(projectId)
+      }
+    })()
+
+    return { started: true, count: sequence.length }
+  }
+
+  const handler = createHandler(ctx, settings, store, tasks, { projects, frames, startChain })
 
   ctx.effect(
     () =>
@@ -762,4 +1179,5 @@ export function apply(ctx, config = {}) {
   store.ready
     .then(() => tasks.resume())
     .catch(() => {})
+  projects.ready.catch(() => {})
 }

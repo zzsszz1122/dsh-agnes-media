@@ -1,4 +1,4 @@
-﻿# dsh-agnes-media · Agnes Studio
+# dsh-agnes-media · Agnes Studio
 
 **Generate images and videos from a DeepSeek Harness sidebar panel. Tasks run in the Host process, so closing the page never loses a generation.**
 
@@ -62,15 +62,23 @@ Those endpoints are outside the chat protocol. This plugin calls them from the *
 
 **Interface**
 
-- A dedicated sidebar entry with **Image / Video** tabs and prompt examples.
+- A dedicated sidebar entry with four tabs: **Video / Image / Canvas / Drama**.
 - Preview, download (Host route supports `Range` seeking), open in a new tab, copy link.
 - Key status and endpoint in the header, with setup guidance when unset.
 - A persistent history rail with per-item delete.
 
+**Canvas and drama mode (0.3.0)**
+
+- **Canvas**: node graph with drag layout, wheel zoom, background pan, and sequence edges. Press **Connect** on a node, then click the target node to chain tail frame → first frame; the graph autosaves.
+- **Drama mode**: linear episode/scene/shot editing with a shot list, prompt/duration/camera editor, continuity notes, and a timeline with total duration. **Generate all** runs shots in order; failures stop at the current shot and **Continue from selected** resumes without rerunning finished shots.
+- **Tail → head**: after a shot completes, the Host extracts its last frame with ffmpeg and submits the next shot as `mode: keyframe` with a base64 `first_frame`. Requires ffmpeg on the machine, or `AGNES_FFMPEG` / `config.ffmpegPath`. Without it the canvas warns and downstream shots are marked blocked rather than silently degraded.
+- **Context assembly**: global style + character/scene bible + continuity note + shot prompt + camera + negative prompt, composed by the Host.
+
 **Local storage**
 
 - Results and index live in `<DSH home>/agnes-media/` (`history.json` plus `media/`).
-- The newest **80** entries are kept; older ones are pruned with their files. A single result file may be up to 512MB.
+- Projects live in `agnes-media/projects/<projectId>/`: `project.json`, `shots/*.json`, `canvas.json`, `assets/frames/`.
+- The newest **80** history entries are kept; older ones are pruned with their files. A single result file may be up to 512MB.
 - Nothing is uploaded to a third party.
 
 ---
@@ -164,9 +172,14 @@ The upstream queue is busy. The plugin backs off and retries on `429` / `5xx` an
 
 ## Limitations
 
-- Text-to-image and text-to-video (`mode: text`) only. Image-conditioned video needs a publicly reachable reference image and is not exposed yet.
+- Text-to-image and text-to-video (`mode: text`) are stable. Chained generation
+  uses `mode: keyframe` with a base64 first frame; the real two-shot end-to-end
+  check is still pending upstream queue availability (the payload is implemented
+  and covered by a mocked test).
+- A chain runs sequentially; one chain per project at a time.
 - A task waits at most 40 minutes.
 - History keeps the newest 80 entries; older records are deleted with their files.
+- Canvas has no marquee selection or grouping yet.
 
 ---
 

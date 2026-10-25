@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.3.0
+
+- Add projects/shots/canvas persistence under `<DSH home>/agnes-media/projects/`
+  (`project.json`, `shots/*.json`, `canvas.json`, `assets/frames/`).
+- Add a sequential chain runner: topological order, single concurrency, resume
+  from a shot, per-project lock, and project-level chain state.
+- Compose prompts from style, character/scene bible, continuity note, shot
+  prompt, camera, and negative prompt; seed by project policy.
+- Extract each finished shot's tail frame with ffmpeg and submit the next shot
+  as `mode: keyframe` with a base64 `first_frame`; expose the tail over HTTP and
+  accept manual first-frame uploads.
+- Add the Canvas tab: draggable nodes, wheel zoom, pan, SVG sequence edges,
+  click-to-connect, autosave, and per-node run/continue actions.
+- Add the Drama tab: shot list, prompt/duration/camera/continuity editor,
+  timeline with total duration, generate-all, and continue-from-selected.
+- Extend `/status` with ffmpeg availability and add project/shot/canvas/chain/
+  timeline routes.
+
 ## 0.2.0
 
 - Move generation into the Host: tasks keep running after the page closes, the
