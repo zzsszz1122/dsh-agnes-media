@@ -16,11 +16,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOUR-GITHUB-NAME/dsh-agnes-media.git"
+    "url": "https://github.com/zzsszz1122/dsh-agnes-media.git"
   },
-  "homepage": "https://github.com/YOUR-GITHUB-NAME/dsh-agnes-media#readme",
+  "homepage": "https://github.com/zzsszz1122/dsh-agnes-media#readme",
   "bugs": {
-    "url": "https://github.com/YOUR-GITHUB-NAME/dsh-agnes-media/issues"
+    "url": "https://github.com/zzsszz1122/dsh-agnes-media/issues"
   },
   "engines": {
     "node": ">=20",
@@ -46,7 +46,8 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "docs/panel.jpg"
+    "docs/panel.jpg",
+    "screenshots.json"
   ],
   "dsh": {
     "bundle": {
