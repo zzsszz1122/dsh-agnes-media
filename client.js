@@ -103,6 +103,9 @@ window.__ModuleLoader__.load({
       'status.draft': '草稿',
       'status.blocked': '被阻塞',
       'status.ready': '已完成',
+      'status.cancelled': '已取消',
+      'action.cancelTask': '取消任务',
+      'action.cancelChain': '取消链路',
     }
 
     const EN = {
@@ -191,6 +194,9 @@ window.__ModuleLoader__.load({
       'status.draft': 'Draft',
       'status.blocked': 'Blocked',
       'status.ready': 'Done',
+      'status.cancelled': 'Cancelled',
+      'action.cancelTask': 'Cancel task',
+      'action.cancelChain': 'Cancel chain',
     }
 
     const IMAGE_SIZES = ['1024x1024', '1024x768', '768x1024', '1280x720', '720x1280', '1536x1536', '2048x2048']
@@ -374,9 +380,41 @@ window.__ModuleLoader__.load({
     const loadProjectDetail = (id) => getJson(`/projects/${id}`)
     const saveCanvasApi = (id, canvas) => putJson(`/projects/${id}/canvas`, canvas)
     const runChainApi = (id, body) => postJson(`/projects/${id}/chain`, body)
+    const cancelTaskApi = (id) => postJson(`/task/${id}/cancel`, {})
+    const cancelChainApi = (id) => postJson(`/projects/${id}/chain/cancel`, {})
     const addShotApi = (id, input) => postJson(`/projects/${id}/shots`, input)
     const patchShotApi = (id, shotId, patch) => patchJson(`/projects/${id}/shots/${shotId}`, patch)
     const deleteShotApi = (id, shotId) => deleteJson(`/projects/${id}/shots/${shotId}`)
+
+    class ViewBoundary extends React.Component {
+      constructor(props) {
+        super(props)
+        this.state = { error: null }
+      }
+
+      static getDerivedStateFromError(error) {
+        return { error }
+      }
+
+      componentDidCatch(error) {
+        try {
+          console.error('[agnes-media] view error', error)
+        } catch {
+          /* ignore */
+        }
+      }
+
+      render() {
+        if (this.state.error) {
+          return h(
+            'div',
+            { className: 'agnes-error' },
+            `视图出错：${String((this.state.error && this.state.error.message) || this.state.error)}`,
+          )
+        }
+        return this.props.children
+      }
+    }
 
     const NODE_W = 232
     const NODE_H = 168
@@ -385,11 +423,13 @@ window.__ModuleLoader__.load({
       const byId = new Map((existing || []).map((node) => [node.id, node]))
       return (shots || []).map((shot, index) => {
         const node = byId.get(shot.id)
+        const fallbackX = 40 + (index % 4) * (NODE_W + 48)
+        const fallbackY = 70 + Math.floor(index / 4) * (NODE_H + 56)
         return {
           id: shot.id,
           type: 'shot',
-          x: node ? node.x : 40 + (index % 4) * (NODE_W + 48),
-          y: node ? node.y : 70 + Math.floor(index / 4) * (NODE_H + 56),
+          x: Number.isFinite(Number(node && node.x)) ? Number(node.x) : fallbackX,
+          y: Number.isFinite(Number(node && node.y)) ? Number(node.y) : fallbackY,
           data: {},
         }
       })
@@ -576,13 +616,23 @@ window.__ModuleLoader__.load({
         }
       }
 
-      const onWheel = (event) => {
-        const factor = event.deltaY > 0 ? 0.9 : 1.1
-        setViewport((current) => ({
-          ...current,
-          zoom: Math.min(2.5, Math.max(0.3, current.zoom * factor)),
-        }))
-      }
+      // Wheel must not bubble to the page scroller, or zooming the canvas
+      // scrolls the panel away and the graph seems to vanish. React registers
+      // `wheel` as passive, so attach a non-passive native listener instead.
+      useEffect(() => {
+        const area = areaRef.current
+        if (!area) return undefined
+        const handler = (event) => {
+          event.preventDefault()
+          const factor = event.deltaY > 0 ? 0.9 : 1.1
+          setViewport((current) => ({
+            ...current,
+            zoom: Math.min(2.5, Math.max(0.3, current.zoom * factor)),
+          }))
+        }
+        area.addEventListener('wheel', handler, { passive: false })
+        return () => area.removeEventListener('wheel', handler)
+      }, [])
 
       const connectTo = (targetId) => {
         if (!connecting || connecting === targetId) {
@@ -631,6 +681,27 @@ window.__ModuleLoader__.load({
         try {
           await runChainApi(projectId, { shotIds: shots.map((shot) => shot.id) })
           setError('')
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const cancelChain = async () => {
+        if (!projectId) return
+        try {
+          await cancelChainApi(projectId)
+          setError('')
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const cancelShotTask = async (shot) => {
+        if (!shot || !shot.taskId) return
+        try {
+          await cancelTaskApi(shot.taskId)
           await reload()
         } catch (err) {
           setError(String(err))
@@ -710,6 +781,18 @@ window.__ModuleLoader__.load({
               },
               chain?.running ? t('action.generating') : t('canvas.runAll'),
             ),
+            chain?.running
+              ? h(
+                  'button',
+                  {
+                    key: 'cancelChain',
+                    type: 'button',
+                    className: 'agnes-button agnes-ghost',
+                    onClick: cancelChain,
+                  },
+                  t('action.cancelChain'),
+                )
+              : null,
             detail && detail.ffmpeg === false
               ? h('span', { key: 'ffmpeg', className: 'agnes-chip', style: { color: '#f59e0b' } }, t('canvas.ffmpegMissing'))
               : null,
@@ -727,7 +810,6 @@ window.__ModuleLoader__.load({
             onPointerMove: onAreaMove,
             onPointerUp: onAreaUp,
             onPointerLeave: onAreaUp,
-            onWheel,
           },
           shots.length === 0
             ? h('div', { className: 'agnes-canvas-empty' }, t('canvas.empty'))
@@ -826,6 +908,20 @@ window.__ModuleLoader__.load({
                         { type: 'button', className: 'agnes-mini', onClick: () => runFrom(shot.id) },
                         t('canvas.runFrom'),
                       ),
+                      shot.status === 'running' && shot.taskId
+                        ? h(
+                            'button',
+                            {
+                              type: 'button',
+                              className: 'agnes-mini',
+                              onClick: (event) => {
+                                event.stopPropagation()
+                                cancelShotTask(shot).catch(() => {})
+                              },
+                            },
+                            t('action.cancelTask'),
+                          )
+                        : null,
                       h(
                         'button',
                         { type: 'button', className: 'agnes-mini', onClick: () => pickFirstFrame(shot.id) },
@@ -996,6 +1092,27 @@ window.__ModuleLoader__.load({
         }
       }
 
+      const cancelChain = async () => {
+        if (!projectId) return
+        try {
+          await cancelChainApi(projectId)
+          setError('')
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const cancelShotTask = async (shot) => {
+        if (!shot || !shot.taskId) return
+        try {
+          await cancelTaskApi(shot.taskId)
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
       const runFrom = async () => {
         if (!projectId || !selectedShot) return
         try {
@@ -1037,6 +1154,18 @@ window.__ModuleLoader__.load({
               },
               chain?.running ? t('action.generating') : t('drama.runAll'),
             ),
+            chain?.running
+              ? h(
+                  'button',
+                  {
+                    key: 'cancelChain',
+                    type: 'button',
+                    className: 'agnes-button agnes-ghost',
+                    onClick: cancelChain,
+                  },
+                  t('action.cancelChain'),
+                )
+              : null,
             h(
               'button',
               {
@@ -1074,7 +1203,24 @@ window.__ModuleLoader__.load({
                     h('b', null, `#${shot.index}`),
                     h('span', { className: 'agnes-drama-row-status', 'data-status': shot.status }, t(`status.${shot.status || 'draft'}`)),
                     h('span', { className: 'agnes-drama-row-prompt' }, shot.prompt || '—'),
-                    h('span', { className: 'agnes-drama-row-duration' }, `${shot.duration || 5}${t('note.seconds')}`),
+                    h(
+                      'span',
+                      { className: 'agnes-drama-row-duration' },
+                      shot.status === 'running' && shot.taskId
+                        ? h(
+                            'button',
+                            {
+                              type: 'button',
+                              className: 'agnes-mini',
+                              onClick: (event) => {
+                                event.stopPropagation()
+                                cancelShotTask(shot).catch(() => {})
+                              },
+                            },
+                            t('action.cancelTask'),
+                          )
+                        : `${shot.duration || 5}${t('note.seconds')}`,
+                    ),
                   ),
                 ),
               ),
@@ -1327,6 +1473,21 @@ window.__ModuleLoader__.load({
         }
       }, [prompt, tab, imageSize, videoSize, seconds, seed, t, refresh])
 
+      const cancelActive = useCallback(async () => {
+        const id = activeRef.current
+        if (!id) return
+        try {
+          await cancelTaskApi(id)
+          activeRef.current = null
+          setBusy(false)
+          setPhase('')
+          setNote('')
+          await refresh()
+        } catch (caught) {
+          setError(caught instanceof Error ? caught.message : String(caught))
+        }
+      }, [refresh])
+
       const removeItem = useCallback(
         async (id) => {
           try {
@@ -1447,9 +1608,9 @@ window.__ModuleLoader__.load({
             ),
           ),
           tab === 'canvas'
-            ? h(CanvasView, { t })
+            ? h(ViewBoundary, { key: 'canvas' }, h(CanvasView, { t }))
             : tab === 'drama'
-              ? h(DramaView, { t })
+              ? h(ViewBoundary, { key: 'drama' }, h(DramaView, { t }))
               : h(
                   React.Fragment,
                   null,
@@ -1585,6 +1746,17 @@ window.__ModuleLoader__.load({
                         ? t('action.generate.image')
                         : t('action.generate.video'),
                   ),
+                  busy
+                    ? h(
+                        'button',
+                        {
+                          type: 'button',
+                          className: 'agnes-button agnes-ghost',
+                          onClick: () => cancelActive(),
+                        },
+                        t('action.cancelTask'),
+                      )
+                    : null,
                   result
                     ? h(
                         'button',

@@ -223,14 +223,16 @@ async function upstream(settings, key, endpoint, options = {}) {
   return data
 }
 
-async function upstreamRetry(settings, key, endpoint, options, taskId, update, deadline) {
+async function upstreamRetry(settings, key, endpoint, options, taskId, update, deadline, shouldStop) {
   let attempt = 0
   for (;;) {
+    if (shouldStop && shouldStop()) throw new HttpError(409, '任务已取消')
     try {
       return await upstream(settings, key, endpoint, options)
     } catch (error) {
       if (!error || !error.transient) throw error
       if (deadline && Date.now() > deadline) throw error
+      if (shouldStop && shouldStop()) throw new HttpError(409, '任务已取消')
       attempt += 1
       const delay = Math.min(30000, 5000 + attempt * 2000)
       if (update) {
@@ -239,6 +241,7 @@ async function upstreamRetry(settings, key, endpoint, options, taskId, update, d
         })
       }
       await sleep(delay)
+      if (shouldStop && shouldStop()) throw new HttpError(409, '任务已取消')
       if (update) await update(taskId, { note: '' })
     }
   }
@@ -401,6 +404,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
         id,
         update,
         deadline,
+        () => cancelled.has(id),
       )
       const url = String(data?.data?.[0]?.url || data?.url || '')
       if (!url) throw new HttpError(502, '图片接口没有返回图片地址', { transient: true })
@@ -419,7 +423,16 @@ function createTasks(ctx, settings, store, hooks = {}) {
         note: '',
       })
     } catch (error) {
-      if (!cancelled.has(id)) {
+      if (cancelled.has(id) || (error instanceof HttpError && error.status === 409)) {
+        await update(id, { status: 'cancelled', stage: '', note: '', error: '已取消' })
+        if (typeof hooks.onTaskCancelled === 'function') {
+          try {
+            await hooks.onTaskCancelled(store.find(id))
+          } catch {
+            /* keep the cancellation authoritative */
+          }
+        }
+      } else if (!cancelled.has(id)) {
         await update(id, { status: 'failed', error: messageOf(error), note: '' })
       }
     }
@@ -428,10 +441,12 @@ function createTasks(ctx, settings, store, hooks = {}) {
   async function videoTask(id) {
     const item = store.find(id)
     if (!item) return
+    if (cancelled.has(id)) return
     try {
       const deadline = Date.now() + TASK_DEADLINE_MS
       let videoId = item.videoId
       if (!videoId) {
+        if (cancelled.has(id)) return
         await update(id, { status: 'running', stage: 'submit', progress: 3, note: '' })
         const key = await requireKey(ctx, settings)
         const payload = {
@@ -456,6 +471,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
           id,
           update,
           deadline,
+          () => cancelled.has(id),
         )
         videoId = String(data?.video_id || data?.id || data?.task_id || '')
         if (!videoId) throw new HttpError(502, '视频接口没有返回任务 ID', { transient: true })
@@ -524,7 +540,16 @@ function createTasks(ctx, settings, store, hooks = {}) {
       }
       throw new HttpError(504, '视频生成超时（超过 40 分钟）')
     } catch (error) {
-      if (!cancelled.has(id)) {
+      if (cancelled.has(id) || (error instanceof HttpError && error.status === 409)) {
+        await update(id, { status: 'cancelled', stage: '', note: '', error: '已取消' })
+        if (typeof hooks.onVideoCancelled === 'function') {
+          try {
+            await hooks.onVideoCancelled(store.find(id))
+          } catch {
+            /* keep the cancellation authoritative */
+          }
+        }
+      } else if (!cancelled.has(id)) {
         await update(id, { status: 'failed', error: messageOf(error), note: '' })
         if (typeof hooks.onVideoFailed === 'function') {
           try {
@@ -668,7 +693,7 @@ function publicShot(shot) {
 }
 
 function createHandler(ctx, settings, store, tasks, services) {
-  const { projects, frames, startChain } = services
+  const { projects, frames, startChain, cancelTask, cancelChain } = services
 
   return async (req, res) => {
     try {
@@ -814,6 +839,14 @@ function createHandler(ctx, settings, store, tasks, services) {
         }
       }
 
+      match = rest.match(/^\/projects\/([^/]+)\/chain\/cancel$/)
+      if (match && method === 'POST') {
+        const projectId = decodeURIComponent(match[1])
+        const result = await cancelChain(projectId)
+        sendJson(res, 200, { ok: true, ...result })
+        return
+      }
+
       match = rest.match(/^\/projects\/([^/]+)\/chain$/)
       if (match && method === 'POST') {
         const projectId = decodeURIComponent(match[1])
@@ -949,6 +982,13 @@ function createHandler(ctx, settings, store, tasks, services) {
         return
       }
 
+      match = rest.match(/^\/task\/([^/]+)\/cancel$/)
+      if (match && method === 'POST') {
+        const item = await cancelTask(decodeURIComponent(match[1]))
+        sendJson(res, 200, { ok: true, item: publicItem(item) })
+        return
+      }
+
       const taskMatch = rest.match(/^\/task\/([^/]+)$/)
       if (method === 'GET' && taskMatch) {
         await taskRoute(res, store, decodeURIComponent(taskMatch[1]))
@@ -1021,11 +1061,31 @@ export function apply(ctx, config = {}) {
     })
   }
 
+  async function onVideoCancelled(item) {
+    if (!item || !item.projectId || !item.shotId) return
+    await projects.updateShot(item.projectId, item.shotId, { status: 'cancelled', error: '' })
+  }
+
   const tasks = createTasks(ctx, settings, store, {
     frameDataUri: (file) => frames.dataUri(file),
     onVideoReady,
     onVideoFailed,
+    onVideoCancelled,
+    onTaskCancelled: onVideoCancelled,
   })
+
+  async function cancelTask(taskId) {
+    const item = store.find(taskId)
+    if (!item) throw new HttpError(404, '任务不存在')
+    tasks.cancel(taskId)
+    if (item.status === 'queued' || item.status === 'running') {
+      await store.update(taskId, { status: 'cancelled', stage: '', note: '', error: '已取消' })
+      if (item.projectId && item.shotId) {
+        await projects.updateShot(item.projectId, item.shotId, { status: 'cancelled', error: '' })
+      }
+    }
+    return store.find(taskId)
+  }
 
   async function submitVideo(input) {
     const item = {
@@ -1052,12 +1112,14 @@ export function apply(ctx, config = {}) {
     return store.find(item.id)
   }
 
-  async function waitForTask(taskId, timeoutMs = TASK_DEADLINE_MS + 10 * 60 * 1000) {
+  async function waitForTask(taskId, shouldStop, timeoutMs = TASK_DEADLINE_MS + 10 * 60 * 1000) {
     const deadline = Date.now() + timeoutMs
     while (Date.now() < deadline) {
+      if (shouldStop && shouldStop()) throw new HttpError(409, '链路已取消')
       const item = store.find(taskId)
       if (!item) throw new HttpError(410, '任务记录丢失')
       if (item.status === 'ready') return item
+      if (item.status === 'cancelled') throw new HttpError(409, '任务已取消')
       if (item.status === 'failed') throw new HttpError(502, item.error || '任务失败')
       await sleep(1500)
     }
@@ -1077,6 +1139,27 @@ export function apply(ctx, config = {}) {
   }
 
   const chainLocks = new Set()
+  const chainCancelled = new Set()
+  const chainCurrentTask = new Map()
+
+  async function cancelChain(projectId) {
+    const project = projects.getProject(projectId)
+    if (!project) throw new HttpError(404, '项目不存在')
+    chainCancelled.add(projectId)
+    const taskId = chainCurrentTask.get(projectId)
+    if (taskId) await cancelTask(taskId).catch(() => {})
+    const currentId = project.chain && project.chain.currentShotId
+    if (currentId) {
+      const current = projects.getShot(projectId, currentId)
+      if (current && (current.status === 'running' || current.status === 'queued')) {
+        await projects.updateShot(projectId, currentId, { status: 'cancelled', error: '' })
+      }
+    }
+    await projects.updateProject(projectId, {
+      chain: { running: false, currentShotId: null, finishedAt: Date.now(), error: '已取消' },
+    })
+    return { cancelled: true }
+  }
 
   async function startChain(projectId, body = {}) {
     if (chainLocks.has(projectId)) throw new HttpError(409, '该项目已有链路在执行')
@@ -1095,6 +1178,7 @@ export function apply(ctx, config = {}) {
     if (sequence.length === 0) throw new HttpError(400, '没有可执行的镜头')
 
     chainLocks.add(projectId)
+    chainCancelled.delete(projectId)
     const force = body.force === true
 
     await projects.updateProject(projectId, {
@@ -1104,6 +1188,7 @@ export function apply(ctx, config = {}) {
     ;(async () => {
       try {
         for (let index = 0; index < sequence.length; index += 1) {
+          if (chainCancelled.has(projectId)) throw new HttpError(409, '链路已取消')
           const current = projects.getShot(projectId, sequence[index].id)
           if (!current) continue
           if (!force && current.status === 'ready' && current.assetFile) continue
@@ -1138,7 +1223,9 @@ export function apply(ctx, config = {}) {
             shotId: current.id,
             firstFrameFile,
           })
-          await waitForTask(task.id)
+          chainCurrentTask.set(projectId, task.id)
+          await projects.updateShot(projectId, current.id, { taskId: task.id })
+          await waitForTask(task.id, () => chainCancelled.has(projectId))
           const settled = await waitForShotTail(projectId, current.id)
           if (settled && settled.status === 'failed') {
             throw new HttpError(502, settled.error || '镜头生成失败')
@@ -1158,13 +1245,21 @@ export function apply(ctx, config = {}) {
         })
       } finally {
         chainLocks.delete(projectId)
+        chainCurrentTask.delete(projectId)
+        chainCancelled.delete(projectId)
       }
     })()
 
     return { started: true, count: sequence.length }
   }
 
-  const handler = createHandler(ctx, settings, store, tasks, { projects, frames, startChain })
+  const handler = createHandler(ctx, settings, store, tasks, {
+    projects,
+    frames,
+    startChain,
+    cancelTask,
+    cancelChain,
+  })
 
   ctx.effect(
     () =>
