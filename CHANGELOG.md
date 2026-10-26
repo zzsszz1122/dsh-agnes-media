@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.5.0
+
+- **Cast library**: `project.bible.characters[]` now carries `aliases`, `refs[]`
+  (`front`/`side`/`back`/`extra`, each with a local file and an optional public
+  HTTPS `url`) and a derived `locked` flag. New routes: `GET/POST /cast`,
+  `PATCH/DELETE /cast/:cid`, `POST /cast/:cid/refs`, `PATCH /cast/:cid/refs/:rid`,
+  and `GET /cast/:cid/refs/:rid/file`.
+- **Reference locking**: `videoTask` prefers `mode: reference` +
+  `reference_image_urls` (max 4 public HTTPS images) when the shot's cast has
+  them, then falls back to `keyframe` + `first_frame`, then `text`. A 4xx on
+  reference mode downgrades exactly once to keyframe/text and records why. Every
+  shot stores `lockMode` so the UI can show "unlocked".
+- **Script import binds cast**: parsed shots are matched against character names
+  and aliases (pure substring, no guessing) and written to
+  `shot.context.characters`.
+- **Storyboard before video**: `POST /shots/:sid/storyboard` renders a still with
+  the image model from the same composed prompt; `/approve` promotes it to
+  `firstFrame` and `/reject` moves it to `storyboard/rejected/`. New statuses:
+  `storyboard`, `pending-review`, `approved`.
+- **Preflight gate**: `startChain` refuses to start when a shot has no approved
+  still, no usable previous tail frame, and no locked character. It returns HTTP
+  422 with a `blockers[]` list (`shotId`, `index`, `reason`) that the panel shows
+  directly. Pass `skipPreflight: true` to override.
+- **Per-shot isolation**: a failing shot no longer aborts the whole chain; it is
+  marked `failed`, recorded in `chain.failures`, and the run continues.
+- Drama mode gains three sub-tabs: **Shots / Cast / Storyboard**, with a cast
+  editor (three-view upload slots, alias/look editing, public-URL prompt, lock
+  badge), a still grid with per-shot approve/reject/rerender, and per-shot cast
+  binding pills.
+
 ## 0.4.0
 
 - Cancel everywhere: `POST /task/:id/cancel` and `POST /projects/:id/chain/cancel`

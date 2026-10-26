@@ -27,7 +27,7 @@ import { createProjects } from './lib/projects.js'
 import { createAssemble } from './lib/assemble.js'
 import { bindCharactersToShots, parseScript } from './lib/script.js'
 
-const VERSION = '0.4.0'
+const VERSION = '0.5.0'
 
 const DEFAULTS = {
   baseURL: 'https://api.agnes-ai.cn/v1',
@@ -118,21 +118,21 @@ async function readJson(req, limit = 1024 * 1024) {
   let size = 0
   for await (const chunk of req) {
     size += chunk.length
-    if (size > limit) throw new HttpError(413, '请求体过大')
+    if (size > limit) throw new HttpError(413, '璇锋眰浣撹繃澶?)
     chunks.push(chunk)
   }
   if (chunks.length === 0) return {}
   try {
     return JSON.parse(Buffer.concat(chunks).toString('utf8'))
   } catch {
-    throw new HttpError(400, '请求体不是合法 JSON')
+    throw new HttpError(400, '璇锋眰浣撲笉鏄悎娉?JSON')
   }
 }
 
 function cleanPrompt(value) {
   const prompt = String(value || '').trim()
-  if (!prompt) throw new HttpError(400, '提示词不能为空')
-  if (prompt.length > MAX_PROMPT) throw new HttpError(400, '提示词过长')
+  if (!prompt) throw new HttpError(400, '鎻愮ず璇嶄笉鑳戒负绌?)
+  if (prompt.length > MAX_PROMPT) throw new HttpError(400, '鎻愮ず璇嶈繃闀?)
   return prompt
 }
 
@@ -170,7 +170,7 @@ async function requireKey(ctx, settings) {
   if (!key) {
     throw new HttpError(
       400,
-      `未找到 Agnes API Key：请先在「设置 → 模型」里为 agnes 配置 ${settings.apiKeyEnv}，或在 DSH 凭据中新增 ${settings.apiKeyEnv}。`,
+      `鏈壘鍒?Agnes API Key锛氳鍏堝湪銆岃缃?鈫?妯″瀷銆嶉噷涓?agnes 閰嶇疆 ${settings.apiKeyEnv}锛屾垨鍦?DSH 鍑嵁涓柊澧?${settings.apiKeyEnv}銆俙,
     )
   }
   return key
@@ -203,11 +203,11 @@ async function upstream(settings, key, endpoint, options = {}) {
     })
   } catch (error) {
     if (error && (error.name === 'TimeoutError' || error.name === 'AbortError')) {
-      throw new HttpError(504, `上游请求超时（${Math.round(timeoutMs / 1000)} 秒）`, {
+      throw new HttpError(504, `涓婃父璇锋眰瓒呮椂锛?{Math.round(timeoutMs / 1000)} 绉掞級`, {
         transient: true,
       })
     }
-    throw new HttpError(502, `无法连接 ${url}：${messageOf(error)}`, { transient: true })
+    throw new HttpError(502, `鏃犳硶杩炴帴 ${url}锛?{messageOf(error)}`, { transient: true })
   }
   const text = await response.text()
   let data
@@ -218,7 +218,7 @@ async function upstream(settings, key, endpoint, options = {}) {
   }
   if (!response.ok) {
     const detail = extractUpstreamError(data, text.slice(0, 300))
-    throw new HttpError(502, `上游 HTTP ${response.status}：${detail || '无错误详情'}`, {
+    throw new HttpError(502, `涓婃父 HTTP ${response.status}锛?{detail || '鏃犻敊璇鎯?}`, {
       upstreamStatus: response.status,
     })
   }
@@ -228,22 +228,22 @@ async function upstream(settings, key, endpoint, options = {}) {
 async function upstreamRetry(settings, key, endpoint, options, taskId, update, deadline, shouldStop) {
   let attempt = 0
   for (;;) {
-    if (shouldStop && shouldStop()) throw new HttpError(409, '任务已取消')
+    if (shouldStop && shouldStop()) throw new HttpError(409, '浠诲姟宸插彇娑?)
     try {
       return await upstream(settings, key, endpoint, options)
     } catch (error) {
       if (!error || !error.transient) throw error
       if (deadline && Date.now() > deadline) throw error
-      if (shouldStop && shouldStop()) throw new HttpError(409, '任务已取消')
+      if (shouldStop && shouldStop()) throw new HttpError(409, '浠诲姟宸插彇娑?)
       attempt += 1
       const delay = Math.min(30000, 5000 + attempt * 2000)
       if (update) {
         await update(taskId, {
-          note: `上游繁忙（${error.upstreamStatus || '网络'}），${Math.ceil(delay / 1000)} 秒后重试（第 ${attempt} 次）`,
+          note: `涓婃父绻佸繖锛?{error.upstreamStatus || '缃戠粶'}锛夛紝${Math.ceil(delay / 1000)} 绉掑悗閲嶈瘯锛堢 ${attempt} 娆★級`,
         })
       }
       await sleep(delay)
-      if (shouldStop && shouldStop()) throw new HttpError(409, '任务已取消')
+      if (shouldStop && shouldStop()) throw new HttpError(409, '浠诲姟宸插彇娑?)
       if (update) await update(taskId, { note: '' })
     }
   }
@@ -254,17 +254,17 @@ async function downloadMedia(kind, url) {
   try {
     response = await fetch(url, { signal: AbortSignal.timeout(300000) })
   } catch (error) {
-    throw new HttpError(502, `下载生成结果失败：${messageOf(error)}`, { transient: true })
+    throw new HttpError(502, `涓嬭浇鐢熸垚缁撴灉澶辫触锛?{messageOf(error)}`, { transient: true })
   }
   if (!response.ok) {
-    throw new HttpError(502, `下载生成结果失败 HTTP ${response.status}`, {
+    throw new HttpError(502, `涓嬭浇鐢熸垚缁撴灉澶辫触 HTTP ${response.status}`, {
       upstreamStatus: response.status,
     })
   }
   const declared = Number(response.headers.get('content-length') || 0)
-  if (declared > MAX_MEDIA_BYTES) throw new HttpError(502, '生成结果文件过大')
+  if (declared > MAX_MEDIA_BYTES) throw new HttpError(502, '鐢熸垚缁撴灉鏂囦欢杩囧ぇ')
   const buffer = Buffer.from(await response.arrayBuffer())
-  if (buffer.length > MAX_MEDIA_BYTES) throw new HttpError(502, '生成结果文件过大')
+  if (buffer.length > MAX_MEDIA_BYTES) throw new HttpError(502, '鐢熸垚缁撴灉鏂囦欢杩囧ぇ')
   const mime = (response.headers.get('content-type') || (kind === 'video' ? 'video/mp4' : 'image/png'))
     .split(';')[0]
     .trim()
@@ -409,7 +409,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
         () => cancelled.has(id),
       )
       const url = String(data?.data?.[0]?.url || data?.url || '')
-      if (!url) throw new HttpError(502, '图片接口没有返回图片地址', { transient: true })
+      if (!url) throw new HttpError(502, '鍥剧墖鎺ュ彛娌℃湁杩斿洖鍥剧墖鍦板潃', { transient: true })
       if (cancelled.has(id)) return
       const media = await downloadMedia('image', url)
       if (cancelled.has(id)) return
@@ -433,7 +433,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
       }
     } catch (error) {
       if (cancelled.has(id) || (error instanceof HttpError && error.status === 409)) {
-        await update(id, { status: 'cancelled', stage: '', note: '', error: '已取消' })
+        await update(id, { status: 'cancelled', stage: '', note: '', error: '宸插彇娑? })
         if (typeof hooks.onTaskCancelled === 'function') {
           try {
             await hooks.onTaskCancelled(store.find(id))
@@ -480,7 +480,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
         }
         if (item.firstFrameFile) {
           if (typeof hooks.frameDataUri !== 'function') {
-            throw new HttpError(500, '首帧功能未初始化')
+            throw new HttpError(500, '棣栧抚鍔熻兘鏈垵濮嬪寲')
           }
           payload.first_frame = await hooks.frameDataUri(item.firstFrameFile)
         }
@@ -505,7 +505,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
           delete payload.reference_image_urls
           payload.mode = item.firstFrameFile ? 'keyframe' : 'text'
           await update(id, {
-            note: `参考模式被拒绝（${error.message.slice(0, 120)}），已降级为 ${payload.mode}`,
+            note: `鍙傝€冩ā寮忚鎷掔粷锛?{error.message.slice(0, 120)}锛夛紝宸查檷绾т负 ${payload.mode}`,
           })
           data = await upstreamRetry(
             settings,
@@ -519,7 +519,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
           )
         }
         videoId = String(data?.video_id || data?.id || data?.task_id || '')
-        if (!videoId) throw new HttpError(502, '视频接口没有返回任务 ID', { transient: true })
+        if (!videoId) throw new HttpError(502, '瑙嗛鎺ュ彛娌℃湁杩斿洖浠诲姟 ID', { transient: true })
         if (cancelled.has(id)) return
         await update(id, { status: 'running', stage: 'queue', videoId, progress: 5 })
       } else {
@@ -539,7 +539,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
         } catch (error) {
           if (error && error.transient) {
             await update(id, {
-              note: `上游繁忙（${error.upstreamStatus || '网络'}），正在重试…`,
+              note: `涓婃父绻佸繖锛?{error.upstreamStatus || '缃戠粶'}锛夛紝姝ｅ湪閲嶈瘯鈥,
             })
             continue
           }
@@ -548,11 +548,11 @@ function createTasks(ctx, settings, store, hooks = {}) {
         const status = String(state?.status || '')
         const progress = Number(state?.progress || 0)
         if (status === 'failed') {
-          throw new HttpError(502, extractUpstreamError(state, '视频生成失败'))
+          throw new HttpError(502, extractUpstreamError(state, '瑙嗛鐢熸垚澶辫触'))
         }
         if (status === 'completed') {
           const url = String(state?.metadata?.url || state?.url || '')
-          if (!url) throw new HttpError(502, '视频已完成但没有返回地址', { transient: true })
+          if (!url) throw new HttpError(502, '瑙嗛宸插畬鎴愪絾娌℃湁杩斿洖鍦板潃', { transient: true })
           await update(id, { stage: 'download', progress: 96, note: '' })
           const media = await downloadMedia('video', url)
           if (cancelled.has(id)) return
@@ -583,10 +583,10 @@ function createTasks(ctx, settings, store, hooks = {}) {
           note: '',
         })
       }
-      throw new HttpError(504, '视频生成超时（超过 40 分钟）')
+      throw new HttpError(504, '瑙嗛鐢熸垚瓒呮椂锛堣秴杩?40 鍒嗛挓锛?)
     } catch (error) {
       if (cancelled.has(id) || (error instanceof HttpError && error.status === 409)) {
-        await update(id, { status: 'cancelled', stage: '', note: '', error: '已取消' })
+        await update(id, { status: 'cancelled', stage: '', note: '', error: '宸插彇娑? })
         if (typeof hooks.onVideoCancelled === 'function') {
           try {
             await hooks.onVideoCancelled(store.find(id))
@@ -653,30 +653,30 @@ async function historyRoute(res, store) {
 
 async function taskRoute(res, store, id) {
   const item = store.find(id)
-  if (!item) throw new HttpError(404, '任务不存在或已被删除')
+  if (!item) throw new HttpError(404, '浠诲姟涓嶅瓨鍦ㄦ垨宸茶鍒犻櫎')
   sendJson(res, 200, { ok: true, item: publicItem(item) })
 }
 
 async function deleteRoute(req, res, store, tasks) {
   const body = await readJson(req)
   const id = String(body.id || '')
-  if (!id) throw new HttpError(400, '缺少任务 id')
+  if (!id) throw new HttpError(400, '缂哄皯浠诲姟 id')
   tasks.cancel(id)
   const removed = await store.remove(id)
-  if (!removed) throw new HttpError(404, '任务不存在')
+  if (!removed) throw new HttpError(404, '浠诲姟涓嶅瓨鍦?)
   sendJson(res, 200, { ok: true })
 }
 
 async function mediaRoute(req, res, store, id, download) {
   const headOnly = req.method === 'HEAD'
   const item = store.find(id)
-  if (!item || !item.file) throw new HttpError(404, '生成结果不存在或已被清理')
+  if (!item || !item.file) throw new HttpError(404, '鐢熸垚缁撴灉涓嶅瓨鍦ㄦ垨宸茶娓呯悊')
   const file = store.mediaPath(item.file)
   let info
   try {
     info = await stat(file)
   } catch {
-    throw new HttpError(404, '生成结果文件已被清理')
+    throw new HttpError(404, '鐢熸垚缁撴灉鏂囦欢宸茶娓呯悊')
   }
   const headers = {
     'content-type': item.mime || (item.kind === 'video' ? 'video/mp4' : 'image/png'),
@@ -752,7 +752,7 @@ function createHandler(ctx, settings, store, tasks, services) {
   return async (req, res) => {
     try {
       const url = new URL(req.url || '/', 'http://127.0.0.1')
-      if (!url.pathname.startsWith(ROUTE_PREFIX)) throw new HttpError(404, '未知接口')
+      if (!url.pathname.startsWith(ROUTE_PREFIX)) throw new HttpError(404, '鏈煡鎺ュ彛')
       const rest = url.pathname.slice(ROUTE_PREFIX.length) || '/'
       const method = req.method || 'GET'
 
@@ -852,7 +852,7 @@ function createHandler(ctx, settings, store, tasks, services) {
         const projectId = decodeURIComponent(match[1])
         if (method === 'GET') {
           const project = projects.getProject(projectId)
-          if (!project) throw new HttpError(404, '项目不存在')
+          if (!project) throw new HttpError(404, '椤圭洰涓嶅瓨鍦?)
           sendJson(res, 200, {
             ok: true,
             project,
@@ -865,13 +865,13 @@ function createHandler(ctx, settings, store, tasks, services) {
         if (method === 'PATCH') {
           const body = await readJson(req)
           const project = await projects.updateProject(projectId, body)
-          if (!project) throw new HttpError(404, '项目不存在')
+          if (!project) throw new HttpError(404, '椤圭洰涓嶅瓨鍦?)
           sendJson(res, 200, { ok: true, project })
           return
         }
         if (method === 'DELETE') {
           const removed = await projects.deleteProject(projectId)
-          if (!removed) throw new HttpError(404, '项目不存在')
+          if (!removed) throw new HttpError(404, '椤圭洰涓嶅瓨鍦?)
           sendJson(res, 200, { ok: true })
           return
         }
@@ -887,7 +887,7 @@ function createHandler(ctx, settings, store, tasks, services) {
         if (method === 'PUT' || method === 'POST') {
           const body = await readJson(req, 8 * 1024 * 1024)
           const canvas = await projects.saveCanvas(projectId, body)
-          if (!canvas) throw new HttpError(404, '项目不存在')
+          if (!canvas) throw new HttpError(404, '椤圭洰涓嶅瓨鍦?)
           sendJson(res, 200, { ok: true, canvas })
           return
         }
@@ -914,7 +914,7 @@ function createHandler(ctx, settings, store, tasks, services) {
       if (match && method === 'GET') {
         const projectId = decodeURIComponent(match[1])
         const project = projects.getProject(projectId)
-        if (!project) throw new HttpError(404, '项目不存在')
+        if (!project) throw new HttpError(404, '椤圭洰涓嶅瓨鍦?)
         const shots = projects.listShots(projectId)
         const totalDuration = shots.reduce((sum, shot) => sum + (Number(shot.duration) || 0), 0)
         sendJson(res, 200, {
@@ -945,7 +945,7 @@ function createHandler(ctx, settings, store, tasks, services) {
         if (method === 'POST') {
           const body = await readJson(req)
           const character = await projects.createCast(projectId, body)
-          if (!character) throw new HttpError(404, '项目不存在')
+          if (!character) throw new HttpError(404, '椤圭洰涓嶅瓨鍦?)
           sendJson(res, 200, { ok: true, character })
           return
         }
@@ -958,13 +958,13 @@ function createHandler(ctx, settings, store, tasks, services) {
         if (method === 'PATCH') {
           const body = await readJson(req)
           const character = await projects.updateCast(projectId, characterId, body)
-          if (!character) throw new HttpError(404, '角色不存在')
+          if (!character) throw new HttpError(404, '瑙掕壊涓嶅瓨鍦?)
           sendJson(res, 200, { ok: true, character })
           return
         }
         if (method === 'DELETE') {
           const removed = await projects.deleteCast(projectId, characterId)
-          if (!removed) throw new HttpError(404, '角色不存在')
+          if (!removed) throw new HttpError(404, '瑙掕壊涓嶅瓨鍦?)
           sendJson(res, 200, { ok: true })
           return
         }
@@ -975,9 +975,9 @@ function createHandler(ctx, settings, store, tasks, services) {
         const projectId = decodeURIComponent(match[1])
         const characterId = decodeURIComponent(match[2])
         const project = projects.getProject(projectId)
-        if (!project) throw new HttpError(404, '项目不存在')
+        if (!project) throw new HttpError(404, '椤圭洰涓嶅瓨鍦?)
         const character = projects.getCast(projectId, characterId)
-        if (!character) throw new HttpError(404, '角色不存在')
+        if (!character) throw new HttpError(404, '瑙掕壊涓嶅瓨鍦?)
         const body = await readJson(req, 24 * 1024 * 1024)
         const dataUri = String(body.dataUri || '')
         const kind = ['front', 'side', 'back', 'extra'].includes(body.kind) ? body.kind : 'extra'
@@ -1007,7 +1007,7 @@ function createHandler(ctx, settings, store, tasks, services) {
         const refId = decodeURIComponent(match[3])
         const body = await readJson(req)
         const character = await projects.updateCastRef(projectId, characterId, refId, body)
-        if (!character) throw new HttpError(404, '参考图不存在')
+        if (!character) throw new HttpError(404, '鍙傝€冨浘涓嶅瓨鍦?)
         sendJson(res, 200, { ok: true, character })
         return
       }
@@ -1019,13 +1019,13 @@ function createHandler(ctx, settings, store, tasks, services) {
         const refId = decodeURIComponent(match[3])
         const character = projects.getCast(projectId, characterId)
         const ref = (character?.refs || []).find((entry) => entry.id === refId)
-        if (!ref || !ref.file) throw new HttpError(404, '参考图不存在')
+        if (!ref || !ref.file) throw new HttpError(404, '鍙傝€冨浘涓嶅瓨鍦?)
         const filePath = projects.assetPath(projectId, ref.file)
         let info
         try {
           info = await stat(filePath)
         } catch {
-          throw new HttpError(404, '参考图文件不存在')
+          throw new HttpError(404, '鍙傝€冨浘鏂囦欢涓嶅瓨鍦?)
         }
         res.writeHead(200, {
           'content-type': /\.png$/i.test(ref.file) ? 'image/png' : 'image/jpeg',
@@ -1046,10 +1046,10 @@ function createHandler(ctx, settings, store, tasks, services) {
       if (match && method === 'POST') {
         const projectId = decodeURIComponent(match[1])
         const project = projects.getProject(projectId)
-        if (!project) throw new HttpError(404, '项目不存在')
+        if (!project) throw new HttpError(404, '椤圭洰涓嶅瓨鍦?)
         const body = await readJson(req, 4 * 1024 * 1024)
         const drafts = bindCharactersToShots(parseScript(body.text), projects.listCast(projectId))
-        if (drafts.length === 0) throw new HttpError(400, '没有解析出任何镜头')
+        if (drafts.length === 0) throw new HttpError(400, '娌℃湁瑙ｆ瀽鍑轰换浣曢暅澶?)
         if (body.replace === true) {
           for (const shot of projects.listShots(projectId)) {
             await projects.deleteShot(projectId, shot.id)
@@ -1064,7 +1064,7 @@ function createHandler(ctx, settings, store, tasks, services) {
             sceneId: draft.sceneId,
             context: {
               characters: draft.characters || [],
-              continuity: draft.sceneTitle ? `场景：${draft.sceneTitle}` : '',
+              continuity: draft.sceneTitle ? `鍦烘櫙锛?{draft.sceneTitle}` : '',
             },
           })
           if (shot) created.push(shot)
@@ -1077,14 +1077,14 @@ function createHandler(ctx, settings, store, tasks, services) {
       if (match && method === 'POST') {
         const projectId = decodeURIComponent(match[1])
         const project = projects.getProject(projectId)
-        if (!project) throw new HttpError(404, '项目不存在')
+        if (!project) throw new HttpError(404, '椤圭洰涓嶅瓨鍦?)
         const body = await readJson(req)
         const shots = projects.listShots(projectId)
         const wanted = Array.isArray(body.shotIds) && body.shotIds.length > 0
           ? shots.filter((shot) => body.shotIds.includes(shot.id))
           : shots
         const usable = wanted.filter((shot) => shot.status === 'ready' && shot.assetFile)
-        if (usable.length === 0) throw new HttpError(400, '还没有生成完成的镜头可以合成')
+        if (usable.length === 0) throw new HttpError(400, '杩樻病鏈夌敓鎴愬畬鎴愮殑闀滃ご鍙互鍚堟垚')
         const files = usable.map((shot) => store.mediaPath(shot.assetFile))
         const outFile = path.join(projects.projectDir(projectId), `episode-${Date.now()}.mp4`)
         const result = await assemble.concat(files, outFile, {
@@ -1108,13 +1108,13 @@ function createHandler(ctx, settings, store, tasks, services) {
       if (match && (method === 'GET' || method === 'HEAD')) {
         const projectId = decodeURIComponent(match[1])
         const file = decodeURIComponent(match[2])
-        if (!/^episode-\d+\.mp4$/.test(file)) throw new HttpError(400, '文件名不合法')
+        if (!/^episode-\d+\.mp4$/.test(file)) throw new HttpError(400, '鏂囦欢鍚嶄笉鍚堟硶')
         const filePath = path.join(projects.projectDir(projectId), file)
         let info
         try {
           info = await stat(filePath)
         } catch {
-          throw new HttpError(404, '合成文件不存在')
+          throw new HttpError(404, '鍚堟垚鏂囦欢涓嶅瓨鍦?)
         }
         res.writeHead(200, {
           'content-type': 'video/mp4',
@@ -1148,7 +1148,7 @@ function createHandler(ctx, settings, store, tasks, services) {
         if (method === 'POST') {
           const body = await readJson(req)
           const shot = await projects.createShot(projectId, body)
-          if (!shot) throw new HttpError(404, '项目不存在')
+          if (!shot) throw new HttpError(404, '椤圭洰涓嶅瓨鍦?)
           sendJson(res, 200, { ok: true, shot: publicShot(shot) })
           return
         }
@@ -1160,20 +1160,20 @@ function createHandler(ctx, settings, store, tasks, services) {
         const shotId = decodeURIComponent(match[2])
         if (method === 'GET') {
           const shot = projects.getShot(projectId, shotId)
-          if (!shot) throw new HttpError(404, '镜头不存在')
+          if (!shot) throw new HttpError(404, '闀滃ご涓嶅瓨鍦?)
           sendJson(res, 200, { ok: true, shot: publicShot(shot) })
           return
         }
         if (method === 'PATCH') {
           const body = await readJson(req)
           const shot = await projects.updateShot(projectId, shotId, body)
-          if (!shot) throw new HttpError(404, '镜头不存在')
+          if (!shot) throw new HttpError(404, '闀滃ご涓嶅瓨鍦?)
           sendJson(res, 200, { ok: true, shot: publicShot(shot) })
           return
         }
         if (method === 'DELETE') {
           const removed = await projects.deleteShot(projectId, shotId)
-          if (!removed) throw new HttpError(404, '镜头不存在')
+          if (!removed) throw new HttpError(404, '闀滃ご涓嶅瓨鍦?)
           sendJson(res, 200, { ok: true })
           return
         }
@@ -1187,7 +1187,7 @@ function createHandler(ctx, settings, store, tasks, services) {
         const shotId = decodeURIComponent(match[2])
         const project = projects.getProject(projectId)
         const shot = projects.getShot(projectId, shotId)
-        if (!project || !shot) throw new HttpError(404, '项目或镜头不存在')
+        if (!project || !shot) throw new HttpError(404, '椤圭洰鎴栭暅澶翠笉瀛樺湪')
         const prompt = composePrompt({ project, shot, previousShot: undefined })
         await projects.updateShot(projectId, shotId, { status: 'storyboard', storyboardError: '' })
         const task = await submitImage({
@@ -1207,8 +1207,8 @@ function createHandler(ctx, settings, store, tasks, services) {
         const projectId = decodeURIComponent(match[1])
         const shotId = decodeURIComponent(match[2])
         const shot = projects.getShot(projectId, shotId)
-        if (!shot) throw new HttpError(404, '镜头不存在')
-        if (!shot.storyboardFile) throw new HttpError(400, '该镜还没有静帧可批准')
+        if (!shot) throw new HttpError(404, '闀滃ご涓嶅瓨鍦?)
+        if (!shot.storyboardFile) throw new HttpError(400, '璇ラ暅杩樻病鏈夐潤甯у彲鎵瑰噯')
         const updated = await projects.updateShot(projectId, shotId, {
           status: 'approved',
           firstFrame: { source: 'manual', file: shot.storyboardFile },
@@ -1223,7 +1223,7 @@ function createHandler(ctx, settings, store, tasks, services) {
         const projectId = decodeURIComponent(match[1])
         const shotId = decodeURIComponent(match[2])
         const shot = projects.getShot(projectId, shotId)
-        if (!shot) throw new HttpError(404, '镜头不存在')
+        if (!shot) throw new HttpError(404, '闀滃ご涓嶅瓨鍦?)
         if (shot.storyboardFile) {
           const source = projects.assetPath(projectId, shot.storyboardFile)
           const target = projects.assetPath(
@@ -1249,13 +1249,13 @@ function createHandler(ctx, settings, store, tasks, services) {
         const projectId = decodeURIComponent(match[1])
         const shotId = decodeURIComponent(match[2])
         const shot = projects.getShot(projectId, shotId)
-        if (!shot || !shot.storyboardFile) throw new HttpError(404, '该镜还没有静帧')
+        if (!shot || !shot.storyboardFile) throw new HttpError(404, '璇ラ暅杩樻病鏈夐潤甯?)
         const filePath = projects.assetPath(projectId, shot.storyboardFile)
         let info
         try {
           info = await stat(filePath)
         } catch {
-          throw new HttpError(404, '静帧文件不存在')
+          throw new HttpError(404, '闈欏抚鏂囦欢涓嶅瓨鍦?)
         }
         res.writeHead(200, {
           'content-type': /\.png$/i.test(shot.storyboardFile) ? 'image/png' : 'image/jpeg',
@@ -1277,7 +1277,7 @@ function createHandler(ctx, settings, store, tasks, services) {
         const projectId = decodeURIComponent(match[1])
         const shotId = decodeURIComponent(match[2])
         const shot = projects.getShot(projectId, shotId)
-        if (!shot) throw new HttpError(404, '镜头不存在')
+        if (!shot) throw new HttpError(404, '闀滃ご涓嶅瓨鍦?)
         const body = await readJson(req, 24 * 1024 * 1024)
         const dataUri = String(body.dataUri || '')
         const mimeMatch = /^data:image\/(png|jpeg|jpg|webp);base64,/i.exec(dataUri)
@@ -1306,13 +1306,13 @@ function createHandler(ctx, settings, store, tasks, services) {
         const projectId = decodeURIComponent(match[1])
         const shotId = decodeURIComponent(match[2])
         const shot = projects.getShot(projectId, shotId)
-        if (!shot || !shot.tailFile) throw new HttpError(404, '该镜头还没有尾帧')
+        if (!shot || !shot.tailFile) throw new HttpError(404, '璇ラ暅澶磋繕娌℃湁灏惧抚')
         const file = projects.assetPath(projectId, shot.tailFile)
         let info
         try {
           info = await stat(file)
         } catch {
-          throw new HttpError(404, '尾帧文件已被清理')
+          throw new HttpError(404, '灏惧抚鏂囦欢宸茶娓呯悊')
         }
         res.writeHead(200, {
           'content-type': 'image/jpeg',
@@ -1352,7 +1352,7 @@ function createHandler(ctx, settings, store, tasks, services) {
         )
         return
       }
-      throw new HttpError(404, '未知接口')
+      throw new HttpError(404, '鏈煡鎺ュ彛')
     } catch (error) {
       const status = error instanceof HttpError ? error.status : 500
       const payload = { ok: false, error: messageOf(error) }
@@ -1459,10 +1459,10 @@ export function apply(ctx, config = {}) {
 
   async function cancelTask(taskId) {
     const item = store.find(taskId)
-    if (!item) throw new HttpError(404, '任务不存在')
+    if (!item) throw new HttpError(404, '浠诲姟涓嶅瓨鍦?)
     tasks.cancel(taskId)
     if (item.status === 'queued' || item.status === 'running') {
-      await store.update(taskId, { status: 'cancelled', stage: '', note: '', error: '已取消' })
+      await store.update(taskId, { status: 'cancelled', stage: '', note: '', error: '宸插彇娑? })
       if (item.projectId && item.shotId) {
         await projects.updateShot(item.projectId, item.shotId, { status: 'cancelled', error: '' })
       }
@@ -1524,15 +1524,15 @@ export function apply(ctx, config = {}) {
   async function waitForTask(taskId, shouldStop, timeoutMs = TASK_DEADLINE_MS + 10 * 60 * 1000) {
     const deadline = Date.now() + timeoutMs
     while (Date.now() < deadline) {
-      if (shouldStop && shouldStop()) throw new HttpError(409, '链路已取消')
+      if (shouldStop && shouldStop()) throw new HttpError(409, '閾捐矾宸插彇娑?)
       const item = store.find(taskId)
-      if (!item) throw new HttpError(410, '任务记录丢失')
+      if (!item) throw new HttpError(410, '浠诲姟璁板綍涓㈠け')
       if (item.status === 'ready') return item
-      if (item.status === 'cancelled') throw new HttpError(409, '任务已取消')
-      if (item.status === 'failed') throw new HttpError(502, item.error || '任务失败')
+      if (item.status === 'cancelled') throw new HttpError(409, '浠诲姟宸插彇娑?)
+      if (item.status === 'failed') throw new HttpError(502, item.error || '浠诲姟澶辫触')
       await sleep(1500)
     }
-    throw new HttpError(504, '等待任务完成超时')
+    throw new HttpError(504, '绛夊緟浠诲姟瀹屾垚瓒呮椂')
   }
 
   async function waitForShotTail(projectId, shotId) {
@@ -1553,7 +1553,7 @@ export function apply(ctx, config = {}) {
 
   async function cancelChain(projectId) {
     const project = projects.getProject(projectId)
-    if (!project) throw new HttpError(404, '项目不存在')
+    if (!project) throw new HttpError(404, '椤圭洰涓嶅瓨鍦?)
     chainCancelled.add(projectId)
     const taskId = chainCurrentTask.get(projectId)
     if (taskId) await cancelTask(taskId).catch(() => {})
@@ -1565,7 +1565,7 @@ export function apply(ctx, config = {}) {
       }
     }
     await projects.updateProject(projectId, {
-      chain: { running: false, currentShotId: null, finishedAt: Date.now(), error: '已取消' },
+      chain: { running: false, currentShotId: null, finishedAt: Date.now(), error: '宸插彇娑? },
     })
     return { cancelled: true }
   }
@@ -1596,17 +1596,17 @@ export function apply(ctx, config = {}) {
       const reason = hasReference
         ? ''
         : previous
-          ? `第 ${index0} 镜既没有已批准静帧，也缺少上一镜尾帧（需要 ffmpeg 或上传首帧）`
-          : `第 ${index0} 镜既没有已批准静帧，也没有可用的角色参考图`
+          ? `绗?${index0} 闀滄棦娌℃湁宸叉壒鍑嗛潤甯э紝涔熺己灏戜笂涓€闀滃熬甯э紙闇€瑕?ffmpeg 鎴栦笂浼犻甯э級`
+          : `绗?${index0} 闀滄棦娌℃湁宸叉壒鍑嗛潤甯э紝涔熸病鏈夊彲鐢ㄧ殑瑙掕壊鍙傝€冨浘`
       blockers.push({ shotId: shot.id, index: index0, reason })
     })
     return blockers
   }
 
   async function startChain(projectId, body = {}) {
-    if (chainLocks.has(projectId)) throw new HttpError(409, '该项目已有链路在执行')
+    if (chainLocks.has(projectId)) throw new HttpError(409, '璇ラ」鐩凡鏈夐摼璺湪鎵ц')
     const project = projects.getProject(projectId)
-    if (!project) throw new HttpError(404, '项目不存在')
+    if (!project) throw new HttpError(404, '椤圭洰涓嶅瓨鍦?)
 
     const allShots = projects.listShots(projectId)
     let sequence = allShots
@@ -1617,14 +1617,14 @@ export function apply(ctx, config = {}) {
       const index = allShots.findIndex((shot) => shot.id === String(body.from))
       if (index >= 0) sequence = allShots.slice(index)
     }
-    if (sequence.length === 0) throw new HttpError(400, '没有可执行的镜头')
+    if (sequence.length === 0) throw new HttpError(400, '娌℃湁鍙墽琛岀殑闀滃ご')
 
     if (body.skipPreflight !== true) {
       const blockers = preflight(projectId, sequence)
       if (blockers.length > 0) {
         const error = new HttpError(
           422,
-          `有 ${blockers.length} 个镜头无法锁定人物，已阻止启动：${blockers[0].reason}`,
+          `鏈?${blockers.length} 涓暅澶存棤娉曢攣瀹氫汉鐗╋紝宸查樆姝㈠惎鍔細${blockers[0].reason}`,
         )
         error.blockers = blockers
         throw error
@@ -1643,7 +1643,7 @@ export function apply(ctx, config = {}) {
       const failures = []
       try {
         for (let index = 0; index < sequence.length; index += 1) {
-          if (chainCancelled.has(projectId)) throw new HttpError(409, '链路已取消')
+          if (chainCancelled.has(projectId)) throw new HttpError(409, '閾捐矾宸插彇娑?)
           const current = projects.getShot(projectId, sequence[index].id)
           if (!current) continue
           if (!force && current.status === 'ready' && current.assetFile) continue
@@ -1687,7 +1687,7 @@ export function apply(ctx, config = {}) {
             await waitForTask(task.id, () => chainCancelled.has(projectId))
             const settled = await waitForShotTail(projectId, current.id)
             if (settled && settled.status === 'failed') {
-              throw new HttpError(502, settled.error || '镜头生成失败')
+              throw new HttpError(502, settled.error || '闀滃ご鐢熸垚澶辫触')
             }
           } catch (error) {
             if (chainCancelled.has(projectId)) throw error
@@ -1704,7 +1704,7 @@ export function apply(ctx, config = {}) {
             running: false,
             currentShotId: null,
             finishedAt: Date.now(),
-            error: failures.length > 0 ? `${failures.length} 个镜头失败` : '',
+            error: failures.length > 0 ? `${failures.length} 涓暅澶村け璐 : '',
             failures,
           },
         })

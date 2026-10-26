@@ -75,10 +75,18 @@ DeepSeek Harness 的模型调用统一走 `POST /v1/chat/completions`，而 Agne
 - **合成导出（0.4.0）**：一键把已完成镜头用 ffmpeg 归一化并拼成一集 mp4（仅当每段都含音轨时才混音），面板内预览、下载。
 - **随时取消（0.4.0）**：单镜、链路都能在宿主侧真正中断（停轮询/退避），新状态「已取消」；生图/生视频、画布、短剧模式每个界面都有取消入口。
 
+**人物一致性（0.5.0 新增）**
+
+- **角色库**：每个角色有名字、别名、外观文本，以及正/侧/背三视图参考图；参考图可设置公网 HTTPS 地址，具备可用公网图时标记为「已锁脸」。
+- **参考模式锁脸**：视频请求优先 `mode: reference` + `reference_image_urls`（最多 4 张公网图），其次 `keyframe` + 首帧，最后纯文本；每镜记录 `lockMode`，未锁脸时界面明确提示，不静默降级。参考模式被 4xx 拒绝会降级一次并记录原因。
+- **先静帧后视频**：每镜可先生成静帧（图片几秒、便宜），在「静帧审片」网格里逐张通过 / 打回 / 重生成；通过的静帧自动成为该镜首帧，再花视频的钱。
+- **生成前门禁**：链路启动前检查每一镜，满足「有已批准静帧 / 能接上一镜尾帧 / 角色已锁脸」之一才放行；否则直接拒绝并列出「第 N 镜缺少 X」，不让人白等。
+- **失败隔离**：单镜失败只标记该镜，不再拖垮整条链路，失败清单落在 `chain.failures`。
+
 **本地存储**
 
 - 结果与索引保存在 `<DSH 主目录>/agnes-media/`（`history.json` + `media/`）。
-- 项目数据在 `agnes-media/projects/<projectId>/`：`project.json`、`shots/*.json`、`canvas.json`、`assets/frames/`。
+- 项目数据在 `agnes-media/projects/<projectId>/`：`project.json`、`shots/*.json`、`canvas.json`、`assets/frames/`、`assets/cast/<角色>/`、`assets/storyboard/`。
 - 保留最近 **80** 条历史，超出自动清理最旧记录。单个结果文件上限 512MB。
 - 不上传任何第三方。
 
@@ -148,6 +156,15 @@ DeepSeek Harness 的模型调用统一走 `POST /v1/chat/completions`，而 Agne
 | POST | `/agnes-media/api/projects/:id/shots/:shotId/first-frame` | 上传手动首帧（base64 data URI） |
 | GET | `/agnes-media/api/projects/:id/shots/:shotId/tail` | 读取该镜尾帧（jpg） |
 | GET | `/agnes-media/api/projects/:id/timeline` | 时间线与总时长 |
+| GET/POST | `/agnes-media/api/projects/:id/cast` | 角色列表 / 新建角色 |
+| PATCH/DELETE | `/agnes-media/api/projects/:id/cast/:cid` | 改名/别名/外观 / 删除角色 |
+| POST | `/agnes-media/api/projects/:id/cast/:cid/refs` | 上传三视图参考图（base64 + kind） |
+| PATCH | `/agnes-media/api/projects/:id/cast/:cid/refs/:rid` | 设置参考图公网 URL（参考模式必需） |
+| GET | `/agnes-media/api/projects/:id/cast/:cid/refs/:rid/file` | 读取参考图 |
+| POST | `/agnes-media/api/projects/:id/shots/:sid/storyboard` | 生成该镜静帧 |
+| GET | `/agnes-media/api/projects/:id/shots/:sid/storyboard` | 读取静帧 |
+| POST | `/agnes-media/api/projects/:id/shots/:sid/approve` | 通过静帧 → 成为首帧 |
+| POST | `/agnes-media/api/projects/:id/shots/:sid/reject` | 打回静帧 |
 
 所有路由挂在 `/agnes-media/api` 前缀下，由宿主进程提供，需要已登录的 DSH Web 会话。
 
