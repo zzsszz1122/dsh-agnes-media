@@ -435,14 +435,14 @@ window.__ModuleLoader__.load({
       .agnes-mini[data-active="true"]{border-color:#2563eb;color:#2563eb}
       .agnes-drama{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:14px;align-items:start}
       .agnes-drama-list{display:flex;flex-direction:column;gap:6px;max-height:min(62vh,560px);overflow:auto}
-      .agnes-drama-row{display:grid;grid-template-columns:36px 54px 1fr 42px;gap:6px;align-items:center;text-align:left;padding:7px 8px;border-radius:8px;border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-primary);cursor:pointer;font-family:inherit;font-size:11.5px}
+      .agnes-drama-row{display:grid;grid-template-columns:36px 54px 1fr auto;gap:6px;align-items:center;text-align:left;padding:7px 8px;border-radius:8px;border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-primary);cursor:pointer;font-family:inherit;font-size:11.5px}
       .agnes-drama-row[data-active="true"]{border-color:#2563eb;background:rgba(37,99,235,.08)}
       .agnes-drama-row-status{font-size:10px;color:var(--dsw-alias-label-secondary)}
       .agnes-drama-row-status[data-status="ready"]{color:#22c55e}
       .agnes-drama-row-status[data-status="failed"]{color:#ef4444}
       .agnes-drama-row-prompt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--dsw-alias-label-secondary)}
-      .agnes-drama-row-duration{font-size:10px;color:var(--dsw-alias-label-secondary);text-align:right}
-      .agnes-drama-cancel{grid-column:1/-1;justify-self:center;display:inline-block;width:auto;margin-top:2px;padding:4px 16px;border-radius:6px;border:1px solid rgba(59,130,246,.5);background:rgba(59,130,246,.14);color:#3b82f6;font-family:inherit;font-size:11px;font-weight:600;line-height:1.4;text-align:center;cursor:pointer}
+      .agnes-drama-row-duration{font-size:10px;color:var(--dsw-alias-label-secondary);text-align:right;white-space:nowrap}
+      .agnes-drama-cancel{display:inline-block;white-space:nowrap;padding:3px 8px;border-radius:6px;border:1px solid rgba(59,130,246,.5);background:rgba(59,130,246,.14);color:#3b82f6;font-family:inherit;font-size:11px;font-weight:600;line-height:1.4;text-align:center;cursor:pointer;vertical-align:middle}
       .agnes-drama-cancel:hover{background:rgba(59,130,246,.24);border-color:rgba(59,130,246,.75)}
       .agnes-drama-cancel:active{background:rgba(59,130,246,.34)}
       .agnes-drama-detail{display:flex;flex-direction:column;gap:12px;min-width:0}
@@ -1724,23 +1724,22 @@ window.__ModuleLoader__.load({
                     h(
                       'span',
                       { className: 'agnes-drama-row-duration' },
-                      `${shot.duration || 5}${t('note.seconds')}`,
-                    ),
-                    shot.status === 'running' && shot.taskId
-                      ? h(
-                          'span',
-                          {
-                            className: 'agnes-drama-cancel',
-                            role: 'button',
-                            tabIndex: -1,
-                            onClick: (event) => {
-                              event.stopPropagation()
-                              cancelShotTask(shot).catch(() => {})
+                      shot.status === 'running' && shot.taskId
+                        ? h(
+                            'span',
+                            {
+                              className: 'agnes-drama-cancel',
+                              role: 'button',
+                              tabIndex: -1,
+                              onClick: (event) => {
+                                event.stopPropagation()
+                                cancelShotTask(shot).catch(() => {})
+                              },
                             },
-                          },
-                          t('action.cancelTask'),
-                        )
-                      : null,
+                            t('action.cancelTask'),
+                          )
+                        : `${shot.duration || 5}${t('note.seconds')}`,
+                    ),
                   ),
                 ),
               ),
