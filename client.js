@@ -442,7 +442,7 @@ window.__ModuleLoader__.load({
       .agnes-drama-row-status[data-status="failed"]{color:#ef4444}
       .agnes-drama-row-prompt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--dsw-alias-label-secondary)}
       .agnes-drama-row-duration{font-size:10px;color:var(--dsw-alias-label-secondary);text-align:right}
-      .agnes-drama-cancel{grid-column:1/-1;display:block;width:100%;margin-top:2px;padding:5px 10px;border-radius:6px;border:1px solid rgba(59,130,246,.5);background:rgba(59,130,246,.14);color:#3b82f6;font-family:inherit;font-size:11px;font-weight:600;line-height:1.4;text-align:center;cursor:pointer}
+      .agnes-drama-cancel{grid-column:1/-1;justify-self:center;display:inline-block;width:auto;margin-top:2px;padding:4px 16px;border-radius:6px;border:1px solid rgba(59,130,246,.5);background:rgba(59,130,246,.14);color:#3b82f6;font-family:inherit;font-size:11px;font-weight:600;line-height:1.4;text-align:center;cursor:pointer}
       .agnes-drama-cancel:hover{background:rgba(59,130,246,.24);border-color:rgba(59,130,246,.75)}
       .agnes-drama-cancel:active{background:rgba(59,130,246,.34)}
       .agnes-drama-detail{display:flex;flex-direction:column;gap:12px;min-width:0}
