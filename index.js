@@ -25,7 +25,7 @@ import { composePrompt, seedFor } from './lib/context.js'
 import { createFrames } from './lib/frames.js'
 import { createProjects } from './lib/projects.js'
 
-const VERSION = '0.3.0'
+const VERSION = '0.3.1'
 
 const DEFAULTS = {
   baseURL: 'https://api.agnes-ai.cn/v1',

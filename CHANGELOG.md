@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.1
+
+- Wrap the whole panel in an error boundary so a throwing view can no longer
+  blank the entire app.
+- Replace nested buttons with `span[role=button]` to keep the rendered HTML
+  valid.
+- Isolate canvas wheel events and guard against NaN node coordinates, so
+  scrolling or a malformed node cannot corrupt the canvas state.
+- Add cancel for running tasks, and allow continuing a chain from any shot on
+  every surface that shows one.
+
 ## 0.3.0
 
 - Add projects/shots/canvas persistence under `<DSH home>/agnes-media/projects/`
