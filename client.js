@@ -1968,7 +1968,12 @@ window.__ModuleLoader__.load({
               locale: NS,
               inject: () => ({ t }),
             },
-            (owner) => h(Page, { t: owner && owner.t ? owner.t : t }),
+            (owner) =>
+              h(
+                ViewBoundary,
+                { key: PANEL_ID },
+                h(Page, { t: owner && owner.t ? owner.t : t }),
+              ),
           )
           return () => {
             if (typeof offRow === 'function') offRow()
