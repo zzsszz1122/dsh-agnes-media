@@ -1208,10 +1208,11 @@ window.__ModuleLoader__.load({
                       { className: 'agnes-drama-row-duration' },
                       shot.status === 'running' && shot.taskId
                         ? h(
-                            'button',
+                            'span',
                             {
-                              type: 'button',
                               className: 'agnes-mini',
+                              role: 'button',
+                              tabIndex: -1,
                               onClick: (event) => {
                                 event.stopPropagation()
                                 cancelShotTask(shot).catch(() => {})
@@ -1920,10 +1921,11 @@ window.__ModuleLoader__.load({
                           )
                         : null,
                       h(
-                        'button',
+                        'span',
                         {
-                          type: 'button',
                           className: 'agnes-thumb-del',
+                          role: 'button',
+                          tabIndex: -1,
                           title: t('action.delete'),
                           onClick: (event) => {
                             event.stopPropagation()
