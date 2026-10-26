@@ -114,6 +114,37 @@ window.__ModuleLoader__.load({
       'status.cancelled': '已取消',
       'action.cancelTask': '取消任务',
       'action.cancelChain': '取消链路',
+      'pane.shots': '镜头',
+      'pane.cast': '角色',
+      'pane.storyboard': '静帧审片',
+      'cast.create': '新建角色',
+      'cast.name': '角色名',
+      'cast.aliases': '别名（逗号分隔）',
+      'cast.look': '外观描述（文本兜底，会拼进提示词）',
+      'cast.add': '添加角色',
+      'cast.empty': '还没有角色。角色用于生成参考图并锁定人物。',
+      'cast.locked': '已锁脸',
+      'cast.unlocked': '未锁脸',
+      'cast.refs': '张参考图',
+      'cast.front': '正视图',
+      'cast.side': '侧视图',
+      'cast.back': '背视图',
+      'cast.setUrl': '设置公网 URL',
+      'cast.inShot': '本镜出场角色',
+      'cast.urlPrompt': '粘贴公网可访问的 HTTPS 图片地址（参考模式必需）',
+      'cast.nameRequired': '角色名不能为空',
+      'story.hint': '先生成静帧审片：便宜、快；通过后再生成视频。',
+      'story.generate': '生成静帧',
+      'story.approve': '通过',
+      'story.reject': '打回',
+      'story.none': '还没有静帧',
+      'drama.blockedHint': '以下镜头无法锁定人物，链路已阻止启动：',
+      'lock.reference': '参考锁脸',
+      'lock.keyframe': '首帧锁定',
+      'lock.text': '仅文本（未锁脸）',
+      'status.pending-review': '待审片',
+      'status.approved': '已批准',
+      'status.storyboard': '静帧生成中',
     }
 
     const EN = {
@@ -213,6 +244,37 @@ window.__ModuleLoader__.load({
       'status.cancelled': 'Cancelled',
       'action.cancelTask': 'Cancel task',
       'action.cancelChain': 'Cancel chain',
+      'pane.shots': 'Shots',
+      'pane.cast': 'Cast',
+      'pane.storyboard': 'Storyboard',
+      'cast.create': 'New character',
+      'cast.name': 'Name',
+      'cast.aliases': 'Aliases (comma separated)',
+      'cast.look': 'Look (text fallback, injected into prompts)',
+      'cast.add': 'Add character',
+      'cast.empty': 'No characters yet. A character provides reference images that lock identity.',
+      'cast.locked': 'Identity locked',
+      'cast.unlocked': 'Not locked',
+      'cast.refs': 'refs',
+      'cast.front': 'Front',
+      'cast.side': 'Side',
+      'cast.back': 'Back',
+      'cast.setUrl': 'Set public URL',
+      'cast.inShot': 'Characters in this shot',
+      'cast.urlPrompt': 'Paste a publicly reachable HTTPS image URL (required by reference mode)',
+      'cast.nameRequired': 'Character name is required',
+      'story.hint': 'Render stills first: they are cheap and fast. Approve them before spending on video.',
+      'story.generate': 'Render still',
+      'story.approve': 'Approve',
+      'story.reject': 'Reject',
+      'story.none': 'No still yet',
+      'drama.blockedHint': 'These shots cannot lock identity; the chain was not started:',
+      'lock.reference': 'Reference lock',
+      'lock.keyframe': 'Keyframe lock',
+      'lock.text': 'Text only (unlocked)',
+      'status.pending-review': 'In review',
+      'status.approved': 'Approved',
+      'status.storyboard': 'Rendering still',
     }
 
     const IMAGE_SIZES = ['1024x1024', '1024x768', '768x1024', '1280x720', '720x1280', '1536x1536', '2048x2048']
@@ -227,7 +289,10 @@ window.__ModuleLoader__.load({
         /* the HTTP status is the only fact left */
       }
       if (!response.ok || (data && data.ok === false)) {
-        throw new Error(data && data.error ? String(data.error) : `HTTP ${response.status}`)
+        const error = new Error(data && data.error ? String(data.error) : `HTTP ${response.status}`)
+        error.status = response.status
+        if (Array.isArray(data?.blockers)) error.blockers = data.blockers
+        throw error
       }
       return data || {}
     }
@@ -367,6 +432,20 @@ window.__ModuleLoader__.load({
       .agnes-timeline-clip[data-status="ready"]{background:rgba(34,197,94,.35)}
       .agnes-timeline-clip[data-status="failed"]{background:rgba(239,68,68,.35)}
       .agnes-timeline-clip[data-status="running"]{background:rgba(37,99,235,.35)}
+      .agnes-cast-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+      .agnes-cast-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px}
+      .agnes-cast-refs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+      .agnes-cast-slot{position:relative;aspect-ratio:3/4;border:1px dashed var(--dsw-alias-border-l1);border-radius:8px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-secondary);font-size:11px;cursor:pointer;overflow:hidden;padding:0;display:flex;align-items:center;justify-content:center}
+      .agnes-cast-slot img{width:100%;height:100%;object-fit:cover;display:block}
+      .agnes-cast-url{position:absolute;left:2px;bottom:2px;font-size:9px;background:rgba(0,0,0,.65);color:#fff;border-radius:999px;padding:1px 5px;cursor:pointer}
+      .agnes-story-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+      .agnes-story-card{display:flex;flex-direction:column;gap:8px}
+      .agnes-story-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;display:block}
+      .agnes-story-placeholder{width:100%;aspect-ratio:4/3;border:1px dashed var(--dsw-alias-border-l1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11.5px;color:var(--dsw-alias-label-secondary)}
+      .agnes-story-prompt{font-size:11.5px;color:var(--dsw-alias-label-secondary);max-height:34px;overflow:hidden;line-height:1.45}
+      .agnes-cast-toggle{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+      .agnes-cast-pill{font-size:10.5px;padding:2px 7px;border-radius:999px;border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;font-family:inherit}
+      .agnes-cast-pill[data-active="true"]{border-color:#2563eb;color:#2563eb;background:rgba(37,99,235,.1)}
     `
 
     async function patchJson(path, body) {
@@ -449,6 +528,14 @@ window.__ModuleLoader__.load({
           data: {},
         }
       })
+    }
+
+    function statusColor(status) {
+      if (status === 'ready' || status === 'approved') return '#22c55e'
+      if (status === 'failed' || status === 'blocked') return '#ef4444'
+      if (status === 'running' || status === 'storyboard') return '#2563eb'
+      if (status === 'pending-review') return '#f59e0b'
+      return 'var(--dsw-alias-label-secondary)'
     }
 
     function ProjectToolbar(props) {
@@ -993,6 +1080,12 @@ window.__ModuleLoader__.load({
       const [scriptText, setScriptText] = useState('')
       const [assembling, setAssembling] = useState(false)
       const [assembled, setAssembled] = useState(null)
+      const [pane, setPane] = useState('shots')
+      const [cast, setCast] = useState([])
+      const [castDraft, setCastDraft] = useState({ name: '', aliases: '', look: '' })
+      const [castBusy, setCastBusy] = useState(false)
+      const [storyBusy, setStoryBusy] = useState({})
+      const [blockers, setBlockers] = useState([])
 
       const shots = detail ? detail.shots || [] : []
       const chain = detail && detail.project ? detail.project.chain : null
@@ -1059,6 +1152,160 @@ window.__ModuleLoader__.load({
         return data
       }, [projectId])
 
+      const reloadCast = useCallback(async () => {
+        if (!projectId) return []
+        const data = await getJson(`/projects/${projectId}/cast`)
+        const list = data.cast || []
+        setCast(list)
+        return list
+      }, [projectId])
+
+      useEffect(() => {
+        if (!projectId) return undefined
+        let alive = true
+        getJson(`/projects/${projectId}/cast`)
+          .then((data) => {
+            if (alive) setCast(data.cast || [])
+          })
+          .catch(() => {})
+        return () => {
+          alive = false
+        }
+      }, [projectId])
+
+      const createCast = async () => {
+        if (!projectId) return
+        const name = castDraft.name.trim()
+        if (!name) {
+          setError(t('cast.nameRequired'))
+          return
+        }
+        setCastBusy(true)
+        try {
+          await postJson(`/projects/${projectId}/cast`, {
+            name,
+            aliases: castDraft.aliases
+              .split(/[,，\s]+/)
+              .map((alias) => alias.trim())
+              .filter(Boolean),
+            look: castDraft.look,
+          })
+          setCastDraft({ name: '', aliases: '', look: '' })
+          await reloadCast()
+          setError('')
+        } catch (err) {
+          setError(String(err))
+        } finally {
+          setCastBusy(false)
+        }
+      }
+
+      const updateCastField = async (character, patch) => {
+        if (!projectId) return
+        try {
+          await patchJson(`/projects/${projectId}/cast/${character.id}`, patch)
+          await reloadCast()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const removeCast = async (character) => {
+        if (!projectId) return
+        try {
+          await deleteJson(`/projects/${projectId}/cast/${character.id}`)
+          await reloadCast()
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const uploadCastRef = (character, kind) => {
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.accept = 'image/*'
+        input.onchange = () => {
+          const file = input.files && input.files[0]
+          if (!file) return
+          const reader = new FileReader()
+          reader.onload = () => {
+            postJson(`/projects/${projectId}/cast/${character.id}/refs`, {
+              kind,
+              dataUri: String(reader.result),
+            })
+              .then(() => reloadCast())
+              .catch((err) => setError(String(err)))
+          }
+          reader.readAsDataURL(file)
+        }
+        input.click()
+      }
+
+      const setRefUrl = async (character, ref) => {
+        const url = window.prompt(t('cast.urlPrompt'), ref.url || '')
+        if (url === null) return
+        try {
+          await patchJson(`/projects/${projectId}/cast/${character.id}/refs/${ref.id}`, {
+            url: url.trim(),
+          })
+          await reloadCast()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const generateStoryboard = async (shot) => {
+        if (!projectId || !shot) return
+        setStoryBusy((current) => ({ ...current, [shot.id]: true }))
+        try {
+          await postJson(`/projects/${projectId}/shots/${shot.id}/storyboard`, {})
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        } finally {
+          setStoryBusy((current) => {
+            const next = { ...current }
+            delete next[shot.id]
+            return next
+          })
+        }
+      }
+
+      const approveStoryboard = async (shot) => {
+        if (!projectId || !shot) return
+        try {
+          await postJson(`/projects/${projectId}/shots/${shot.id}/approve`, {})
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const rejectStoryboard = async (shot) => {
+        if (!projectId || !shot) return
+        try {
+          await postJson(`/projects/${projectId}/shots/${shot.id}/reject`, {})
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const toggleShotCharacter = async (shot, characterId) => {
+        if (!projectId) return
+        const current = Array.isArray(shot.context?.characters) ? shot.context.characters : []
+        const next = current.includes(characterId)
+          ? current.filter((id) => id !== characterId)
+          : [...current, characterId]
+        try {
+          await patchShotApi(projectId, shot.id, { context: { characters: next } })
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
       const createProject = async (name) => {
         try {
           const data = await postJson('/projects', { name: name || '未命名项目' })
@@ -1103,12 +1350,14 @@ window.__ModuleLoader__.load({
 
       const runAll = async () => {
         if (!projectId) return
+        setBlockers([])
         try {
           await runChainApi(projectId, { shotIds: shots.map((shot) => shot.id) })
           setError('')
           await reload()
         } catch (err) {
           setError(String(err))
+          setBlockers(Array.isArray(err.blockers) ? err.blockers : [])
         }
       }
 
@@ -1257,6 +1506,50 @@ window.__ModuleLoader__.load({
           ],
         }),
         h('div', { className: 'agnes-view-hint' }, t('drama.hint')),
+        h(
+          'div',
+          { className: 'agnes-tabs', style: { marginBottom: '6px' } },
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'agnes-tab',
+              'data-active': pane === 'shots' ? 'true' : 'false',
+              onClick: () => setPane('shots'),
+            },
+            t('pane.shots'),
+          ),
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'agnes-tab',
+              'data-active': pane === 'cast' ? 'true' : 'false',
+              onClick: () => setPane('cast'),
+            },
+            `${t('pane.cast')} (${cast.length})`,
+          ),
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'agnes-tab',
+              'data-active': pane === 'storyboard' ? 'true' : 'false',
+              onClick: () => setPane('storyboard'),
+            },
+            t('pane.storyboard'),
+          ),
+        ),
+        blockers.length > 0
+          ? h(
+              'div',
+              { className: 'agnes-error', style: { display: 'block' } },
+              h('div', null, t('drama.blockedHint')),
+              ...blockers.map((blocker) =>
+                h('div', { key: blocker.shotId, className: 'agnes-mono' }, `#${blocker.index} ${blocker.reason}`),
+              ),
+            )
+          : null,
         assembled
           ? h(
               'div',
@@ -1336,7 +1629,7 @@ window.__ModuleLoader__.load({
           : null,
         error ? h('div', { className: 'agnes-error' }, error) : null,
         chain && chain.error ? h('div', { className: 'agnes-error' }, chain.error) : null,
-        shots.length === 0
+        pane === 'shots' && (shots.length === 0
           ? h('div', { className: 'agnes-empty' }, h('b', null, t('drama.empty')))
           : h(
               'div',
@@ -1429,6 +1722,34 @@ window.__ModuleLoader__.load({
                         value: draft.continuity,
                         onChange: (event) => setDraft({ ...draft, continuity: event.target.value }),
                       }),
+                      cast.length > 0
+                        ? h(
+                            'div',
+                            null,
+                            h('label', { className: 'agnes-label', style: { marginTop: '10px' } }, t('cast.inShot')),
+                            h(
+                              'div',
+                              { className: 'agnes-cast-toggle' },
+                              ...cast.map((character) =>
+                                h(
+                                  'button',
+                                  {
+                                    key: character.id,
+                                    type: 'button',
+                                    className: 'agnes-cast-pill',
+                                    'data-active':
+                                      (selectedShot.context?.characters || []).includes(character.id)
+                                        ? 'true'
+                                        : 'false',
+                                    onClick: () => toggleShotCharacter(selectedShot, character.id),
+                                  },
+                                  character.locked ? '● ' : '○ ',
+                                  character.name,
+                                ),
+                              ),
+                            ),
+                          )
+                        : null,
                       h(
                         'div',
                         { className: 'agnes-actions' },
@@ -1478,7 +1799,231 @@ window.__ModuleLoader__.load({
                   ),
                 ),
               ),
-            ),
+            )),
+        pane === 'cast'
+          ? h(
+              'div',
+              { className: 'agnes-view' },
+              h(
+                'div',
+                { className: 'agnes-card' },
+                h('label', { className: 'agnes-label' }, t('cast.create')),
+                h(
+                  'div',
+                  { className: 'agnes-row' },
+                  h('input', {
+                    className: 'agnes-input',
+                    placeholder: t('cast.name'),
+                    value: castDraft.name,
+                    onChange: (event) => setCastDraft({ ...castDraft, name: event.target.value }),
+                  }),
+                  h('input', {
+                    className: 'agnes-input',
+                    placeholder: t('cast.aliases'),
+                    value: castDraft.aliases,
+                    onChange: (event) => setCastDraft({ ...castDraft, aliases: event.target.value }),
+                  }),
+                ),
+                h('input', {
+                  className: 'agnes-input',
+                  style: { marginTop: '8px' },
+                  placeholder: t('cast.look'),
+                  value: castDraft.look,
+                  onChange: (event) => setCastDraft({ ...castDraft, look: event.target.value }),
+                }),
+                h(
+                  'div',
+                  { className: 'agnes-actions' },
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'agnes-button agnes-primary',
+                      disabled: castBusy || !castDraft.name.trim(),
+                      onClick: createCast,
+                    },
+                    t('cast.add'),
+                  ),
+                ),
+              ),
+              cast.length === 0
+                ? h('div', { className: 'agnes-empty' }, h('b', null, t('cast.empty')))
+                : h(
+                    'div',
+                    { className: 'agnes-cast-grid' },
+                    ...cast.map((character) =>
+                      h(
+                        'div',
+                        { key: character.id, className: 'agnes-card' },
+                        h(
+                          'div',
+                          { className: 'agnes-cast-head' },
+                          h('b', null, character.name),
+                          h(
+                            'span',
+                            {
+                              className: 'agnes-chip',
+                              style: { color: character.locked ? '#22c55e' : '#f59e0b' },
+                            },
+                            character.locked ? t('cast.locked') : t('cast.unlocked'),
+                          ),
+                          h(
+                            'span',
+                            { className: 'agnes-chip' },
+                            `${(character.refs || []).length} ${t('cast.refs')}`,
+                          ),
+                        ),
+                        h(
+                          'div',
+                          { className: 'agnes-cast-refs' },
+                          ...['front', 'side', 'back'].map((kind) => {
+                            const ref = (character.refs || []).find((entry) => entry.kind === kind)
+                            return h(
+                              'button',
+                              {
+                                key: kind,
+                                type: 'button',
+                                className: 'agnes-cast-slot',
+                                title: `${kind}${ref && ref.url ? ' · HTTPS' : ''}`,
+                                onClick: () =>
+                                  ref && ref.file
+                                    ? setRefUrl(character, ref)
+                                    : uploadCastRef(character, kind),
+                                onDoubleClick: () => uploadCastRef(character, kind),
+                              },
+                              ref && ref.file
+                                ? h('img', {
+                                    src: `/agnes-media/api/projects/${projectId}/cast/${character.id}/refs/${ref.id}/file`,
+                                    alt: kind,
+                                  })
+                                : h('span', null, t(`cast.${kind}`)),
+                              ref && ref.file
+                                ? h(
+                                    'span',
+                                    {
+                                      className: 'agnes-cast-url',
+                                      role: 'button',
+                                      onClick: (event) => {
+                                        event.stopPropagation()
+                                        uploadCastRef(character, kind)
+                                      },
+                                    },
+                                    ref.url ? 'URL ✓' : t('cast.setUrl'),
+                                  )
+                                : null,
+                            )
+                          }),
+                        ),
+                        h(
+                          'input',
+                          {
+                            className: 'agnes-input',
+                            style: { marginTop: '6px' },
+                            defaultValue: (character.aliases || []).join('，'),
+                            placeholder: t('cast.aliases'),
+                            onBlur: (event) =>
+                              updateCastField(character, {
+                                aliases: event.target.value
+                                  .split(/[,，\s]+/)
+                                  .map((alias) => alias.trim())
+                                  .filter(Boolean),
+                              }),
+                          },
+                        ),
+                        h(
+                          'div',
+                          { className: 'agnes-actions' },
+                          h(
+                            'button',
+                            {
+                              type: 'button',
+                              className: 'agnes-button agnes-ghost',
+                              onClick: () => removeCast(character),
+                            },
+                            t('action.delete'),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+            )
+          : null,
+        pane === 'storyboard'
+          ? h(
+              'div',
+              { className: 'agnes-view' },
+              h('div', { className: 'agnes-view-hint' }, t('story.hint')),
+              shots.length === 0
+                ? h('div', { className: 'agnes-empty' }, h('b', null, t('drama.empty')))
+                : h(
+                    'div',
+                    { className: 'agnes-story-grid' },
+                    ...shots.map((shot) =>
+                      h(
+                        'div',
+                        { key: shot.id, className: 'agnes-card agnes-story-card' },
+                        h(
+                          'div',
+                          { className: 'agnes-cast-head' },
+                          h('b', null, `#${shot.index}`),
+                          h(
+                            'span',
+                            { className: 'agnes-chip', style: { color: statusColor(shot.status) } },
+                            t(`status.${shot.status || 'draft'}`),
+                          ),
+                          shot.lockMode
+                            ? h('span', { className: 'agnes-chip' }, t(`lock.${shot.lockMode}`))
+                            : null,
+                        ),
+                        shot.storyboardUrl
+                          ? h('img', {
+                              className: 'agnes-story-img',
+                              src: shot.storyboardUrl,
+                              alt: `#${shot.index}`,
+                            })
+                          : h('div', { className: 'agnes-story-placeholder' }, t('story.none')),
+                        h('div', { className: 'agnes-story-prompt' }, shot.prompt || '—'),
+                        h(
+                          'div',
+                          { className: 'agnes-actions' },
+                          h(
+                            'button',
+                            {
+                              type: 'button',
+                              className: 'agnes-button agnes-ghost',
+                              disabled: Boolean(storyBusy[shot.id]),
+                              onClick: () => generateStoryboard(shot),
+                            },
+                            storyBusy[shot.id] ? t('action.generating') : t('story.generate'),
+                          ),
+                          shot.storyboardUrl
+                            ? h(
+                                'button',
+                                {
+                                  type: 'button',
+                                  className: 'agnes-button agnes-primary',
+                                  onClick: () => approveStoryboard(shot),
+                                },
+                                t('story.approve'),
+                              )
+                            : null,
+                          shot.storyboardUrl
+                            ? h(
+                                'button',
+                                {
+                                  type: 'button',
+                                  className: 'agnes-button agnes-ghost',
+                                  onClick: () => rejectStoryboard(shot),
+                                },
+                                t('story.reject'),
+                              )
+                            : null,
+                        ),
+                      ),
+                    ),
+                  ),
+            )
+          : null,
       )
     }
 

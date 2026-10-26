@@ -21,11 +21,11 @@ import { mkdir, readFile, rename, stat, unlink, writeFile } from 'node:fs/promis
 import { homedir } from 'node:os'
 import path from 'node:path'
 
-import { composePrompt, seedFor } from './lib/context.js'
+import { composePrompt, collectReferenceUrls, seedFor } from './lib/context.js'
 import { createFrames } from './lib/frames.js'
 import { createProjects } from './lib/projects.js'
 import { createAssemble } from './lib/assemble.js'
-import { parseScript } from './lib/script.js'
+import { bindCharactersToShots, parseScript } from './lib/script.js'
 
 const VERSION = '0.4.0'
 
@@ -424,6 +424,13 @@ function createTasks(ctx, settings, store, hooks = {}) {
         stage: '',
         note: '',
       })
+      if (typeof hooks.onImageReady === 'function') {
+        try {
+          await hooks.onImageReady(store.find(id))
+        } catch {
+          /* keep the generation authoritative */
+        }
+      }
     } catch (error) {
       if (cancelled.has(id) || (error instanceof HttpError && error.status === 409)) {
         await update(id, { status: 'cancelled', stage: '', note: '', error: '已取消' })
@@ -436,6 +443,13 @@ function createTasks(ctx, settings, store, hooks = {}) {
         }
       } else if (!cancelled.has(id)) {
         await update(id, { status: 'failed', error: messageOf(error), note: '' })
+        if (typeof hooks.onImageFailed === 'function') {
+          try {
+            await hooks.onImageFailed(store.find(id), error)
+          } catch {
+            /* keep the failure authoritative */
+          }
+        }
       }
     }
   }
@@ -458,6 +472,12 @@ function createTasks(ctx, settings, store, hooks = {}) {
           seconds: item.seconds,
           size: item.size,
         }
+        // Reference mode wins when the shot's cast has public HTTPS images:
+        // it locks identity, which a keyframe alone cannot do.
+        if (Array.isArray(item.referenceUrls) && item.referenceUrls.length > 0) {
+          payload.mode = 'reference'
+          payload.reference_image_urls = item.referenceUrls.slice(0, 4)
+        }
         if (item.firstFrameFile) {
           if (typeof hooks.frameDataUri !== 'function') {
             throw new HttpError(500, '首帧功能未初始化')
@@ -465,16 +485,39 @@ function createTasks(ctx, settings, store, hooks = {}) {
           payload.first_frame = await hooks.frameDataUri(item.firstFrameFile)
         }
         if (typeof item.seed === 'number') payload.seed = item.seed
-        const data = await upstreamRetry(
-          settings,
-          key,
-          '/videos',
-          { method: 'POST', body: payload, timeoutMs: 120000 },
-          id,
-          update,
-          deadline,
-          () => cancelled.has(id),
-        )
+        let data
+        try {
+          data = await upstreamRetry(
+            settings,
+            key,
+            '/videos',
+            { method: 'POST', body: payload, timeoutMs: 120000 },
+            id,
+            update,
+            deadline,
+            () => cancelled.has(id),
+          )
+        } catch (error) {
+          // A 4xx on reference mode is a capability/URL problem, not congestion:
+          // drop the reference images and retry exactly once, recording why.
+          const rejected = error instanceof HttpError && !error.transient
+          if (!rejected || payload.mode !== 'reference') throw error
+          delete payload.reference_image_urls
+          payload.mode = item.firstFrameFile ? 'keyframe' : 'text'
+          await update(id, {
+            note: `参考模式被拒绝（${error.message.slice(0, 120)}），已降级为 ${payload.mode}`,
+          })
+          data = await upstreamRetry(
+            settings,
+            key,
+            '/videos',
+            { method: 'POST', body: payload, timeoutMs: 120000 },
+            id,
+            update,
+            deadline,
+            () => cancelled.has(id),
+          )
+        }
         videoId = String(data?.video_id || data?.id || data?.task_id || '')
         if (!videoId) throw new HttpError(502, '视频接口没有返回任务 ID', { transient: true })
         if (cancelled.has(id)) return
@@ -690,12 +733,21 @@ async function mediaRoute(req, res, store, id, download) {
 
 function publicShot(shot) {
   if (!shot) return undefined
-  const { assetFile, tailFile, ...rest } = shot
-  return rest
+  const { assetFile, tailFile, storyboardFile, ...rest } = shot
+  return { ...rest, hasStoryboard: Boolean(storyboardFile) }
 }
 
 function createHandler(ctx, settings, store, tasks, services) {
-  const { projects, frames, startChain, cancelTask, cancelChain, assemble, parseScript } = services
+  const {
+    projects,
+    frames,
+    startChain,
+    cancelTask,
+    cancelChain,
+    assemble,
+    parseScript,
+    submitImage,
+  } = services
 
   return async (req, res) => {
     try {
@@ -883,13 +935,120 @@ function createHandler(ctx, settings, store, tasks, services) {
         return
       }
 
+      match = rest.match(/^\/projects\/([^/]+)\/cast$/)
+      if (match) {
+        const projectId = decodeURIComponent(match[1])
+        if (method === 'GET') {
+          sendJson(res, 200, { ok: true, cast: projects.listCast(projectId) })
+          return
+        }
+        if (method === 'POST') {
+          const body = await readJson(req)
+          const character = await projects.createCast(projectId, body)
+          if (!character) throw new HttpError(404, '项目不存在')
+          sendJson(res, 200, { ok: true, character })
+          return
+        }
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/cast\/([^/]+)$/)
+      if (match) {
+        const projectId = decodeURIComponent(match[1])
+        const characterId = decodeURIComponent(match[2])
+        if (method === 'PATCH') {
+          const body = await readJson(req)
+          const character = await projects.updateCast(projectId, characterId, body)
+          if (!character) throw new HttpError(404, '角色不存在')
+          sendJson(res, 200, { ok: true, character })
+          return
+        }
+        if (method === 'DELETE') {
+          const removed = await projects.deleteCast(projectId, characterId)
+          if (!removed) throw new HttpError(404, '角色不存在')
+          sendJson(res, 200, { ok: true })
+          return
+        }
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/cast\/([^/]+)\/refs$/)
+      if (match && method === 'POST') {
+        const projectId = decodeURIComponent(match[1])
+        const characterId = decodeURIComponent(match[2])
+        const project = projects.getProject(projectId)
+        if (!project) throw new HttpError(404, '项目不存在')
+        const character = projects.getCast(projectId, characterId)
+        if (!character) throw new HttpError(404, '角色不存在')
+        const body = await readJson(req, 24 * 1024 * 1024)
+        const dataUri = String(body.dataUri || '')
+        const kind = ['front', 'side', 'back', 'extra'].includes(body.kind) ? body.kind : 'extra'
+        const mimeMatch = /^data:image\/(png|jpeg|jpg|webp);base64,/i.exec(dataUri)
+        const extension = mimeMatch
+          ? mimeMatch[1].toLowerCase() === 'png'
+            ? 'png'
+            : mimeMatch[1].toLowerCase() === 'webp'
+              ? 'webp'
+              : 'jpg'
+          : 'jpg'
+        const relative = `cast/${characterId}/${kind}.${extension}`
+        await frames.saveDataUri(dataUri, projects.assetPath(projectId, relative))
+        const updated = await projects.addCastRef(projectId, characterId, {
+          kind,
+          file: relative,
+          url: String(body.url || ''),
+        })
+        sendJson(res, 200, { ok: true, character: updated })
+        return
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/cast\/([^/]+)\/refs\/([^/]+)$/)
+      if (match && method === 'PATCH') {
+        const projectId = decodeURIComponent(match[1])
+        const characterId = decodeURIComponent(match[2])
+        const refId = decodeURIComponent(match[3])
+        const body = await readJson(req)
+        const character = await projects.updateCastRef(projectId, characterId, refId, body)
+        if (!character) throw new HttpError(404, '参考图不存在')
+        sendJson(res, 200, { ok: true, character })
+        return
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/cast\/([^/]+)\/refs\/([^/]+)\/file$/)
+      if (match && (method === 'GET' || method === 'HEAD')) {
+        const projectId = decodeURIComponent(match[1])
+        const characterId = decodeURIComponent(match[2])
+        const refId = decodeURIComponent(match[3])
+        const character = projects.getCast(projectId, characterId)
+        const ref = (character?.refs || []).find((entry) => entry.id === refId)
+        if (!ref || !ref.file) throw new HttpError(404, '参考图不存在')
+        const filePath = projects.assetPath(projectId, ref.file)
+        let info
+        try {
+          info = await stat(filePath)
+        } catch {
+          throw new HttpError(404, '参考图文件不存在')
+        }
+        res.writeHead(200, {
+          'content-type': /\.png$/i.test(ref.file) ? 'image/png' : 'image/jpeg',
+          'content-length': String(info.size),
+          'cache-control': 'private, max-age=86400',
+        })
+        if (method === 'HEAD') {
+          res.end()
+          return
+        }
+        const stream = createReadStream(filePath)
+        stream.on('error', () => res.destroy())
+        stream.pipe(res)
+        return
+      }
+
       match = rest.match(/^\/projects\/([^/]+)\/script\/parse$/)
       if (match && method === 'POST') {
         const projectId = decodeURIComponent(match[1])
         const project = projects.getProject(projectId)
         if (!project) throw new HttpError(404, '项目不存在')
         const body = await readJson(req, 4 * 1024 * 1024)
-        const drafts = parseScript(body.text)
+        const drafts = bindCharactersToShots(parseScript(body.text), projects.listCast(projectId))
         if (drafts.length === 0) throw new HttpError(400, '没有解析出任何镜头')
         if (body.replace === true) {
           for (const shot of projects.listShots(projectId)) {
@@ -903,7 +1062,10 @@ function createHandler(ctx, settings, store, tasks, services) {
             duration: draft.duration,
             episodeId: draft.episodeId,
             sceneId: draft.sceneId,
-            context: { continuity: draft.sceneTitle ? `场景：${draft.sceneTitle}` : '' },
+            context: {
+              characters: draft.characters || [],
+              continuity: draft.sceneTitle ? `场景：${draft.sceneTitle}` : '',
+            },
           })
           if (shot) created.push(shot)
         }
@@ -1017,6 +1179,99 @@ function createHandler(ctx, settings, store, tasks, services) {
         }
       }
 
+      /* --------------------------- storyboard --------------------------- */
+
+      match = rest.match(/^\/projects\/([^/]+)\/shots\/([^/]+)\/storyboard$/)
+      if (match && method === 'POST') {
+        const projectId = decodeURIComponent(match[1])
+        const shotId = decodeURIComponent(match[2])
+        const project = projects.getProject(projectId)
+        const shot = projects.getShot(projectId, shotId)
+        if (!project || !shot) throw new HttpError(404, '项目或镜头不存在')
+        const prompt = composePrompt({ project, shot, previousShot: undefined })
+        await projects.updateShot(projectId, shotId, { status: 'storyboard', storyboardError: '' })
+        const task = await submitImage({
+          prompt,
+          size: '1024x768',
+          projectId,
+          shotId,
+          purpose: 'storyboard',
+        })
+        await projects.updateShot(projectId, shotId, { storyboardTaskId: task.id })
+        sendJson(res, 200, { ok: true, task: publicItem(task) })
+        return
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/shots\/([^/]+)\/approve$/)
+      if (match && method === 'POST') {
+        const projectId = decodeURIComponent(match[1])
+        const shotId = decodeURIComponent(match[2])
+        const shot = projects.getShot(projectId, shotId)
+        if (!shot) throw new HttpError(404, '镜头不存在')
+        if (!shot.storyboardFile) throw new HttpError(400, '该镜还没有静帧可批准')
+        const updated = await projects.updateShot(projectId, shotId, {
+          status: 'approved',
+          firstFrame: { source: 'manual', file: shot.storyboardFile },
+          error: '',
+        })
+        sendJson(res, 200, { ok: true, shot: publicShot(updated) })
+        return
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/shots\/([^/]+)\/reject$/)
+      if (match && method === 'POST') {
+        const projectId = decodeURIComponent(match[1])
+        const shotId = decodeURIComponent(match[2])
+        const shot = projects.getShot(projectId, shotId)
+        if (!shot) throw new HttpError(404, '镜头不存在')
+        if (shot.storyboardFile) {
+          const source = projects.assetPath(projectId, shot.storyboardFile)
+          const target = projects.assetPath(
+            projectId,
+            `storyboard/rejected/${shotId}-${Date.now()}.jpg`,
+          )
+          await mkdir(path.dirname(target), { recursive: true })
+          await rename(source, target).catch(() => {})
+        }
+        const updated = await projects.updateShot(projectId, shotId, {
+          status: 'draft',
+          storyboardFile: null,
+          storyboardUrl: null,
+          storyboardError: '',
+          firstFrame: { source: 'auto', file: null },
+        })
+        sendJson(res, 200, { ok: true, shot: publicShot(updated) })
+        return
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/shots\/([^/]+)\/storyboard$/)
+      if (match && (method === 'GET' || method === 'HEAD')) {
+        const projectId = decodeURIComponent(match[1])
+        const shotId = decodeURIComponent(match[2])
+        const shot = projects.getShot(projectId, shotId)
+        if (!shot || !shot.storyboardFile) throw new HttpError(404, '该镜还没有静帧')
+        const filePath = projects.assetPath(projectId, shot.storyboardFile)
+        let info
+        try {
+          info = await stat(filePath)
+        } catch {
+          throw new HttpError(404, '静帧文件不存在')
+        }
+        res.writeHead(200, {
+          'content-type': /\.png$/i.test(shot.storyboardFile) ? 'image/png' : 'image/jpeg',
+          'content-length': String(info.size),
+          'cache-control': 'private, max-age=86400',
+        })
+        if (method === 'HEAD') {
+          res.end()
+          return
+        }
+        const stream = createReadStream(filePath)
+        stream.on('error', () => res.destroy())
+        stream.pipe(res)
+        return
+      }
+
       match = rest.match(/^\/projects\/([^/]+)\/shots\/([^/]+)\/first-frame$/)
       if (match && method === 'POST') {
         const projectId = decodeURIComponent(match[1])
@@ -1100,7 +1355,9 @@ function createHandler(ctx, settings, store, tasks, services) {
       throw new HttpError(404, '未知接口')
     } catch (error) {
       const status = error instanceof HttpError ? error.status : 500
-      sendJson(res, status, { ok: false, error: messageOf(error) })
+      const payload = { ok: false, error: messageOf(error) }
+      if (Array.isArray(error?.blockers)) payload.blockers = error.blockers
+      sendJson(res, status, payload)
     }
   }
 }
@@ -1153,6 +1410,38 @@ export function apply(ctx, config = {}) {
     })
   }
 
+  async function onImageReady(item) {
+    if (!item || item.purpose !== 'storyboard' || !item.projectId || !item.shotId) return
+    const project = projects.getProject(item.projectId)
+    if (!project) return
+    const relative = `storyboard/${item.shotId}.jpg`
+    const target = projects.assetPath(item.projectId, relative)
+    try {
+      await mkdir(path.dirname(target), { recursive: true })
+      await frames.copyFile(store.mediaPath(item.file), target)
+      await projects.updateShot(item.projectId, item.shotId, {
+        status: 'pending-review',
+        storyboardFile: relative,
+        storyboardUrl: `${ROUTE_PREFIX}/projects/${item.projectId}/shots/${item.shotId}/storyboard`,
+        storyboardError: '',
+      })
+    } catch (error) {
+      await projects.updateShot(item.projectId, item.shotId, {
+        status: 'failed',
+        storyboardError: messageOf(error),
+      })
+    }
+  }
+
+  async function onImageFailed(item, error) {
+    if (!item || item.purpose !== 'storyboard') return
+    if (!item.projectId || !item.shotId) return
+    await projects.updateShot(item.projectId, item.shotId, {
+      storyboardError: messageOf(error),
+      status: 'draft',
+    })
+  }
+
   async function onVideoCancelled(item) {
     if (!item || !item.projectId || !item.shotId) return
     await projects.updateShot(item.projectId, item.shotId, { status: 'cancelled', error: '' })
@@ -1163,6 +1452,8 @@ export function apply(ctx, config = {}) {
     onVideoReady,
     onVideoFailed,
     onVideoCancelled,
+    onImageReady,
+    onImageFailed,
     onTaskCancelled: onVideoCancelled,
   })
 
@@ -1199,6 +1490,32 @@ export function apply(ctx, config = {}) {
     if (input.shotId) item.shotId = String(input.shotId)
     if (input.parentTaskId) item.parentTaskId = String(input.parentTaskId)
     if (input.firstFrameFile) item.firstFrameFile = input.firstFrameFile
+    if (Array.isArray(input.referenceUrls) && input.referenceUrls.length > 0) {
+      item.referenceUrls = input.referenceUrls.map(String).slice(0, 4)
+    }
+    await store.add(item)
+    tasks.start(item.id)
+    return store.find(item.id)
+  }
+
+  async function submitImage(input) {
+    const item = {
+      id: randomUUID(),
+      kind: 'image',
+      status: 'queued',
+      prompt: input.prompt,
+      model: input.model || settings.imageModel,
+      size: input.size || '1024x768',
+      progress: 0,
+      stage: 'queued',
+      note: '',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+    if (input.projectId) item.projectId = String(input.projectId)
+    if (input.shotId) item.shotId = String(input.shotId)
+    if (input.purpose) item.purpose = String(input.purpose)
+    if (Number.isFinite(Number(input.seed))) item.seed = Number(input.seed)
     await store.add(item)
     tasks.start(item.id)
     return store.find(item.id)
@@ -1253,6 +1570,39 @@ export function apply(ctx, config = {}) {
     return { cancelled: true }
   }
 
+  /**
+   * Refuse to start when a shot cannot be locked.
+   *
+   * Passing needs any one of: an approved storyboard, a usable previous tail
+   * frame, or a cast member whose reference image is public. The point is to
+   * fail before any quota is spent, not 20 minutes in.
+   */
+  function preflight(projectId, sequence) {
+    const project = projects.getProject(projectId)
+    const blockers = []
+    sequence.forEach((shot, index) => {
+      if (!shot) return
+      const previous = index > 0 ? sequence[index - 1] : undefined
+      const hasApproved =
+        (shot.firstFrame && shot.firstFrame.source === 'manual' && shot.firstFrame.file) ||
+        shot.status === 'approved' ||
+        shot.status === 'pending-review' ||
+        Boolean(shot.storyboardFile)
+      const hasTail = Boolean(previous && previous.tailFile)
+      const hasReference = collectReferenceUrls(project, shot).length > 0
+      if (shot.status === 'ready' && shot.assetFile) return
+      if (hasApproved || hasTail || hasReference) return
+      const index0 = shot.index || index + 1
+      const reason = hasReference
+        ? ''
+        : previous
+          ? `第 ${index0} 镜既没有已批准静帧，也缺少上一镜尾帧（需要 ffmpeg 或上传首帧）`
+          : `第 ${index0} 镜既没有已批准静帧，也没有可用的角色参考图`
+      blockers.push({ shotId: shot.id, index: index0, reason })
+    })
+    return blockers
+  }
+
   async function startChain(projectId, body = {}) {
     if (chainLocks.has(projectId)) throw new HttpError(409, '该项目已有链路在执行')
     const project = projects.getProject(projectId)
@@ -1269,6 +1619,18 @@ export function apply(ctx, config = {}) {
     }
     if (sequence.length === 0) throw new HttpError(400, '没有可执行的镜头')
 
+    if (body.skipPreflight !== true) {
+      const blockers = preflight(projectId, sequence)
+      if (blockers.length > 0) {
+        const error = new HttpError(
+          422,
+          `有 ${blockers.length} 个镜头无法锁定人物，已阻止启动：${blockers[0].reason}`,
+        )
+        error.blockers = blockers
+        throw error
+      }
+    }
+
     chainLocks.add(projectId)
     chainCancelled.delete(projectId)
     const force = body.force === true
@@ -1278,6 +1640,7 @@ export function apply(ctx, config = {}) {
     })
 
     ;(async () => {
+      const failures = []
       try {
         for (let index = 0; index < sequence.length; index += 1) {
           if (chainCancelled.has(projectId)) throw new HttpError(409, '链路已取消')
@@ -1291,40 +1654,59 @@ export function apply(ctx, config = {}) {
           await projects.updateShot(projectId, current.id, { status: 'running', error: '' })
 
           const previous = index > 0 ? projects.getShot(projectId, sequence[index - 1].id) : undefined
+          const liveProject = projects.getProject(projectId)
+          const referenceUrls = collectReferenceUrls(liveProject, current)
+
           let firstFrameFile
           if (current.firstFrame && current.firstFrame.source === 'manual' && current.firstFrame.file) {
             firstFrameFile = projects.assetPath(projectId, current.firstFrame.file)
           } else if (previous && previous.tailFile) {
             firstFrameFile = projects.assetPath(projectId, previous.tailFile)
-          } else if (previous && current.firstFrame?.source !== 'none') {
-            const reason =
-              previous.tailError || '缺少上一镜尾帧（需要 ffmpeg 或为该镜上传首帧）'
-            await projects.updateShot(projectId, current.id, { status: 'blocked', error: reason })
-            throw new HttpError(409, `镜头 ${current.index} 无法衔接：${reason}`)
           }
 
-          const liveProject = projects.getProject(projectId)
+          // Reference mode needs public URLs; without them fall back visibly.
+          const lockMode =
+            referenceUrls.length > 0 ? 'reference' : firstFrameFile ? 'keyframe' : 'text'
+          await projects.updateShot(projectId, current.id, { lockMode })
+
           const prompt = composePrompt({ project: liveProject, shot: current, previousShot: previous })
           const seed = seedFor(liveProject, current, index)
-          const task = await submitVideo({
-            prompt,
-            seconds: String(current.duration || 5),
-            size: current.size,
-            seed,
-            projectId,
-            shotId: current.id,
-            firstFrameFile,
-          })
-          chainCurrentTask.set(projectId, task.id)
-          await projects.updateShot(projectId, current.id, { taskId: task.id })
-          await waitForTask(task.id, () => chainCancelled.has(projectId))
-          const settled = await waitForShotTail(projectId, current.id)
-          if (settled && settled.status === 'failed') {
-            throw new HttpError(502, settled.error || '镜头生成失败')
+          try {
+            const task = await submitVideo({
+              prompt,
+              seconds: String(current.duration || 5),
+              size: current.size,
+              seed,
+              projectId,
+              shotId: current.id,
+              firstFrameFile,
+              referenceUrls,
+            })
+            chainCurrentTask.set(projectId, task.id)
+            await projects.updateShot(projectId, current.id, { taskId: task.id })
+            await waitForTask(task.id, () => chainCancelled.has(projectId))
+            const settled = await waitForShotTail(projectId, current.id)
+            if (settled && settled.status === 'failed') {
+              throw new HttpError(502, settled.error || '镜头生成失败')
+            }
+          } catch (error) {
+            if (chainCancelled.has(projectId)) throw error
+            // Isolate a single bad shot: record it and keep the chain moving.
+            failures.push({ shotId: current.id, index: current.index || index + 1, reason: messageOf(error) })
+            await projects.updateShot(projectId, current.id, {
+              status: 'failed',
+              error: messageOf(error),
+            })
           }
         }
         await projects.updateProject(projectId, {
-          chain: { running: false, currentShotId: null, finishedAt: Date.now(), error: '' },
+          chain: {
+            running: false,
+            currentShotId: null,
+            finishedAt: Date.now(),
+            error: failures.length > 0 ? `${failures.length} 个镜头失败` : '',
+            failures,
+          },
         })
       } catch (error) {
         await projects.updateProject(projectId, {
@@ -1333,6 +1715,7 @@ export function apply(ctx, config = {}) {
             currentShotId: null,
             finishedAt: Date.now(),
             error: messageOf(error),
+            failures,
           },
         })
       } finally {
@@ -1352,6 +1735,7 @@ export function apply(ctx, config = {}) {
     cancelTask,
     cancelChain,
     parseScript,
+    submitImage,
     assemble: {
       concat: async (files, outFile, options) => {
         const ffmpeg = await frames.detect()
