@@ -132,6 +132,9 @@ window.__ModuleLoader__.load({
       'cast.setUrl': '设置公网 URL',
       'cast.inShot': '本镜出场角色',
       'cast.urlPrompt': '粘贴公网可访问的 HTTPS 图片地址（参考模式必需）',
+      'cast.clearUrl': '清除 URL',
+      'cast.lockHint': '锁脸需要至少一张公网 HTTPS 参考图；本地图片无法被上游读取',
+      'cast.lockScope': '锁定范围：只对本镜「出场角色」中勾选的角色生效',
       'cast.nameRequired': '角色名不能为空',
       'story.hint': '先生成静帧审片：便宜、快；通过后再生成视频。',
       'story.generate': '生成静帧',
@@ -139,6 +142,9 @@ window.__ModuleLoader__.load({
       'story.reject': '打回',
       'story.none': '还没有静帧',
       'drama.blockedHint': '以下镜头无法锁定人物，链路已阻止启动：',
+      'drama.blockedOptions': '三种解决方式（不需要重新上传视频）：给角色填一张公网图 → 点「去角色」；或给该镜生成并批准静帧 → 去「静帧审片」；也可以直接不锁脸生成。',
+      'drama.goCast': '去角色',
+      'drama.runAnyway': '不锁脸，仍然生成',
       'lock.reference': '参考锁脸',
       'lock.keyframe': '首帧锁定',
       'lock.text': '仅文本（未锁脸）',
@@ -262,6 +268,9 @@ window.__ModuleLoader__.load({
       'cast.setUrl': 'Set public URL',
       'cast.inShot': 'Characters in this shot',
       'cast.urlPrompt': 'Paste a publicly reachable HTTPS image URL (required by reference mode)',
+      'cast.clearUrl': 'Clear URL',
+      'cast.lockHint': 'Locking needs at least one public HTTPS reference image; the upstream cannot read local files',
+      'cast.lockScope': 'Scope: only characters selected under "characters in this shot" are locked',
       'cast.nameRequired': 'Character name is required',
       'story.hint': 'Render stills first: they are cheap and fast. Approve them before spending on video.',
       'story.generate': 'Render still',
@@ -269,6 +278,9 @@ window.__ModuleLoader__.load({
       'story.reject': 'Reject',
       'story.none': 'No still yet',
       'drama.blockedHint': 'These shots cannot lock identity; the chain was not started:',
+      'drama.blockedOptions': 'Three fixes (no re-upload of video needed): give the character a public image URL ("Go to cast"); or render and approve a still for that shot ("Storyboard"); or generate anyway without locking.',
+      'drama.goCast': 'Go to cast',
+      'drama.runAnyway': 'Generate without locking',
       'lock.reference': 'Reference lock',
       'lock.keyframe': 'Keyframe lock',
       'lock.text': 'Text only (unlocked)',
@@ -1088,6 +1100,8 @@ window.__ModuleLoader__.load({
       const [cast, setCast] = useState([])
       const [castDraft, setCastDraft] = useState({ name: '', aliases: '', look: '' })
       const [castBusy, setCastBusy] = useState(false)
+      const [urlEditing, setUrlEditing] = useState(null)
+      const [urlDraft, setUrlDraft] = useState('')
       const [storyBusy, setStoryBusy] = useState({})
       const [blockers, setBlockers] = useState([])
 
@@ -1246,14 +1260,17 @@ window.__ModuleLoader__.load({
         input.click()
       }
 
-      const setRefUrl = async (character, ref) => {
-        const url = window.prompt(t('cast.urlPrompt'), ref.url || '')
-        if (url === null) return
+      // `window.prompt` is inert in the Electron WebView, so the URL is edited
+      // inline on the card instead (this was why locking never succeeded).
+      const setRefUrl = async (character, ref, url) => {
         try {
           await patchJson(`/projects/${projectId}/cast/${character.id}/refs/${ref.id}`, {
-            url: url.trim(),
+            url: String(url || '').trim(),
           })
+          setUrlEditing(null)
+          setUrlDraft('')
           await reloadCast()
+          setError('')
         } catch (err) {
           setError(String(err))
         }
@@ -1362,6 +1379,23 @@ window.__ModuleLoader__.load({
         } catch (err) {
           setError(String(err))
           setBlockers(Array.isArray(err.blockers) ? err.blockers : [])
+        }
+      }
+
+      // Escape hatch: generate without identity locking. The result is honest
+      // about it — every shot still records lockMode and the UI shows it.
+      const runAnyway = async () => {
+        if (!projectId) return
+        try {
+          await runChainApi(projectId, {
+            shotIds: shots.map((shot) => shot.id),
+            skipPreflight: true,
+          })
+          setBlockers([])
+          setError('')
+          await reload()
+        } catch (err) {
+          setError(String(err))
         }
       }
 
@@ -1551,6 +1585,36 @@ window.__ModuleLoader__.load({
               h('div', null, t('drama.blockedHint')),
               ...blockers.map((blocker) =>
                 h('div', { key: blocker.shotId, className: 'agnes-mono' }, `#${blocker.index} ${blocker.reason}`),
+              ),
+              h(
+                'div',
+                { className: 'agnes-view-hint', style: { marginTop: '6px' } },
+                t('drama.blockedOptions'),
+              ),
+              h(
+                'div',
+                { className: 'agnes-actions' },
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'agnes-button agnes-ghost',
+                    onClick: () => {
+                      setPane('cast')
+                      setBlockers([])
+                    },
+                  },
+                  t('drama.goCast'),
+                ),
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'agnes-button agnes-primary',
+                    onClick: runAnyway,
+                  },
+                  t('drama.runAnyway'),
+                ),
               ),
             )
           : null,
@@ -1808,6 +1872,7 @@ window.__ModuleLoader__.load({
           ? h(
               'div',
               { className: 'agnes-view' },
+              h('div', { className: 'agnes-view-hint' }, `${t('cast.lockHint')} · ${t('cast.lockScope')}`),
               h(
                 'div',
                 { className: 'agnes-card' },
@@ -1889,10 +1954,18 @@ window.__ModuleLoader__.load({
                                 type: 'button',
                                 className: 'agnes-cast-slot',
                                 title: `${kind}${ref && ref.url ? ' · HTTPS' : ''}`,
-                                onClick: () =>
-                                  ref && ref.file
-                                    ? setRefUrl(character, ref)
-                                    : uploadCastRef(character, kind),
+                                onClick: () => {
+                                  if (ref && ref.file) {
+                                    setUrlEditing({
+                                      characterId: character.id,
+                                      refId: ref.id,
+                                      current: ref.url || '',
+                                    })
+                                    setUrlDraft(ref.url || '')
+                                  } else {
+                                    uploadCastRef(character, kind)
+                                  }
+                                },
                                 onDoubleClick: () => uploadCastRef(character, kind),
                               },
                               ref && ref.file
@@ -1918,6 +1991,72 @@ window.__ModuleLoader__.load({
                             )
                           }),
                         ),
+                        urlEditing && urlEditing.characterId === character.id
+                          ? (() => {
+                              const targetRef = (character.refs || []).find(
+                                (entry) => entry.id === urlEditing.refId,
+                              )
+                              return targetRef
+                                ? h(
+                                    'div',
+                                    { style: { marginTop: '6px' } },
+                                    h(
+                                      'div',
+                                      { className: 'agnes-view-hint' },
+                                      t('cast.urlPrompt'),
+                                    ),
+                                    h(
+                                      'div',
+                                      { className: 'agnes-row' },
+                                      h('input', {
+                                        className: 'agnes-input',
+                                        autoFocus: true,
+                                        placeholder: 'https://…/front.jpg',
+                                        value: urlDraft,
+                                        onChange: (event) => setUrlDraft(event.target.value),
+                                      }),
+                                      h(
+                                        'button',
+                                        {
+                                          type: 'button',
+                                          className: 'agnes-button agnes-primary',
+                                          disabled: !/^https:\/\/\S+$/i.test(urlDraft.trim()),
+                                          onClick: () => setRefUrl(character, targetRef, urlDraft),
+                                        },
+                                        t('action.save'),
+                                      ),
+                                    ),
+                                    h(
+                                      'div',
+                                      { className: 'agnes-actions' },
+                                      h(
+                                        'button',
+                                        {
+                                          type: 'button',
+                                          className: 'agnes-button agnes-ghost',
+                                          onClick: () => {
+                                            setUrlEditing(null)
+                                            setUrlDraft('')
+                                          },
+                                        },
+                                        t('action.cancel'),
+                                      ),
+                                      targetRef.url
+                                        ? h(
+                                            'button',
+                                            {
+                                              type: 'button',
+                                              className: 'agnes-button agnes-ghost',
+                                              onClick: () => setRefUrl(character, targetRef, ''),
+                                            },
+                                            t('cast.clearUrl'),
+                                          )
+                                        : null,
+                                    ),
+                                  )
+                                : null
+                            })()
+                          : null,
                         h(
                           'input',
                           {

@@ -21,7 +21,7 @@ import { mkdir, readFile, rename, stat, unlink, writeFile } from 'node:fs/promis
 import { homedir } from 'node:os'
 import path from 'node:path'
 
-import { composePrompt, collectReferenceUrls, seedFor } from './lib/context.js'
+import { composePrompt, seedFor } from './lib/context.js'
 import { createFrames } from './lib/frames.js'
 import { createProjects } from './lib/projects.js'
 import { createAssemble } from './lib/assemble.js'
@@ -1577,11 +1577,64 @@ export function apply(ctx, config = {}) {
    * frame, or a cast member whose reference image is public. The point is to
    * fail before any quota is spent, not 20 minutes in.
    */
+  /**
+   * Characters this shot should lock, in this order of precedence:
+   *   1. explicitly selected `context.characters`
+   *   2. names/aliases that actually appear in the shot prompt
+   *
+   * Auto-binding only ever *adds* characters that have a usable public
+   * reference, so a shot never silently loses an explicitly chosen lock.
+   */
+  function resolveShotCast(project, shot) {
+    const explicit = Array.isArray(shot?.context?.characters) ? shot.context.characters : []
+    const characters = Array.isArray(project?.bible?.characters) ? project.bible.characters : []
+    const locked = characters.filter((character) => character && (character.refs || []).some((ref) => /^https:\/\/\S+$/i.test(String(ref.url || ''))))
+    const auto = locked
+      .filter((character) => {
+        const names = [character.name, ...(Array.isArray(character.aliases) ? character.aliases : [])]
+          .map((name) => String(name || '').trim())
+          .filter(Boolean)
+        return names.some((name) => String(shot?.prompt || '').includes(name))
+      })
+      .map((character) => character.id)
+    return [...new Set([...explicit, ...auto])]
+  }
+
+  function referenceUrlsFor(project, shot) {
+    const cast = resolveShotCast(project, shot)
+    const characters = Array.isArray(project?.bible?.characters) ? project.bible.characters : []
+    const urls = []
+    for (const character of characters) {
+      if (!character || !cast.includes(character.id)) continue
+      for (const ref of Array.isArray(character.refs) ? character.refs : []) {
+        const url = String(ref?.url || '').trim()
+        if (/^https:\/\/\S+$/i.test(url) && !urls.includes(url)) urls.push(url)
+        if (urls.length >= 4) return urls
+      }
+    }
+    return urls
+  }
+
+  /**
+   * Which shots actually need identity locking?
+   *
+   * Only a shot whose cast resolves to at least one character (explicitly
+   * selected, or named in the prompt) has a face to protect. A pure scenery
+   * shot has nothing to lock, so it must never be blocked by this gate.
+   */
+  function lockIntent(project, shot) {
+    const cast = resolveShotCast(project, shot)
+    const characters = Array.isArray(project?.bible?.characters) ? project.bible.characters : []
+    const named = characters.filter((character) => character && cast.includes(character.id))
+    return { needsLock: named.length > 0, characters: named }
+  }
+
   function preflight(projectId, sequence) {
     const project = projects.getProject(projectId)
     const blockers = []
     sequence.forEach((shot, index) => {
       if (!shot) return
+      if (shot.status === 'ready' && shot.assetFile) return
       const previous = index > 0 ? sequence[index - 1] : undefined
       const hasApproved =
         (shot.firstFrame && shot.firstFrame.source === 'manual' && shot.firstFrame.file) ||
@@ -1589,16 +1642,27 @@ export function apply(ctx, config = {}) {
         shot.status === 'pending-review' ||
         Boolean(shot.storyboardFile)
       const hasTail = Boolean(previous && previous.tailFile)
-      const hasReference = collectReferenceUrls(project, shot).length > 0
-      if (shot.status === 'ready' && shot.assetFile) return
-      if (hasApproved || hasTail || hasReference) return
+      const referenceUrls = referenceUrlsFor(project, shot)
+      const hasReference = referenceUrls.length > 0
+      const { needsLock, characters } = lockIntent(project, shot)
       const index0 = shot.index || index + 1
-      const reason = hasReference
-        ? ''
-        : previous
-          ? `第 ${index0} 镜既没有已批准静帧，也缺少上一镜尾帧（需要 ffmpeg 或上传首帧）`
-          : `第 ${index0} 镜既没有已批准静帧，也没有可用的角色参考图`
-      blockers.push({ shotId: shot.id, index: index0, reason })
+
+      // Nothing to protect (scenery), or a lock already exists.
+      if (!needsLock) {
+        if (hasApproved || hasTail) return
+        // Even for scenery, the first shot needs *something* to start from
+        // only when the user asked for a locked run; plain text is fine.
+        return
+      }
+      if (hasReference || hasApproved || hasTail) return
+
+      const names = characters.map((character) => character.name).filter(Boolean).join('、')
+      blockers.push({
+        shotId: shot.id,
+        index: index0,
+        characters: characters.map((character) => character.id),
+        reason: `第 ${index0} 镜要锁 ${names} 的脸，但该角色还没有公网参考图，也没有已批准静帧；也可以给这镜上传首帧`,
+      })
     })
     return blockers
   }
@@ -1655,7 +1719,7 @@ export function apply(ctx, config = {}) {
 
           const previous = index > 0 ? projects.getShot(projectId, sequence[index - 1].id) : undefined
           const liveProject = projects.getProject(projectId)
-          const referenceUrls = collectReferenceUrls(liveProject, current)
+          const referenceUrls = referenceUrlsFor(liveProject, current)
 
           let firstFrameFile
           if (current.firstFrame && current.firstFrame.source === 'manual' && current.firstFrame.file) {
