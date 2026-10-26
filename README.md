@@ -71,6 +71,9 @@ DeepSeek Harness 的模型调用统一走 `POST /v1/chat/completions`，而 Agne
 - **短剧模式**：集/场/镜头线性编排，镜头列表 + 提示词/时长/镜头语言编辑 + 时间线总时长；「一键生成」按顺序执行，失败停在该镜，可从选中镜头续跑。
 - **尾帧接首帧**：上游完成后由宿主用 ffmpeg 抽尾帧，下一镜以 `mode: keyframe` + `first_frame`（base64）提交；需要本机安装 ffmpeg（或设置 `AGNES_FFMPEG` / 插件 `config.ffmpegPath`）。缺失时画布会提示「ffmpeg 未安装」，该镜之后的链路会标记为被阻塞而不是静默降级。
 - **上下文装配**：全局风格 + 角色卡 + 场景卡 + 承接说明 + 本镜提示词 + 镜头语言 + 禁止项，由宿主统一拼装后提交。
+- **剧本导入（0.4.0）**：粘贴纯文本剧本（`第X集 / EP / 场… / 1.` 标记），按规则确定性地拆成集/场/镜头草稿，不依赖大模型，导入后可在分镜表逐条改。
+- **合成导出（0.4.0）**：一键把已完成镜头用 ffmpeg 归一化并拼成一集 mp4（仅当每段都含音轨时才混音），面板内预览、下载。
+- **随时取消（0.4.0）**：单镜、链路都能在宿主侧真正中断（停轮询/退避），新状态「已取消」；生图/生视频、画布、短剧模式每个界面都有取消入口。
 
 **本地存储**
 
@@ -135,6 +138,11 @@ DeepSeek Harness 的模型调用统一走 `POST /v1/chat/completions`，而 Agne
 | GET/PATCH/DELETE | `/agnes-media/api/projects/:id` | 项目详情（含镜头、画布、ffmpeg 状态）/ 更新 / 删除 |
 | GET | `/agnes-media/api/projects/:id/canvas` · PUT 同路径 | 读取 / 保存画布节点、连线、视口 |
 | POST | `/agnes-media/api/projects/:id/chain` | 顺序执行链路（`{shotIds?, from?, force?}`） |
+| POST | `/agnes-media/api/projects/:id/chain/cancel` | 取消整条链路并中断当前任务 |
+| POST | `/agnes-media/api/task/:id/cancel` | 取消单个任务（宿主侧停轮询/退避） |
+| POST | `/agnes-media/api/projects/:id/script/parse` | 解析剧本生成分镜（`{text, replace?}`） |
+| POST | `/agnes-media/api/projects/:id/assemble` | ffmpeg 合成导出成片 |
+| GET | `/agnes-media/api/projects/:id/episode/:file?download=1` | 下载/预览合成结果 mp4 |
 | GET/POST | `/agnes-media/api/projects/:id/shots` | 镜头列表 / 新建 |
 | PATCH/DELETE | `/agnes-media/api/projects/:id/shots/:shotId` | 更新 / 删除镜头 |
 | POST | `/agnes-media/api/projects/:id/shots/:shotId/first-frame` | 上传手动首帧（base64 data URI） |

@@ -24,8 +24,10 @@ import path from 'node:path'
 import { composePrompt, seedFor } from './lib/context.js'
 import { createFrames } from './lib/frames.js'
 import { createProjects } from './lib/projects.js'
+import { createAssemble } from './lib/assemble.js'
+import { parseScript } from './lib/script.js'
 
-const VERSION = '0.3.1'
+const VERSION = '0.4.0'
 
 const DEFAULTS = {
   baseURL: 'https://api.agnes-ai.cn/v1',
@@ -693,7 +695,7 @@ function publicShot(shot) {
 }
 
 function createHandler(ctx, settings, store, tasks, services) {
-  const { projects, frames, startChain, cancelTask, cancelChain } = services
+  const { projects, frames, startChain, cancelTask, cancelChain, assemble, parseScript } = services
 
   return async (req, res) => {
     try {
@@ -878,6 +880,96 @@ function createHandler(ctx, settings, store, tasks, services) {
             tailUrl: shot.tailUrl,
           })),
         })
+        return
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/script\/parse$/)
+      if (match && method === 'POST') {
+        const projectId = decodeURIComponent(match[1])
+        const project = projects.getProject(projectId)
+        if (!project) throw new HttpError(404, '项目不存在')
+        const body = await readJson(req, 4 * 1024 * 1024)
+        const drafts = parseScript(body.text)
+        if (drafts.length === 0) throw new HttpError(400, '没有解析出任何镜头')
+        if (body.replace === true) {
+          for (const shot of projects.listShots(projectId)) {
+            await projects.deleteShot(projectId, shot.id)
+          }
+        }
+        const created = []
+        for (const draft of drafts) {
+          const shot = await projects.createShot(projectId, {
+            prompt: draft.prompt.slice(0, 4000),
+            duration: draft.duration,
+            episodeId: draft.episodeId,
+            sceneId: draft.sceneId,
+            context: { continuity: draft.sceneTitle ? `场景：${draft.sceneTitle}` : '' },
+          })
+          if (shot) created.push(shot)
+        }
+        sendJson(res, 200, { ok: true, shots: created.map(publicShot) })
+        return
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/assemble$/)
+      if (match && method === 'POST') {
+        const projectId = decodeURIComponent(match[1])
+        const project = projects.getProject(projectId)
+        if (!project) throw new HttpError(404, '项目不存在')
+        const body = await readJson(req)
+        const shots = projects.listShots(projectId)
+        const wanted = Array.isArray(body.shotIds) && body.shotIds.length > 0
+          ? shots.filter((shot) => body.shotIds.includes(shot.id))
+          : shots
+        const usable = wanted.filter((shot) => shot.status === 'ready' && shot.assetFile)
+        if (usable.length === 0) throw new HttpError(400, '还没有生成完成的镜头可以合成')
+        const files = usable.map((shot) => store.mediaPath(shot.assetFile))
+        const outFile = path.join(projects.projectDir(projectId), `episode-${Date.now()}.mp4`)
+        const result = await assemble.concat(files, outFile, {
+          width: Number(body.width) || 1280,
+          height: Number(body.height) || 720,
+          fps: Number(body.fps) || 24,
+        })
+        if (!result.ok) throw new HttpError(502, result.error)
+        const fileBase = path.basename(outFile)
+        sendJson(res, 200, {
+          ok: true,
+          file: fileBase,
+          duration: result.duration,
+          clipCount: usable.length,
+          url: `${ROUTE_PREFIX}/projects/${projectId}/episode/${encodeURIComponent(fileBase)}`,
+        })
+        return
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/episode\/([^/]+)$/)
+      if (match && (method === 'GET' || method === 'HEAD')) {
+        const projectId = decodeURIComponent(match[1])
+        const file = decodeURIComponent(match[2])
+        if (!/^episode-\d+\.mp4$/.test(file)) throw new HttpError(400, '文件名不合法')
+        const filePath = path.join(projects.projectDir(projectId), file)
+        let info
+        try {
+          info = await stat(filePath)
+        } catch {
+          throw new HttpError(404, '合成文件不存在')
+        }
+        res.writeHead(200, {
+          'content-type': 'video/mp4',
+          'content-length': String(info.size),
+          'accept-ranges': 'none',
+          'cache-control': 'private, max-age=86400',
+          ...(url.searchParams.get('download') === '1'
+            ? { 'content-disposition': `attachment; filename="${file}"` }
+            : {}),
+        })
+        if (method === 'HEAD') {
+          res.end()
+          return
+        }
+        const stream = createReadStream(filePath)
+        stream.on('error', () => res.destroy())
+        stream.pipe(res)
         return
       }
 
@@ -1259,6 +1351,13 @@ export function apply(ctx, config = {}) {
     startChain,
     cancelTask,
     cancelChain,
+    parseScript,
+    assemble: {
+      concat: async (files, outFile, options) => {
+        const ffmpeg = await frames.detect()
+        return createAssemble({ ffmpegPath: ffmpeg }).concat(files, outFile, options)
+      },
+    },
   })
 
   ctx.effect(

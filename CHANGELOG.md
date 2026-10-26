@@ -1,15 +1,23 @@
 # Changelog
 
-## 0.3.1
+## 0.4.0
 
-- Wrap the whole panel in an error boundary so a throwing view can no longer
-  blank the entire app.
-- Replace nested buttons with `span[role=button]` to keep the rendered HTML
-  valid.
-- Isolate canvas wheel events and guard against NaN node coordinates, so
-  scrolling or a malformed node cannot corrupt the canvas state.
-- Add cancel for running tasks, and allow continuing a chain from any shot on
-  every surface that shows one.
+- Cancel everywhere: `POST /task/:id/cancel` and `POST /projects/:id/chain/cancel`
+  stop the backoff/poll loops in the Host; new `cancelled` status, with a cancel
+  button on the single-shot pages, per node in the canvas, per row in drama mode,
+  plus a chain-level cancel while a run is in flight.
+- Drama mode gains **script import** (`POST /projects/:id/script/parse`): a plain
+  text script with `第X集 / EP / 场… / 1.` markers is split into episode/scene/shot
+  drafts deterministically, with no LLM call, and hand-editable.
+- Drama mode gains **episode assembly** (`POST /projects/:id/assemble`): finished
+  shots are normalized and concatenated with ffmpeg into one downloadable mp4;
+  audio is mapped only when every clip carries it, and the result streams from
+  `/projects/:id/episode/<file>`.
+- Canvas stability: the wheel listener is now a non-passive native handler
+  (`preventDefault`) so zooming cannot scroll the page and blank the graph; node
+  coordinates and zoom are guarded against `NaN`; an error boundary wraps the
+  panel so a view throw shows an inline message instead of a black screen; nested
+  buttons were replaced with `span[role=button]` for valid DOM.
 
 ## 0.3.0
 

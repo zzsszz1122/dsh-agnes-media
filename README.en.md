@@ -73,6 +73,9 @@ Those endpoints are outside the chat protocol. This plugin calls them from the *
 - **Drama mode**: linear episode/scene/shot editing with a shot list, prompt/duration/camera editor, continuity notes, and a timeline with total duration. **Generate all** runs shots in order; failures stop at the current shot and **Continue from selected** resumes without rerunning finished shots.
 - **Tail → head**: after a shot completes, the Host extracts its last frame with ffmpeg and submits the next shot as `mode: keyframe` with a base64 `first_frame`. Requires ffmpeg on the machine, or `AGNES_FFMPEG` / `config.ffmpegPath`. Without it the canvas warns and downstream shots are marked blocked rather than silently degraded.
 - **Context assembly**: global style + character/scene bible + continuity note + shot prompt + camera + negative prompt, composed by the Host.
+- **Script import (0.4.0)**: paste a plain-text script (`EP/第X集`, `场/SCENE`, `1.` markers) and it is split deterministically into episode/scene/shot drafts — no LLM call, and every line stays hand-editable.
+- **Episode assembly (0.4.0)**: one click concatenates the finished shots into a single mp4 with ffmpeg (normalized, audio mapped only when every clip has it), previewable and downloadable in the panel.
+- **Cancel anywhere (0.4.0)**: a single shot or a whole chain can be interrupted for real in the Host (the poll/backoff loops stop), with a new `cancelled` status and cancel buttons on every surface.
 
 **Local storage**
 
@@ -132,6 +135,14 @@ The endpoint defaults to `https://api.agnes-ai.cn/v1`. Override it on the plugin
 | POST | `/agnes-media/api/video` | Create a background video task |
 | POST | `/agnes-media/api/history/delete` | Delete one entry and its file |
 | GET | `/agnes-media/api/media/:id?download=1` | Result file, supports `HEAD` and `Range` |
+| GET/POST | `/agnes-media/api/projects` · GET/PATCH/DELETE `/projects/:id` | Project list/create and detail (shots + canvas + ffmpeg state) |
+| GET/PUT | `/agnes-media/api/projects/:id/canvas` | Read / save the node graph |
+| GET/POST · PATCH/DELETE | `/agnes-media/api/projects/:id/shots[/:shotId]` | Shot CRUD |
+| POST | `/agnes-media/api/projects/:id/chain` · `/chain/cancel` | Run a chain / cancel it |
+| POST | `/agnes-media/api/task/:id/cancel` | Cancel a single task in the Host |
+| POST | `/agnes-media/api/projects/:id/script/parse` | Parse a script into shot drafts |
+| POST | `/agnes-media/api/projects/:id/assemble` · GET `/episode/:file` | Concatenate into an mp4 · fetch it |
+| POST · GET | `/agnes-media/api/projects/:id/shots/:shotId/first-frame` · `/tail` | Upload a manual first frame · read a tail frame |
 
 All routes sit under the `/agnes-media/api` prefix and are served by the Host process; an authenticated DSH Web session is required.
 

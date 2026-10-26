@@ -97,6 +97,14 @@ window.__ModuleLoader__.load({
       'drama.shots': '镜头',
       'drama.empty': '还没有镜头',
       'drama.noProject': '先创建一个项目',
+      'drama.import': '剧本导入',
+      'drama.export': '合成导出',
+      'drama.exporting': '合成中…',
+      'drama.scriptPlaceholder': '粘贴剧本：每行一句；用「1. / #1」分镜、用「第X集 / 场…」分集分场',
+      'drama.scriptReplace': '导入将替换当前所有镜头',
+      'drama.doImport': '解析并导入',
+      'drama.downloaded': '成片已生成',
+      'drama.clips': '片段',
       'action.save': '保存',
       'action.cancel': '取消',
       'action.refreshList': '刷新',
@@ -188,6 +196,14 @@ window.__ModuleLoader__.load({
       'drama.shots': 'Shots',
       'drama.empty': 'No shots yet',
       'drama.noProject': 'Create a project first',
+      'drama.import': 'Import script',
+      'drama.export': 'Assemble',
+      'drama.exporting': 'Assembling…',
+      'drama.scriptPlaceholder': 'Paste a script: one line each; use "1. / #1" for shots, "EP01 / 第X集 / 场…" for episodes and scenes',
+      'drama.scriptReplace': 'Importing replaces every current shot',
+      'drama.doImport': 'Parse & import',
+      'drama.downloaded': 'Episode rendered',
+      'drama.clips': 'clips',
       'action.save': 'Save',
       'action.cancel': 'Cancel',
       'action.refreshList': 'Refresh',
@@ -973,6 +989,10 @@ window.__ModuleLoader__.load({
       const [newName, setNewName] = useState('')
       const [error, setError] = useState('')
       const [saving, setSaving] = useState(false)
+      const [scriptOpen, setScriptOpen] = useState(false)
+      const [scriptText, setScriptText] = useState('')
+      const [assembling, setAssembling] = useState(false)
+      const [assembled, setAssembled] = useState(null)
 
       const shots = detail ? detail.shots || [] : []
       const chain = detail && detail.project ? detail.project.chain : null
@@ -1124,6 +1144,38 @@ window.__ModuleLoader__.load({
         }
       }
 
+      const importScript = async () => {
+        if (!projectId) return
+        const text = scriptText.trim()
+        if (!text) {
+          setError(t('error.prompt'))
+          return
+        }
+        try {
+          await postJson(`/projects/${projectId}/script/parse`, { text, replace: true })
+          setScriptOpen(false)
+          setError('')
+          const data = await reload()
+          if (data.shots && data.shots[0]) setSelected(data.shots[0].id)
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const exportVideo = async () => {
+        if (!projectId) return
+        setAssembling(true)
+        try {
+          const data = await postJson(`/projects/${projectId}/assemble`, {})
+          setAssembled(data)
+          setError('')
+        } catch (err) {
+          setError(String(err))
+        } finally {
+          setAssembling(false)
+        }
+      }
+
       const total = shots.reduce((sum, shot) => sum + (Number(shot.duration) || 0), 0)
 
       return h(
@@ -1177,9 +1229,111 @@ window.__ModuleLoader__.load({
               },
               t('drama.runFrom'),
             ),
+            h(
+              'button',
+              {
+                key: 'import',
+                type: 'button',
+                className: 'agnes-button agnes-ghost',
+                disabled: Boolean(chain?.running),
+                onClick: () => setScriptOpen((value) => !value),
+              },
+              t('drama.import'),
+            ),
+            h(
+              'button',
+              {
+                key: 'export',
+                type: 'button',
+                className: 'agnes-button agnes-ghost',
+                disabled:
+                  assembling ||
+                  !shots.some((shot) => shot.status === 'ready' && shot.assetUrl) ||
+                  detail && detail.ffmpeg === false,
+                onClick: exportVideo,
+              },
+              assembling ? t('drama.exporting') : t('drama.export'),
+            ),
           ],
         }),
         h('div', { className: 'agnes-view-hint' }, t('drama.hint')),
+        assembled
+          ? h(
+              'div',
+              { className: 'agnes-card' },
+              h(
+                'label',
+                { className: 'agnes-label' },
+                `${t('drama.downloaded')} · ${assembled.clipCount} ${t('drama.clips')} · ${assembled.duration}${t('note.seconds')}`,
+              ),
+              h('video', {
+                className: 'agnes-media',
+                src: assembled.url,
+                controls: true,
+                style: { maxHeight: '340px' },
+              }),
+              h(
+                'div',
+                { className: 'agnes-actions' },
+                h(
+                  'a',
+                  {
+                    className: 'agnes-button agnes-primary',
+                    href: `${assembled.url}?download=1`,
+                    download: 'agnes-episode.mp4',
+                  },
+                  t('action.download'),
+                ),
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'agnes-button agnes-ghost',
+                    onClick: () => setAssembled(null),
+                  },
+                  t('action.clear'),
+                ),
+              ),
+            )
+          : null,
+        scriptOpen
+          ? h(
+              'div',
+              { className: 'agnes-card' },
+              h('label', { className: 'agnes-label' }, t('drama.scriptPlaceholder')),
+              h('textarea', {
+                className: 'agnes-textarea',
+                style: { minHeight: '160px' },
+                value: scriptText,
+                placeholder: t('drama.scriptPlaceholder'),
+                onChange: (event) => setScriptText(event.target.value),
+              }),
+              h('div', { className: 'agnes-view-hint' }, t('drama.scriptReplace')),
+              h(
+                'div',
+                { className: 'agnes-actions' },
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'agnes-button agnes-primary',
+                    disabled: !scriptText.trim(),
+                    onClick: importScript,
+                  },
+                  t('drama.doImport'),
+                ),
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'agnes-button agnes-ghost',
+                    onClick: () => setScriptOpen(false),
+                  },
+                  t('action.cancel'),
+                ),
+              ),
+            )
+          : null,
         error ? h('div', { className: 'agnes-error' }, error) : null,
         chain && chain.error ? h('div', { className: 'agnes-error' }, chain.error) : null,
         shots.length === 0
