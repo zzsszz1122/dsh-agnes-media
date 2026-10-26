@@ -442,6 +442,9 @@ window.__ModuleLoader__.load({
       .agnes-drama-row-status[data-status="failed"]{color:#ef4444}
       .agnes-drama-row-prompt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--dsw-alias-label-secondary)}
       .agnes-drama-row-duration{font-size:10px;color:var(--dsw-alias-label-secondary);text-align:right}
+      .agnes-drama-cancel{grid-column:1/-1;display:block;width:100%;margin-top:2px;padding:5px 10px;border-radius:6px;border:1px solid rgba(59,130,246,.5);background:rgba(59,130,246,.14);color:#3b82f6;font-family:inherit;font-size:11px;font-weight:600;line-height:1.4;text-align:center;cursor:pointer}
+      .agnes-drama-cancel:hover{background:rgba(59,130,246,.24);border-color:rgba(59,130,246,.75)}
+      .agnes-drama-cancel:active{background:rgba(59,130,246,.34)}
       .agnes-drama-detail{display:flex;flex-direction:column;gap:12px;min-width:0}
       .agnes-timeline{display:flex;gap:3px;height:36px;margin-top:4px}
       .agnes-timeline-clip{flex-basis:0;border-radius:5px;background:var(--dsw-alias-bg-layer-2);border:1px solid var(--dsw-alias-border-l1)}
@@ -1721,22 +1724,23 @@ window.__ModuleLoader__.load({
                     h(
                       'span',
                       { className: 'agnes-drama-row-duration' },
-                      shot.status === 'running' && shot.taskId
-                        ? h(
-                            'span',
-                            {
-                              className: 'agnes-mini',
-                              role: 'button',
-                              tabIndex: -1,
-                              onClick: (event) => {
-                                event.stopPropagation()
-                                cancelShotTask(shot).catch(() => {})
-                              },
-                            },
-                            t('action.cancelTask'),
-                          )
-                        : `${shot.duration || 5}${t('note.seconds')}`,
+                      `${shot.duration || 5}${t('note.seconds')}`,
                     ),
+                    shot.status === 'running' && shot.taskId
+                      ? h(
+                          'span',
+                          {
+                            className: 'agnes-drama-cancel',
+                            role: 'button',
+                            tabIndex: -1,
+                            onClick: (event) => {
+                              event.stopPropagation()
+                              cancelShotTask(shot).catch(() => {})
+                            },
+                          },
+                          t('action.cancelTask'),
+                        )
+                      : null,
                   ),
                 ),
               ),
