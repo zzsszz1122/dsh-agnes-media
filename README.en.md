@@ -57,7 +57,7 @@ One sidebar entry with four tabs:
 |---|---|
 | **Video** | Prompt, resolution, duration, seed for a single clip |
 | **Image** | Prompt, size, seed for a single still |
-| **Canvas** | Node graph: drag to arrange, wheel to zoom, drag empty space to pan, autosaves |
+| **Canvas** | Node graph: drag to arrange, wheel to zoom, drag empty space to pan, autosaves; videos and images can be **dragged straight in from Explorer** as media nodes |
 | **Drama** | Three sub-tabs: **Shots** (storyboard table and prompt editing), **Cast** (character reference images and lock status), **Storyboard review** (grid review of an episode's stills) |
 
 Results support preview, download (the Host route serves `Range`), open in a new tab, and copy link; a persistent history rail keeps finished items and allows per-item delete.
@@ -89,6 +89,11 @@ Results support preview, download (the Host route serves `Range`), open in a new
 - **Generate all**: runs sequentially with single concurrency and a per-project lock, can resume from any shot, and never re-runs shots that are already done.
 - **Episode assembly**: finished shots are normalized and concatenated with ffmpeg into one mp4 (audio is mapped only when every clip carries it), previewed and downloadable in the panel.
 - **Failure isolation**: a failed shot is marked and recorded in `chain.failures` without tearing down the rest of the run.
+
+### Long durations and canvas media
+
+- **Durations**: choose 5 / 10 / 15 / 20 / 25 / 30 seconds (multiples of 5). Upstream accepts at most 12 seconds per request, so a longer shot is split into **balanced** chunks (15→8+7, 20→10+10, 30→10+10+10); each chunk's tail frame feeds the next chunk's keyframe, and the pieces are concatenated with ffmpeg into one continuous file.
+- **Imported media**: drop a video or image from Explorer onto the canvas and it is stored under `projects/<pid>/assets/imports/` as a media node. Videos play inline, with `Range` support so seeking works.
 
 ### Character consistency
 
@@ -229,6 +234,8 @@ All routes sit under the `/agnes-media/api` prefix and are served by the Host pr
 | POST | `/projects/:id/script/parse` | Parse a script into shots (`{text, replace?}`) |
 | POST | `/projects/:id/assemble` | Concatenate the episode with ffmpeg |
 | GET | `/projects/:id/episode/:file?download=1` | Preview / download the assembled mp4 |
+| POST | `/projects/:id/imports` | Upload canvas media (base64, mp4/mov/webm/png/jpeg/webp, 200MB cap) |
+| GET/HEAD | `/projects/:id/imports/:assetId` | Serve imported media with `Range` support |
 
 **Cast and stills**
 
