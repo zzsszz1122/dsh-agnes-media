@@ -17,7 +17,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { createReadStream } from 'node:fs'
-import { mkdir, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, readdir, rename, stat, unlink, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import path from 'node:path'
 
@@ -27,7 +27,7 @@ import { createProjects } from './lib/projects.js'
 import { createAssemble } from './lib/assemble.js'
 import { bindCharactersToShots, parseScript } from './lib/script.js'
 
-const VERSION = '0.6.0'
+const VERSION = '0.7.0'
 
 const DEFAULTS = {
   baseURL: 'https://api.agnes-ai.cn/v1',
@@ -1254,6 +1254,166 @@ function createHandler(ctx, settings, store, tasks, services) {
           if (shot) created.push(shot)
         }
         sendJson(res, 200, { ok: true, shots: created.map(publicShot) })
+        return
+      }
+
+      /* ------------------------- canvas imports ------------------------- */
+
+      // A video or image dragged in from Explorer. Stored under the project's
+      // assets/imports/ so the canvas node keeps working after a restart.
+      match = rest.match(/^\/projects\/([^/]+)\/imports$/)
+      if (match && method === 'POST') {
+        const projectId = decodeURIComponent(match[1])
+        const project = projects.getProject(projectId)
+        if (!project) throw new HttpError(404, '项目不存在')
+        const body = await readJson(req, 200 * 1024 * 1024)
+        const dataUri = String(body.dataUri || '')
+        const parsed = /^data:([^;]+);base64,([\s\S]+)$/.exec(dataUri)
+        if (!parsed) throw new HttpError(400, '导入内容不是合法的 base64 data URI')
+        const mime = parsed[1].toLowerCase()
+        const buffer = Buffer.from(parsed[2], 'base64')
+        if (buffer.length === 0) throw new HttpError(400, '导入内容为空')
+        if (buffer.length > 200 * 1024 * 1024) throw new HttpError(413, '素材过大（上限 200MB）')
+        const allowed = [
+          'video/mp4',
+          'video/quicktime',
+          'video/webm',
+          'image/png',
+          'image/jpeg',
+          'image/webp',
+        ]
+        const kind = mime.startsWith('video/') ? 'video' : mime.startsWith('image/') ? 'image' : ''
+        if (!kind || !allowed.includes(mime)) {
+          throw new HttpError(415, `不支持的素材类型：${mime}`)
+        }
+        const extension = /mp4/.test(mime)
+          ? 'mp4'
+          : /quicktime/.test(mime)
+            ? 'mov'
+            : /webm/.test(mime)
+              ? 'webm'
+              : /png/.test(mime)
+                ? 'png'
+                : /webp/.test(mime)
+                  ? 'webp'
+                  : 'jpg'
+        const name = String(body.name || `import.${extension}`).slice(0, 160)
+        const id = `imp_${randomUUID().replace(/-/g, '').slice(0, 12)}`
+        const relative = `imports/${id}.${extension}`
+        const target = projects.assetPath(projectId, relative)
+        await mkdir(path.dirname(target), { recursive: true })
+        await writeFile(target, buffer)
+        // Duration is a convenience label, never a reason to fail an import:
+        // probe with a hard timeout and fall back to 0.
+        let duration = 0
+        if (kind === 'video') {
+          try {
+            const ffmpegPath = await Promise.race([
+              frames.detect(),
+              new Promise((resolve) => setTimeout(() => resolve(''), 3000)),
+            ])
+            if (ffmpegPath) {
+              const assembleApi = createAssemble({ ffmpegPath })
+              duration = await Promise.race([
+                assembleApi.probeDuration(target),
+                new Promise((resolve) => setTimeout(() => resolve(0), 8000)),
+              ])
+            }
+          } catch {
+            duration = 0
+          }
+        }
+        sendJson(res, 200, {
+          ok: true,
+          asset: {
+            id,
+            kind,
+            name,
+            file: relative,
+            mime,
+            bytes: buffer.length,
+            duration: Math.round((Number(duration) || 0) * 10) / 10,
+            url: `${ROUTE_PREFIX}/projects/${projectId}/imports/${id}`,
+          },
+        })
+        return
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/imports\/([^/]+)$/)
+      if (match && (method === 'GET' || method === 'HEAD')) {
+        const projectId = decodeURIComponent(match[1])
+        const assetId = decodeURIComponent(match[2])
+        if (!/^imp_[a-z0-9]+$/i.test(assetId)) throw new HttpError(400, '素材标识不合法')
+        const dir = projects.assetPath(projectId, 'imports')
+        let entries = []
+        try {
+          entries = await readdir(dir)
+        } catch {
+          throw new HttpError(404, '素材不存在')
+        }
+        const file = entries.find((entry) => entry.startsWith(`${assetId}.`))
+        if (!file) throw new HttpError(404, '素材不存在')
+        const filePath = path.join(dir, file)
+        let info
+        try {
+          info = await stat(filePath)
+        } catch {
+          throw new HttpError(404, '素材文件不存在')
+        }
+        const extension = path.extname(file).toLowerCase()
+        const contentType =
+          extension === '.mp4'
+            ? 'video/mp4'
+            : extension === '.mov'
+              ? 'video/quicktime'
+              : extension === '.webm'
+                ? 'video/webm'
+                : extension === '.png'
+                  ? 'image/png'
+                  : extension === '.webp'
+                    ? 'image/webp'
+                    : 'image/jpeg'
+        // Range support keeps video seeking usable on imported clips.
+        const range = String(req.headers.range || '')
+        if (range) {
+          const matchRange = /bytes=(\d*)-(\d*)/.exec(range)
+          if (matchRange) {
+            const total = info.size
+            const start = matchRange[1] ? Number(matchRange[1]) : 0
+            const end = matchRange[2] ? Math.min(Number(matchRange[2]), total - 1) : total - 1
+            if (start >= total || end < start) {
+              res.writeHead(416, { 'content-range': `bytes */${total}` })
+              res.end()
+              return
+            }
+            res.writeHead(206, {
+              'content-type': contentType,
+              'content-length': String(end - start + 1),
+              'content-range': `bytes ${start}-${end}/${total}`,
+              'accept-ranges': 'bytes',
+              'cache-control': 'private, max-age=86400',
+            })
+            if (method === 'HEAD') {
+              res.end()
+              return
+            }
+            createReadStream(filePath, { start, end }).pipe(res)
+            return
+          }
+        }
+        res.writeHead(200, {
+          'content-type': contentType,
+          'content-length': String(info.size),
+          'accept-ranges': 'bytes',
+          'cache-control': 'private, max-age=86400',
+        })
+        if (method === 'HEAD') {
+          res.end()
+          return
+        }
+        const stream = createReadStream(filePath)
+        stream.on('error', () => res.destroy())
+        stream.pipe(res)
         return
       }
 

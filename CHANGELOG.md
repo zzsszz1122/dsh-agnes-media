@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.0
+
+- **Drag files from Explorer onto the canvas**: dropping a video or image uploads
+  it to `projects/<pid>/assets/imports/` and adds a media node at the drop point.
+  Multiple files drop in a column. Video nodes play inline; both kinds can be
+  deleted individually.
+- New routes: `POST /projects/:id/imports` (base64 upload, 200MB cap, mp4/mov/
+  webm/png/jpeg/webp only) and `GET|HEAD /projects/:id/imports/:assetId` with
+  HTTP Range support so seeking works on imported clips.
+- Imported clips get their duration probed with ffprobe (3s detect timeout, 8s
+  probe timeout) purely as a node label — a probe failure never fails the import.
+- Canvas fixes found while building this: media nodes now survive a save/reload
+  (`saveCanvas` used to coerce every unknown node type back to `shot`), and the
+  node merge no longer drops non-shot nodes when shots refresh.
+
 ## 0.6.0
 
 - **Durations are multiples of 5 up to 30s** (`5/10/15/20/25/30`) instead of

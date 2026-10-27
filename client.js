@@ -81,7 +81,10 @@ window.__ModuleLoader__.load({
       'canvas.connecting': '选择目标镜头…',
       'canvas.firstFrame': '上传首帧',
       'canvas.ffmpegMissing': 'ffmpeg 未安装，尾帧无法自动抽取',
-      'canvas.empty': '还没有镜头，点「添加镜头」开始',
+      'canvas.empty': '还没有镜头，点「添加镜头」开始；也可以把视频/图片从资源管理器拖进来',
+      'canvas.imported': '导入',
+      'canvas.unsupported': '只支持拖入视频或图片',
+      'canvas.dropHint': '松开即可导入到画布',
       'drama.hint': '线性编排：每镜承接上一镜尾帧，可按顺序一键生成。',
       'drama.addShot': '添加镜头',
       'drama.runAll': '一键生成',
@@ -219,7 +222,10 @@ window.__ModuleLoader__.load({
       'canvas.connecting': 'Pick a target shot…',
       'canvas.firstFrame': 'Upload first frame',
       'canvas.ffmpegMissing': 'ffmpeg is missing; tail frames cannot be extracted',
-      'canvas.empty': 'No shots yet — press “Add shot” to start',
+      'canvas.empty': 'No shots yet — press “Add shot”, or drag a video or image here',
+      'canvas.imported': 'Imported',
+      'canvas.unsupported': 'Only video or image files can be dropped',
+      'canvas.dropHint': 'Release to import onto the canvas',
       'drama.hint': 'Linear editing: every shot continues from the previous tail frame and can be generated in order.',
       'drama.addShot': 'Add shot',
       'drama.runAll': 'Generate all',
@@ -296,6 +302,16 @@ window.__ModuleLoader__.load({
     const IMAGE_SIZES = ['1024x1024', '1024x768', '768x1024', '1280x720', '720x1280', '1536x1536', '2048x2048']
     const VIDEO_SIZES = ['720P', '1080P']
     const VIDEO_SECONDS = ['5', '10', '15', '20', '25', '30']
+
+    /** Read a dropped File into a data URI without touching the DOM elsewhere. */
+    function readFileAsDataUri(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result))
+        reader.onerror = () => reject(new Error(`读取失败：${file.name}`))
+        reader.readAsDataURL(file)
+      })
+    }
 
     async function readJsonResponse(response) {
       let data = {}
@@ -418,6 +434,11 @@ window.__ModuleLoader__.load({
       .agnes-canvas{position:relative;height:min(62vh,560px);min-height:360px;border:1px solid var(--dsw-alias-border-l1);border-radius:12px;overflow:hidden;background:var(--dsw-alias-bg-layer-1);touch-action:none;cursor:grab}
       .agnes-canvas-inner{position:absolute;left:0;top:0;transform-origin:0 0;background-image:radial-gradient(rgba(127,127,127,.18) 1px, transparent 1px);background-size:24px 24px}
       .agnes-canvas-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dsw-alias-label-secondary);font-size:12.5px}
+      .agnes-canvas[data-drag="true"]{outline:2px dashed #2563eb;outline-offset:-6px}
+      .agnes-canvas[data-drag="true"]::after{content:'';position:absolute;inset:0;background:rgba(37,99,235,.08);pointer-events:none}
+      .agnes-node-media video,.agnes-node-media img.agnes-node-media{width:100%;display:block;border-radius:8px;background:#000}
+      .agnes-node-media{border-left:3px solid #8b5cf6}
+      .agnes-node-media .agnes-node-head{color:#8b5cf6}
       .agnes-edges{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
       .agnes-node{position:absolute;background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l1);border-radius:10px;padding:8px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;box-shadow:var(--dsw-shadow-lv1,none)}
       .agnes-node[data-selected="true"]{border-color:#2563eb;box-shadow:0 0 0 1px #2563eb}
@@ -539,7 +560,12 @@ window.__ModuleLoader__.load({
 
     function mergeNodes(existing, shots) {
       const byId = new Map((existing || []).map((node) => [node.id, node]))
-      return (shots || []).map((shot, index) => {
+      const shotIds = new Set((shots || []).map((shot) => shot.id))
+      // Imported media nodes are not backed by a shot, so they survive as-is.
+      const extras = (existing || []).filter(
+        (node) => node && node.type !== 'shot' && !shotIds.has(node.id),
+      )
+      const shotNodes = (shots || []).map((shot, index) => {
         const node = byId.get(shot.id)
         const fallbackX = 40 + (index % 4) * (NODE_W + 48)
         const fallbackY = 70 + Math.floor(index / 4) * (NODE_H + 56)
@@ -551,6 +577,7 @@ window.__ModuleLoader__.load({
           data: {},
         }
       })
+      return [...shotNodes, ...extras]
     }
 
     function statusColor(status) {
@@ -609,6 +636,7 @@ window.__ModuleLoader__.load({
       const [newName, setNewName] = useState('')
       const [error, setError] = useState('')
       const [connecting, setConnecting] = useState('')
+      const [dragging, setDragging] = useState(false)
       const areaRef = useRef(null)
       const dragRef = useRef(null)
       const panRef = useRef(null)
@@ -687,6 +715,51 @@ window.__ModuleLoader__.load({
           x: (event.clientX - rect.left - viewport.x) / viewport.zoom,
           y: (event.clientY - rect.top - viewport.y) / viewport.zoom,
         }
+      }
+
+      /** Drop files from Explorer onto the canvas: upload, then add a node. */
+      const onDrop = async (event) => {
+        event.preventDefault()
+        setDragging(false)
+        if (!projectId) return
+        const files = Array.from(event.dataTransfer?.files || [])
+        if (files.length === 0) return
+        const point = toCanvasPoint(event)
+        const next = [...nodes]
+        let y = point.y
+        for (const file of files) {
+          const isVideo = file.type.startsWith('video/')
+          const isImage = file.type.startsWith('image/')
+          if (!isVideo && !isImage) {
+            setError(t('canvas.unsupported'))
+            continue
+          }
+          try {
+            const dataUri = await readFileAsDataUri(file)
+            const data = await postJson(`/projects/${projectId}/imports`, {
+              dataUri,
+              name: file.name,
+            })
+            next.push({
+              id: data.asset.id,
+              type: 'media',
+              x: point.x,
+              y,
+              data: { ...data.asset, kind: data.asset.kind },
+            })
+            y += NODE_H + 16
+          } catch (err) {
+            setError(String(err))
+          }
+        }
+        setNodes(next)
+        scheduleSave(next, edges, viewport)
+      }
+
+      const removeMediaNode = (nodeId) => {
+        const next = nodes.filter((node) => node.id !== nodeId)
+        setNodes(next)
+        scheduleSave(next, edges, viewport)
       }
 
       const onNodeDown = (event, node) => {
@@ -936,6 +1009,18 @@ window.__ModuleLoader__.load({
             onPointerMove: onAreaMove,
             onPointerUp: onAreaUp,
             onPointerLeave: onAreaUp,
+            'data-drag': dragging ? 'true' : 'false',
+            onDragOver: (event) => {
+              if (!event.dataTransfer?.types?.includes('Files')) return
+              event.preventDefault()
+              event.dataTransfer.dropEffect = 'copy'
+              if (!dragging) setDragging(true)
+            },
+            onDragLeave: (event) => {
+              if (event.currentTarget.contains(event.relatedTarget)) return
+              setDragging(false)
+            },
+            onDrop: onDrop,
           },
           shots.length === 0
             ? h('div', { className: 'agnes-canvas-empty' }, t('canvas.empty'))
@@ -975,6 +1060,53 @@ window.__ModuleLoader__.load({
                 ),
                 ...nodes.map((node) => {
                   const shot = shots.find((entry) => entry.id === node.id)
+                  if (!shot && node.type === 'media' && node.data && node.data.url) {
+                    const media = node.data
+                    return h(
+                      'div',
+                      {
+                        key: node.id,
+                        className: 'agnes-node agnes-node-media',
+                        'data-status': 'imported',
+                        style: { left: node.x, top: node.y, width: NODE_W },
+                      },
+                      h(
+                        'div',
+                        { className: 'agnes-node-head', onPointerDown: (event) => onNodeDown(event, node) },
+                        h('b', null, media.kind === 'video' ? '🎬' : '🖼'),
+                        h(
+                          'span',
+                          { className: 'agnes-node-status' },
+                          media.duration ? `${media.duration}s` : t('canvas.imported'),
+                        ),
+                      ),
+                      media.kind === 'video'
+                        ? h('video', {
+                            className: 'agnes-node-media',
+                            src: media.url,
+                            controls: true,
+                            preload: 'metadata',
+                          })
+                        : h('img', { className: 'agnes-node-media', src: media.url, alt: media.name || '' }),
+                      h('div', { className: 'agnes-node-prompt', title: media.name }, media.name || ''),
+                      h(
+                        'div',
+                        { className: 'agnes-node-actions' },
+                        h(
+                          'button',
+                          {
+                            type: 'button',
+                            className: 'agnes-mini',
+                            onClick: (event) => {
+                              event.stopPropagation()
+                              removeMediaNode(node.id)
+                            },
+                          },
+                          t('action.delete'),
+                        ),
+                      ),
+                    )
+                  }
                   if (!shot) return null
                   return h(
                     'div',
