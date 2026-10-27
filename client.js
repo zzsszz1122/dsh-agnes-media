@@ -131,6 +131,8 @@ window.__ModuleLoader__.load({
       'cast.back': '背视图',
       'cast.setUrl': '设置公网 URL',
       'cast.inShot': '本镜出场角色',
+      'ref.fromShots': '参考前面的镜头',
+      'ref.hint': '选中后优先用该镜的静帧/尾帧作为本镜首帧；● 表示已生成',
       'cast.urlPrompt': '粘贴公网可访问的 HTTPS 图片地址（参考模式必需）',
       'cast.clearUrl': '清除 URL',
       'cast.lockHint': '锁脸需要至少一张公网 HTTPS 参考图；本地图片无法被上游读取',
@@ -267,6 +269,8 @@ window.__ModuleLoader__.load({
       'cast.back': 'Back',
       'cast.setUrl': 'Set public URL',
       'cast.inShot': 'Characters in this shot',
+      'ref.fromShots': 'Reference earlier shots',
+      'ref.hint': 'The selected shot supplies this one\'s first frame (still or tail); ● means rendered',
       'cast.urlPrompt': 'Paste a publicly reachable HTTPS image URL (required by reference mode)',
       'cast.clearUrl': 'Clear URL',
       'cast.lockHint': 'Locking needs at least one public HTTPS reference image; the upstream cannot read local files',
@@ -291,7 +295,7 @@ window.__ModuleLoader__.load({
 
     const IMAGE_SIZES = ['1024x1024', '1024x768', '768x1024', '1280x720', '720x1280', '1536x1536', '2048x2048']
     const VIDEO_SIZES = ['720P', '1080P']
-    const VIDEO_SECONDS = ['4', '5', '6', '8', '10', '12']
+    const VIDEO_SECONDS = ['5', '10', '15', '20', '25', '30']
 
     async function readJsonResponse(response) {
       let data = {}
@@ -1330,6 +1334,18 @@ window.__ModuleLoader__.load({
         }
       }
 
+      const toggleShotRef = async (shot, refId) => {
+        if (!projectId) return
+        const current = Array.isArray(shot.refs) ? shot.refs : []
+        const next = current.includes(refId) ? current.filter((id) => id !== refId) : [...current, refId]
+        try {
+          await patchShotApi(projectId, shot.id, { refs: next })
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
       const createProject = async (name) => {
         try {
           const data = await postJson('/projects', { name: name || '未命名项目' })
@@ -1771,7 +1787,7 @@ window.__ModuleLoader__.load({
                               value: String(draft.duration),
                               onChange: (event) => setDraft({ ...draft, duration: Number(event.target.value) }),
                             },
-                            ...[4, 5, 6, 8, 10, 12].map((value) =>
+                            ...['5', '10', '15', '20', '25', '30'].map((value) =>
                               h('option', { key: value, value: String(value) }, `${value}${t('note.seconds')}`),
                             ),
                           ),
@@ -1819,6 +1835,36 @@ window.__ModuleLoader__.load({
                                 ),
                               ),
                             ),
+                          )
+                        : null,
+                      shots.filter((entry) => entry.index < (selectedShot.index || 0)).length > 0
+                        ? h(
+                            'div',
+                            null,
+                            h('label', { className: 'agnes-label', style: { marginTop: '10px' } }, t('ref.fromShots')),
+                            h(
+                              'div',
+                              { className: 'agnes-cast-toggle' },
+                              ...shots
+                                .filter((entry) => entry.index < (selectedShot.index || 0))
+                                .map((entry) =>
+                                  h(
+                                    'button',
+                                    {
+                                      key: entry.id,
+                                      type: 'button',
+                                      className: 'agnes-cast-pill',
+                                      'data-active': (selectedShot.refs || []).includes(entry.id)
+                                        ? 'true'
+                                        : 'false',
+                                      onClick: () => toggleShotRef(selectedShot, entry.id),
+                                    },
+                                    `#${entry.index}`,
+                                    entry.status === 'ready' ? ' ●' : '',
+                                  ),
+                                ),
+                            ),
+                            h('div', { className: 'agnes-view-hint' }, t('ref.hint')),
                           )
                         : null,
                       h(

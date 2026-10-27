@@ -47,7 +47,11 @@ const IMAGE_SIZES = new Set([
   '2048x2048',
 ])
 const VIDEO_SIZES = new Set(['720P', '1080P'])
-const VIDEO_SECONDS = new Set(['4', '5', '6', '8', '10', '12'])
+// Duration is a multiple of 5 up to 30s; the upstream free model tops out at 12s
+// per request, so anything longer is stitched from chunks (see videoTask).
+const VIDEO_SECONDS = new Set(['5', '10', '15', '20', '25', '30'])
+const CHUNK_SECONDS = 12
+const MAX_SECONDS = 30
 const MAX_PROMPT = 4000
 const HISTORY_LIMIT = 80
 const MAX_MEDIA_BYTES = 512 * 1024 * 1024
@@ -454,10 +458,190 @@ function createTasks(ctx, settings, store, hooks = {}) {
     }
   }
 
+  /**
+   * Split a duration into upstream-sized chunks (max `CHUNK_SECONDS` each).
+   *
+   * The split is balanced rather than greedy: 15s becomes 8+7, not 12+3. A 3s
+   * tail reads as a glitch, and merging it back would produce an illegal 15s
+   * request — which is exactly what a greedy split silently did before.
+   */
+  function planChunks(totalSeconds) {
+    const total = Math.max(5, Math.min(MAX_SECONDS, Number(totalSeconds) || 5))
+    if (total <= CHUNK_SECONDS) return [total]
+    const count = Math.ceil(total / CHUNK_SECONDS)
+    const base = Math.floor(total / count)
+    const chunks = Array.from({ length: count }, () => base)
+    let remainder = total - base * count
+    for (let index = 0; index < chunks.length && remainder > 0; index += 1) {
+      chunks[index] += 1
+      remainder -= 1
+    }
+    return chunks
+  }
+
+  /**
+   * Long shots: render each chunk as its own upstream request, feed the previous
+   * chunk's tail frame into the next as its keyframe, then concatenate.
+   *
+   * This keeps continuity across the seam (the next chunk literally starts on the
+   * frame the previous one ended on) and it is the only way to exceed the
+   * upstream's 12s limit without a different model.
+   */
+  async function videoTaskChunked(id) {
+    const item = store.find(id)
+    if (!item) return
+    const chunks = planChunks(item.seconds)
+    const chunkFiles = []
+    try {
+      const deadline = Date.now() + TASK_DEADLINE_MS
+      const key = await requireKey(ctx, settings)
+      let carryFrame = item.firstFrameFile
+      let referenceUrls = Array.isArray(item.referenceUrls) ? item.referenceUrls.slice(0, 4) : []
+
+      for (let index = 0; index < chunks.length; index += 1) {
+        if (cancelled.has(id)) return
+        if (Date.now() > deadline) throw new HttpError(504, '视频生成超时（超过 40 分钟）')
+        const seconds = chunks[index]
+        await update(id, {
+          status: 'running',
+          stage: 'submit',
+          note: `第 ${index + 1}/${chunks.length} 段（${seconds}秒）`,
+          progress: Math.round((index / chunks.length) * 90),
+        })
+        const chunkPrompt =
+          index === 0 ? item.prompt : `${item.prompt}\n【续接】从上一段的最后一帧继续，动作与光线保持连贯。`
+        const payload = {
+          model: item.model,
+          prompt: chunkPrompt,
+          mode: carryFrame ? 'keyframe' : 'text',
+          seconds: String(seconds),
+          size: item.size,
+        }
+        if (index === 0 && referenceUrls.length > 0) {
+          payload.mode = 'reference'
+          payload.reference_image_urls = referenceUrls
+        }
+        if (carryFrame) {
+          if (typeof hooks.frameDataUri !== 'function') {
+            throw new HttpError(500, '首帧功能未初始化')
+          }
+          payload.first_frame = await hooks.frameDataUri(carryFrame)
+        }
+        if (typeof item.seed === 'number') payload.seed = item.seed + index
+
+        const submitted = await upstreamRetry(
+          settings,
+          key,
+          '/videos',
+          { method: 'POST', body: payload, timeoutMs: 120000 },
+          id,
+          update,
+          deadline,
+          () => cancelled.has(id),
+        )
+        const chunkVideoId = String(submitted?.video_id || submitted?.id || submitted?.task_id || '')
+        if (!chunkVideoId) throw new HttpError(502, '视频接口没有返回任务 ID', { transient: true })
+
+        let doneUrl = ''
+        while (Date.now() < deadline) {
+          if (cancelled.has(id)) return
+          await sleep(POLL_INTERVAL_MS)
+          if (cancelled.has(id)) return
+          let state
+          try {
+            state = await upstream(settings, key, `/videos/${encodeURIComponent(chunkVideoId)}`, {
+              timeoutMs: 60000,
+            })
+          } catch (error) {
+            if (error && error.transient) continue
+            throw error
+          }
+          const status = String(state?.status || '')
+          if (status === 'failed') {
+            throw new HttpError(502, extractUpstreamError(state, '视频生成失败'))
+          }
+          if (status === 'completed') {
+            doneUrl = String(state?.metadata?.url || state?.url || '')
+            break
+          }
+        }
+        if (!doneUrl) throw new HttpError(504, '分段视频生成超时')
+
+        const media = await downloadMedia('video', doneUrl)
+        if (cancelled.has(id)) return
+        const chunkFile = `${id}-part${index + 1}.${media.extension}`
+        await writeFile(store.mediaPath(chunkFile), media.buffer)
+        chunkFiles.push(store.mediaPath(chunkFile))
+
+        // Carry the seam forward: the next chunk starts on this frame.
+        if (index < chunks.length - 1) {
+          const seam = store.mediaPath(`${id}-seam${index + 1}.jpg`)
+          const frame = await hooks.extractTail(chunkFiles[chunkFiles.length - 1], seam)
+          carryFrame = frame.ok ? seam : undefined
+          referenceUrls = []
+        }
+        await update(id, {
+          progress: Math.round(((index + 1) / chunks.length) * 90),
+          note: `已完成 ${index + 1}/${chunks.length} 段`,
+        })
+      }
+
+      await update(id, { stage: 'download', progress: 94, note: '正在拼接分段' })
+      const joined = store.mediaPath(`${id}.mp4`)
+      const result = await hooks.concat(chunkFiles, joined)
+      if (!result.ok) throw new HttpError(502, result.error)
+      await update(id, {
+        status: 'ready',
+        file: `${id}.mp4`,
+        mime: 'video/mp4',
+        upstream: '',
+        progress: 100,
+        stage: '',
+        note: '',
+        parts: chunkFiles.length,
+      })
+      for (const part of chunkFiles) unlink(part).catch(() => {})
+      if (typeof hooks.onVideoReady === 'function') {
+        try {
+          await hooks.onVideoReady(store.find(id))
+        } catch {
+          /* a frame problem must not fail the generation */
+        }
+      }
+    } catch (error) {
+      for (const part of chunkFiles) unlink(part).catch(() => {})
+      if (cancelled.has(id) || (error instanceof HttpError && error.status === 409)) {
+        await update(id, { status: 'cancelled', stage: '', note: '', error: '已取消' })
+        if (typeof hooks.onVideoCancelled === 'function') {
+          try {
+            await hooks.onVideoCancelled(store.find(id))
+          } catch {
+            /* keep the cancellation authoritative */
+          }
+        }
+      } else if (!cancelled.has(id)) {
+        await update(id, { status: 'failed', error: messageOf(error), note: '' })
+        if (typeof hooks.onVideoFailed === 'function') {
+          try {
+            await hooks.onVideoFailed(store.find(id), error)
+          } catch {
+            /* keep the failure authoritative */
+          }
+        }
+      }
+    }
+  }
+
   async function videoTask(id) {
     const item = store.find(id)
     if (!item) return
     if (cancelled.has(id)) return
+    // The free upstream model tops out at 12s per request. Anything longer is
+    // generated as chained chunks and stitched, so a 30s shot is still one file.
+    const plannedSeconds = Number(item.seconds) || 5
+    if (plannedSeconds > CHUNK_SECONDS) {
+      return videoTaskChunked(id)
+    }
     try {
       const deadline = Date.now() + TASK_DEADLINE_MS
       let videoId = item.videoId
@@ -1449,6 +1633,11 @@ export function apply(ctx, config = {}) {
 
   const tasks = createTasks(ctx, settings, store, {
     frameDataUri: (file) => frames.dataUri(file),
+    extractTail: (videoFile, outFile) => frames.extractTail(videoFile, outFile),
+    concat: async (inputs, outFile) => {
+      const assemble = createAssemble({ ffmpegPath: await frames.detect() })
+      return assemble.concat(inputs, outFile, {})
+    },
     onVideoReady,
     onVideoFailed,
     onVideoCancelled,
@@ -1600,6 +1789,37 @@ export function apply(ctx, config = {}) {
     return [...new Set([...explicit, ...auto])]
   }
 
+  /**
+   * A still frame borrowed from an earlier shot, used when the shot has no
+   * approved storyboard of its own. This is the canvas "reference an earlier
+   * clip" path: the referenced shot's approved still or tail frame becomes this
+   * shot's starting image.
+   */
+  async function borrowedFrameFor(projectId, shot, allShots) {
+    const refs = Array.isArray(shot?.refs) ? shot.refs : []
+    if (refs.length === 0) return undefined
+    const byId = new Map((allShots || []).map((entry) => [entry.id, entry]))
+    for (const refId of refs) {
+      const source = byId.get(refId)
+      if (!source) continue
+      const candidates = [
+        source.storyboardFile,
+        source.firstFrame && source.firstFrame.file,
+        source.tailFile,
+      ].filter(Boolean)
+      for (const relative of candidates) {
+        const absolute = projects.assetPath(projectId, relative)
+        try {
+          const info = await stat(absolute)
+          if (info.size > 0) return absolute
+        } catch {
+          /* keep looking */
+        }
+      }
+    }
+    return undefined
+  }
+
   function referenceUrlsFor(project, shot) {
     const cast = resolveShotCast(project, shot)
     const characters = Array.isArray(project?.bible?.characters) ? project.bible.characters : []
@@ -1655,6 +1875,8 @@ export function apply(ctx, config = {}) {
         return
       }
       if (hasReference || hasApproved || hasTail) return
+      // A canvas reference to an earlier shot also counts as a starting image.
+      if (Array.isArray(shot.refs) && shot.refs.length > 0) return
 
       const names = characters.map((character) => character.name).filter(Boolean).join('、')
       blockers.push({
@@ -1726,6 +1948,11 @@ export function apply(ctx, config = {}) {
             firstFrameFile = projects.assetPath(projectId, current.firstFrame.file)
           } else if (previous && previous.tailFile) {
             firstFrameFile = projects.assetPath(projectId, previous.tailFile)
+          }
+          // Canvas reference: borrow an earlier shot's frame when this one has
+          // none of its own (explicit first frame always wins).
+          if (!firstFrameFile) {
+            firstFrameFile = await borrowedFrameFor(projectId, current, allShots)
           }
 
           // Reference mode needs public URLs; without them fall back visibly.
