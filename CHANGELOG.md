@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.6.0
+
+- **Durations are multiples of 5 up to 30s** (`5/10/15/20/25/30`) instead of
+  `4/5/6/8/10/12`. Invalid values still fall back to 5 instead of failing.
+- **Chunked rendering for long shots**: the upstream free model accepts at most
+  12s per request, so anything longer is split into *balanced* chunks
+  (15→8+7, 20→10+10, 25→9+8+8, 30→10+10+10), each chunk rendered separately and
+  the previous chunk's tail frame fed in as the next one's keyframe, then
+  concatenated with ffmpeg into a single file. A greedy split used to produce an
+  illegal 15s request (12+3 merged back), which silently exceeded the limit.
+- **Shot-to-shot frame references**: a shot can name earlier shots
+  (`shot.refs`), and when it has no approved still or first frame of its own it
+  borrows the referenced shot's approved still / first frame / tail frame as its
+  starting image. This is the canvas "reference an earlier clip" path; explicit
+  first frames still win. Drama mode exposes it as "参考前面的镜头" pills, and the
+  preflight gate counts a reference as a valid lock.
+- Character locking fixes carried in this line: reference URLs are edited inline
+  (`window.prompt` is inert in the WebView, which is why locking never worked),
+  cast auto-binds by character name/alias in the prompt, and the preflight gate
+  only blocks shots that actually have a character to lock.
+
 ## 0.5.0
 
 - **Cast library**: `project.bible.characters[]` now carries `aliases`, `refs[]`
