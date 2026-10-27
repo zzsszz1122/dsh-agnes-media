@@ -98,6 +98,10 @@ The costliest failure in short-form drama is a character whose face changes betw
 
 Each character has a name, aliases, a look description, and up to four reference kinds: `front`, `side`, `back`, `extra`. References are stored inside the project directory, and each can carry a **public HTTPS URL** — only public URLs can be consumed by the upstream reference mode.
 
+![Cast tab: three-view references and lock status](docs/screenshot-cast.png)
+
+The screenshot above is **Drama → Cast**: the front view is uploaded, side and back are still empty, and the card reads "not locked" because no public URL has been set yet.
+
 **2. Reference-mode locking**
 
 The video request picks a mode by priority:

@@ -48,6 +48,7 @@
     "locale/*.json",
     "icon.svg",
     "docs/panel.jpg",
+    "docs/screenshot-cast.png",
     "screenshots.json"
   ],
   "dsh": {
