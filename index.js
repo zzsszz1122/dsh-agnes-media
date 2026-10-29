@@ -32,7 +32,7 @@ import { createProjects } from './lib/projects.js'
 import { createAssemble } from './lib/assemble.js'
 import { bindCharactersToShots, parseScript } from './lib/script.js'
 
-const VERSION = '1.0.1'
+const VERSION = '1.0.2'
 
 const DEFAULTS = {
   baseURL: 'https://api.agnes-ai.cn/v1',

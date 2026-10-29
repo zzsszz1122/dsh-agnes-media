@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.2
+
+- **Storefront screenshots refreshed for the 1.0 composer.** The old panel shot
+  predated the composer, the canvas and the drama tabs, so it no longer
+  resembled the UI. Replaced with the composer carrying an attachment's 首帧
+  role tag, and the full panel showing the tab bar, the key fingerprint chip and
+  a finished result. The old image is gone from the repository and the package.
+- Documentation and assets only — routes, request shapes and the rendered tabs
+  are byte-identical to 1.0.1.
+
 ## 1.0.1
 
 - **A key pasted with a YAML separator no longer 401s.** The credential store is
