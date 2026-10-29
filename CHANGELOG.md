@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.7.1
+
+- **API keys are normalized before being sent upstream.** A pasted key carrying a
+  trailing newline, wrapping quotes, or an accidental `Bearer `/`token ` prefix
+  used to be forwarded verbatim, and upstream answered `HTTP 401：无效的令牌` —
+  which reads like a broken key when the key itself is fine. Whitespace is now
+  collapsed and trimmed, a pasted scheme is stripped, and one layer of wrapping
+  quotes is removed.
+- **401/403 errors are self-diagnosing.** The message now names the credential
+  source, a non-reversible fingerprint of the token actually sent (first 4 +
+  last 4 + length, never the full key), and the upstream URL, so "is the plugin
+  using my key?" and "is it pointed at my Agnes host?" can be answered from the
+  error alone.
+- `GET /status` additionally returns `keyHint` and `keyNeededCleaning`; the panel
+  shows the fingerprint as a chip next to the key status and notes when a stored
+  token had to be cleaned.
+- README gains a 401 troubleshooting section covering the credential resolution
+  order (`AGNES_API_KEY` credential → env var → `agnes-api-key` record), a stale
+  env var shadowing Settings, and a key that belongs to a different Agnes host
+  than the default `https://api.agnes-ai.cn/v1`.
+
 ## 0.7.0
 
 - **Drag files from Explorer onto the canvas**: dropping a video or image uploads

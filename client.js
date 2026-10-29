@@ -42,6 +42,8 @@ window.__ModuleLoader__.load({
       'status.key.ok': 'Key 已就绪',
       'status.key.missing': 'Key 未配置',
       'status.hint': '请到「设置 → 模型 → agnes」填写 API Key，或在 DSH 凭据中新增 {env}。',
+      'status.keyHintTitle': '当前实际使用的令牌指纹，可与 Agnes 控制台里的 Key 对照（不会显示完整密钥）',
+      'status.keyCleaned': '检测到令牌里有多余的空格、换行或引号，已自动清理后再发送。',
       'status.backend': '后台任务',
       'empty.title': '还没有生成结果',
       'empty.hint': '写一段提示词后点击生成；任务在后台运行，可以随时切走。',
@@ -183,6 +185,8 @@ window.__ModuleLoader__.load({
       'status.key.ok': 'Key ready',
       'status.key.missing': 'Key missing',
       'status.hint': 'Add the API key in Settings → Models → agnes, or store {env} in DSH credentials.',
+      'status.keyHintTitle': 'Fingerprint of the token actually in use — compare it with the key in your Agnes console (the full key is never shown)',
+      'status.keyCleaned': 'The stored token contained stray spaces, newlines or quotes; it was cleaned before being sent.',
       'status.backend': 'background task',
       'empty.title': 'Nothing generated yet',
       'empty.hint': 'Write a prompt and generate; the task keeps running while you are away.',
@@ -2566,6 +2570,11 @@ window.__ModuleLoader__.load({
                 configured ? t('status.key.ok') : t('status.key.missing'),
                 status && status.source ? ` · ${status.source}` : '',
               ),
+              // Shows which secret is really in use, so a 401 can be compared
+              // against the key in the Agnes console without printing it.
+              configured && status && status.keyHint
+                ? h('span', { className: 'agnes-chip agnes-mono', title: t('status.keyHintTitle') }, status.keyHint)
+                : null,
               status && status.baseURL
                 ? h('span', { className: 'agnes-chip agnes-mono' }, status.baseURL)
                 : null,
@@ -2586,6 +2595,9 @@ window.__ModuleLoader__.load({
                 { className: 'agnes-error' },
                 (t('status.hint') || '').replace('{env}', status.apiKeyEnv || 'AGNES_API_KEY'),
               )
+            : null,
+          configured && status && status.keyNeededCleaning
+            ? h('div', { className: 'agnes-view-hint' }, t('status.keyCleaned'))
             : null,
           h(
             'div',

@@ -27,7 +27,7 @@ import { createProjects } from './lib/projects.js'
 import { createAssemble } from './lib/assemble.js'
 import { bindCharactersToShots, parseScript } from './lib/script.js'
 
-const VERSION = '0.7.0'
+const VERSION = '0.7.1'
 
 const DEFAULTS = {
   baseURL: 'https://api.agnes-ai.cn/v1',
@@ -140,15 +140,44 @@ function cleanPrompt(value) {
   return prompt
 }
 
+/**
+ * Clean an API key before it is sent upstream.
+ *
+ * A pasted key very often carries a trailing newline, wrapping quotes, or an
+ * accidental `Bearer ` prefix. Upstream answers all of those with HTTP 401
+ * "无效的令牌", which reads like a broken key when the key itself is fine — so the
+ * token is normalized here instead of being sent verbatim.
+ */
+function normalizeApiKey(value) {
+  let key = String(value ?? '')
+  // Collapse any embedded whitespace/newlines, then trim the ends.
+  key = key.replace(/\s+/g, ' ').trim()
+  // Drop a scheme someone pasted along with the secret.
+  key = key.replace(/^(Bearer|bearer|token)\s+/i, '')
+  // Drop one layer of wrapping quotes from a copy out of JSON or a shell line.
+  const quoted = /^(['"])(.*)\1$/.exec(key)
+  if (quoted) key = quoted[2].trim()
+  return key
+}
+
+/** A safe, non-reversible hint about which secret is actually in use. */
+function keyFingerprint(value) {
+  const key = String(value || '')
+  if (key.length < 12) return `长度 ${key.length}`
+  return `${key.slice(0, 4)}…${key.slice(-4)}（长度 ${key.length}）`
+}
+
 async function resolveKey(ctx, settings) {
   const ref = settings.apiKeyEnv
   try {
     const resolved = await ctx.credentials.resolve(ref)
     if (resolved) {
-      const value = typeof resolved === 'string' ? resolved : resolved.value
+      const raw = typeof resolved === 'string' ? resolved : resolved.value
+      const value = normalizeApiKey(raw)
       if (value) {
         return {
           value,
+          dirty: value !== String(raw ?? ''),
           source:
             typeof resolved === 'string' ? 'credentials' : resolved.source || 'credentials',
         }
@@ -157,11 +186,17 @@ async function resolveKey(ctx, settings) {
   } catch {
     /* fall through to the ambient environment and record half */
   }
-  if (process.env[ref]) return { value: process.env[ref], source: 'env' }
+  if (process.env[ref]) {
+    const value = normalizeApiKey(process.env[ref])
+    if (value) return { value, dirty: value !== String(process.env[ref]), source: 'env' }
+  }
   try {
     const record = await ctx.credentials.readRecord('agnes-api-key')
     if (record && record.kind === 'api-key' && record.key) {
-      return { value: record.key, source: 'credentials' }
+      const value = normalizeApiKey(record.key)
+      if (value) {
+        return { value, dirty: value !== String(record.key), source: 'credentials' }
+      }
     }
   } catch {
     /* not configured through the record half */
@@ -222,6 +257,18 @@ async function upstream(settings, key, endpoint, options = {}) {
   }
   if (!response.ok) {
     const detail = extractUpstreamError(data, text.slice(0, 300))
+    // An auth rejection is almost always "the token we sent is not the one you
+    // think", so say exactly which token and which host were involved.
+    if (response.status === 401 || response.status === 403) {
+      throw new HttpError(
+        response.status === 401 ? 502 : 502,
+        `上游 HTTP ${response.status}：${detail || '无错误详情'}。` +
+          `已发送的令牌来源 ${key.source || '未知'}、${keyFingerprint(key.value)}，` +
+          `上游地址 ${url}。请确认这个令牌属于该地址对应的 Agnes 账号，` +
+          `并且没有被复制进多余的空格、换行或引号。`,
+        { upstreamStatus: response.status, auth: true },
+      )
+    }
     throw new HttpError(502, `上游 HTTP ${response.status}：${detail || '无错误详情'}`, {
       upstreamStatus: response.status,
     })
@@ -822,6 +869,9 @@ async function statusRoute(ctx, settings, res, frames) {
     version: VERSION,
     configured: Boolean(key),
     source: key ? key.source : null,
+    // Lets a user confirm which secret is really in use, without ever printing it.
+    keyHint: key ? keyFingerprint(key.value) : null,
+    keyNeededCleaning: key ? Boolean(key.dirty) : false,
     apiKeyEnv: settings.apiKeyEnv,
     baseURL: settings.baseURL,
     videoModel: settings.videoModel,
