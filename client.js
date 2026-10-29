@@ -173,12 +173,10 @@ window.__ModuleLoader__.load({
       'home.add.library': '从资产库添加',
       'home.add.local': '本地上传',
       'home.add.hint': '支持 png / jpeg / webp，单张不超过 16MB',
-      'home.assets.title': '从资产库添加',
       'home.assets.empty': '资产库里还没有图片，先用「本地上传」或生成一张。',
       'home.assets.hint': '选用历史里已生成的图片作为首帧',
       'home.mode.video': '视频生成',
       'home.mode.image': '图片生成',
-      'home.compose.title': '创作模式',
       'home.compose.auto': '全能模式',
       'home.compose.keyframe': '首帧模式',
       'home.compose.text': '纯文本',
@@ -361,12 +359,10 @@ window.__ModuleLoader__.load({
       'home.add.library': 'From library',
       'home.add.local': 'Upload from device',
       'home.add.hint': 'png / jpeg / webp, up to 16MB each',
-      'home.assets.title': 'Add from library',
       'home.assets.empty': 'No images in the library yet — upload one or generate one first.',
       'home.assets.hint': 'Use an image already in history as the first frame',
       'home.mode.video': 'Video',
       'home.mode.image': 'Image',
-      'home.compose.title': 'Mode',
       'home.compose.auto': 'Versatile',
       'home.compose.keyframe': 'First frame',
       'home.compose.text': 'Text only',
@@ -574,6 +570,7 @@ window.__ModuleLoader__.load({
       .agnes-example{font-size:11.5px;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-2);border:1px solid var(--dsw-alias-border-l1);border-radius:999px;padding:3px 9px;cursor:pointer;font-family:inherit}
       .agnes-example:hover{color:var(--dsw-alias-label-primary)}
       .agnes-error{display:flex;gap:8px;align-items:flex-start;border:1px solid rgba(239,68,68,.55);background:rgba(239,68,68,.08);color:#ef4444;border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.5;margin-top:12px;word-break:break-word}
+      .agnes-error-panel{align-items:center;justify-content:space-between;flex-wrap:wrap}
       .agnes-progress{height:6px;border-radius:999px;background:rgba(127,127,127,.25);overflow:hidden;margin-top:10px}
       .agnes-progress>i{display:block;height:100%;background:#2563eb;transition:width .4s ease}
       .agnes-stagemark{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--dsw-alias-label-secondary);margin-top:8px}
@@ -778,8 +775,23 @@ window.__ModuleLoader__.load({
         if (this.state.error) {
           return h(
             'div',
-            { className: 'agnes-error' },
-            `视图出错：${String((this.state.error && this.state.error.message) || this.state.error)}`,
+            { className: 'agnes-error agnes-error-panel' },
+            h(
+              'span',
+              null,
+              `视图出错：${String((this.state.error && this.state.error.message) || this.state.error)}`,
+            ),
+            // A render-time error used to leave the panel permanently dead until
+            // a page refresh; this restores it in place.
+            h(
+              'button',
+              {
+                type: 'button',
+                className: 'agnes-button agnes-ghost',
+                onClick: () => this.setState({ error: null }),
+              },
+              '重新加载视图',
+            ),
           )
         }
         return this.props.children
@@ -1069,12 +1081,16 @@ window.__ModuleLoader__.load({
       }
 
       const onAreaMove = (event) => {
-        if (panRef.current && !dragRef.current) {
-          setViewport((current) => ({
-            ...current,
-            x: panRef.current.originX + (event.clientX - panRef.current.startX),
-            y: panRef.current.originY + (event.clientY - panRef.current.startY),
-          }))
+        // Snapshot the pan origin *before* scheduling the update. The updater
+        // runs later, during React's render pass, and by then onAreaUp may have
+        // already nulled panRef — reading it inside the updater threw
+        // "Cannot read properties of null (reading 'originX')" and took the
+        // whole panel down through the error boundary.
+        const pan = panRef.current
+        if (pan && !dragRef.current) {
+          const dx = event.clientX - pan.startX
+          const dy = event.clientY - pan.startY
+          setViewport((current) => ({ ...current, x: pan.originX + dx, y: pan.originY + dy }))
           return
         }
         const drag = dragRef.current
@@ -2877,8 +2893,10 @@ window.__ModuleLoader__.load({
       }, [hasPending, refresh])
 
       // Host-advertised submit route for this entry: a video task route
-      // (`/v1/video`), never a chat completion route.
-      const videoPath = (status && status.videoPath) || '/v1/video'
+      // (`/v1/video`), never a chat completion route. A host from before 0.8
+      // does not advertise it and still answers on `/video`, so that is the
+      // fallback — the panel keeps working across an app restart either way.
+      const videoPath = (status && status.videoPath) || '/video'
       const firstAttachment = attachments.length > 0 ? attachments[0] : null
       const usesReference = Boolean(firstAttachment) && composeMode !== 'text'
 
@@ -3518,7 +3536,7 @@ window.__ModuleLoader__.load({
             h(
               'label',
               { className: 'agnes-label' },
-              tab === 'image' ? t('model.image') : t('model.video'),
+              t('model.image'),
             ),
             h(
               'div',
@@ -3534,7 +3552,7 @@ window.__ModuleLoader__.load({
             h('textarea', {
               className: 'agnes-textarea',
               value: prompt,
-              placeholder: tab === 'image' ? t('placeholder.image') : t('placeholder.video'),
+              placeholder: t('placeholder.image'),
               onChange: (event) => setPrompt(event.target.value),
               disabled: busy,
             }),
@@ -3566,59 +3584,30 @@ window.__ModuleLoader__.load({
                 'div',
                 null,
                 h('label', { className: 'agnes-label' }, t('field.size')),
-                tab === 'image'
-                  ? h(
-                      'select',
-                      {
-                        className: 'agnes-select',
-                        value: imageSize,
-                        disabled: busy,
-                        onChange: (event) => setImageSize(event.target.value),
-                      },
-                      ...IMAGE_SIZES.map((size) => h('option', { key: size, value: size }, size)),
-                    )
-                  : h(
-                      'select',
-                      {
-                        className: 'agnes-select',
-                        value: videoSize,
-                        disabled: busy,
-                        onChange: (event) => setVideoSize(event.target.value),
-                      },
-                      ...VIDEO_SIZES.map((size) => h('option', { key: size, value: size }, size)),
-                    ),
+                h(
+                  'select',
+                  {
+                    className: 'agnes-select',
+                    value: imageSize,
+                    disabled: busy,
+                    onChange: (event) => setImageSize(event.target.value),
+                  },
+                  ...IMAGE_SIZES.map((size) => h('option', { key: size, value: size }, size)),
+                ),
               ),
-              tab === 'video'
-                ? h(
-                    'div',
-                    null,
-                    h('label', { className: 'agnes-label' }, t('field.seconds')),
-                    h(
-                      'select',
-                      {
-                        className: 'agnes-select',
-                        value: seconds,
-                        disabled: busy,
-                        onChange: (event) => setSeconds(event.target.value),
-                      },
-                      ...VIDEO_SECONDS.map((value) =>
-                        h('option', { key: value, value }, `${value}${t('note.seconds')}`),
-                      ),
-                    ),
-                  )
-                : h(
-                    'div',
-                    null,
-                    h('label', { className: 'agnes-label' }, t('field.seed')),
-                    h('input', {
-                      className: 'agnes-input',
-                      value: seed,
-                      inputMode: 'numeric',
-                      placeholder: '—',
-                      disabled: busy,
-                      onChange: (event) => setSeed(event.target.value),
-                    }),
-                  ),
+              h(
+                'div',
+                null,
+                h('label', { className: 'agnes-label' }, t('field.seed')),
+                h('input', {
+                  className: 'agnes-input',
+                  value: seed,
+                  inputMode: 'numeric',
+                  placeholder: '—',
+                  disabled: busy,
+                  onChange: (event) => setSeed(event.target.value),
+                }),
+              ),
             ),
             h(
               'div',
@@ -3632,11 +3621,7 @@ window.__ModuleLoader__.load({
                   onClick: () => generate(),
                   style: { flex: 1 },
                 },
-                busy
-                  ? t('action.generating')
-                  : tab === 'image'
-                    ? t('action.generate.image')
-                    : t('action.generate.video'),
+                busy ? t('action.generating') : t('action.generate.image'),
               ),
               busy
                 ? h(

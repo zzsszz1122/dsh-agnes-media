@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.8.1
+
+- **Fixed `视图出错：Cannot read properties of null (reading 'originX')`.** Canvas
+  panning read `panRef.current` *inside* the `setViewport` updater. That updater
+  runs later, during React's render pass, and `onAreaUp` had already set the ref
+  to `null` — so any pan whose `pointerup` landed before React flushed the move
+  threw during render and the error boundary replaced the entire panel. The origin
+  is now snapshotted before the update is scheduled.
+- **The view error boundary can recover in place.** It renders a 重新加载视图
+  button instead of leaving the panel blank until a full page refresh.
+
+## 0.8.0
+
+- **The 生视频 tab is now a composer, not a form.** It follows the reference
+  layout: a centred title, one large rounded input, and a toolbar of chips —
+  `+` (add reference), 视频生成, the model, 全能模式, duration, resolution, `@`,
+  and a teal submit button. The result preview and the history rail moved below
+  the composer instead of sitting beside it.
+- **The reference travels as a first frame.** `+ → 本地上传` sends the picked
+  image as a data URI; `+ → 从资产库添加` reuses an image already in the history
+  (`firstFrameTaskId`). The Host writes it to `<task>-firstframe.*` and submits
+  upstream with `mode: "keyframe"`, then deletes the scratch file when the task
+  finishes. Four references at most; the first one is the frame.
+- **The entry submits to `POST /v1/video`, not a chat route.** `/v1/video` is the
+  canonical path and replaces `/v1/chat/completions` for everything this entry
+  does; `/video` remains as an alias of the same handler so scripts and older
+  panels keep working. The path is configurable (`config.videoPath`, upstream via
+  `config.videoUpstreamPath`) and advertised in `GET /status`, and the panel
+  falls back to `/video` when talking to a Host that predates this release.
+- 全能模式 / 首帧模式 / 纯文本 decide whether the reference is used at all:
+  Versatile uses it when present, First-frame refuses to submit without one, and
+  Text-only ignores it.
+- The image, canvas and drama tabs are untouched. `test-harness/ui.mjs` renders
+  each tab to HTML and the three of them are byte-identical before and after
+  this release; `--checks` walks the composer end to end (menu, library pick,
+  submit payload, mode switch), and `test-harness/route.mjs` pins the route
+  contract, including that `/v1/chat/completions` is a 404 on the panel.
+
 ## 0.7.2
 
 - **Delete shots from the drama shot list.** Right-clicking a row in 短剧模式 →
