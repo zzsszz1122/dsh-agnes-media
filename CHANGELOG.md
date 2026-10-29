@@ -1,5 +1,56 @@
 # Changelog
 
+## 1.0.1
+
+- **A key pasted with a YAML separator no longer 401s.** The credential store is
+  YAML; a flow-style entry can leave its comma glued to the value (`sk-…,`). The
+  Host's own parser drops it, but any reader that hands back the raw line made the
+  plugin send the comma as part of the token, and the upstream answered a bare
+  「无效的令牌」. `normalizeApiKey()` now strips a trailing `,` / `;` in addition to
+  whitespace, zero-width characters, a pasted `Bearer ` prefix and wrapping quotes.
+- Verified against the live gateway: the stored key resolves to 51 characters and
+  `GET /v1/models` answers 200; the raw line including the comma answers 401.
+- This release also rolls up the 1.0 line: the composer entry (0.8.0), a reference
+  mode that actually reaches the renderer on `images` (0.9.0), and the
+  首帧/参考 picker that appears when a single image is uploaded (0.9.1).
+
+## 0.9.1
+
+- **A single upload is no longer silently made the first frame.** It arrives as
+  待选 and the composer shows an inline chooser: 首帧 / 参考, each with what it
+  actually does (首帧 locks the opening framing, pose and light for the first
+  instant; 参考 conditions the whole clip's face, palette, props and style
+  without deciding the opening frame), plus a one-line summary of the
+  difference.
+- Nothing is submitted while a role is undecided — the submit is refused with a
+  hint instead of guessing. Multi-file drops keep the previous rule (first is
+  the frame, the rest are references), and the tag on any thumbnail reopens the
+  chooser at any time.
+- Choosing a role switches 首帧模式 / 参考模式 back to 全能模式 when the current
+  mode would otherwise ignore the choice, so the picker always wins over a mode
+  that overrides it.
+
+## 0.9.0
+
+- **参考模式修好了，它此前从未生效。** 插件一直把参考图发在
+  `reference_image_urls` 上，而该网关把它判为「不是允许的请求字段」直接 400；
+  代码随后的降级分支又把它悄悄换成 keyframe/text，于是「锁脸」在日志里只剩一行
+  提示。参考图现在发在 `images`（实测为合法字段），并保留降级路径。
+- **主界面可以真正把素材当参考图用。** 每个素材带角色标签：第一张默认 `首帧`，
+  其余默认 `参考`，点标签即可互换（同时只有一个首帧）。「创作模式」新增
+  **参考模式**：全部素材作参考图、不占首帧；全能模式按角色分工；首帧模式只认首帧；
+  纯文本忽略素材。
+- **`@` 变成素材选择器。** 之前只会插入第一个素材的引用词；现在弹出素材列表，
+  序号与缩略图一致，插入 `@图片N` 到光标处。
+- 三种参考图输入都能走通：`referenceUrls`（公网 HTTPS，渲染端可自行抓取）、
+  `referenceTaskIds`（历史图，宿主优先复用其结果产物在 Agnes CDN 上的公开 URL，
+  没有才复制本地文件）、`referenceFrames`（本地上传的 data URI）。单条请求上限 4 张。
+- **降级不再静默。** 上游拒绝参考图时，`referenceDropped` 会写进任务记录，结果卡上
+  显示「上游未接受参考图，本条已按降级模式生成：<原因>」；没被拒绝时则在结果卡显示
+  「参考 × N」。
+- 未改动的页签（生图 / 画布 / 短剧）渲染结果与上一版逐字节一致；路由测试从 18 项
+  增加到 28 项，界面自检从 14 项增加到 23 项。
+
 ## 0.8.1
 
 - **Fixed `视图出错：Cannot read properties of null (reading 'originX')`.** Canvas

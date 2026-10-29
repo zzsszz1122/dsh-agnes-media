@@ -55,10 +55,21 @@ One sidebar entry with four tabs:
 
 | Tab | Purpose |
 |---|---|
-| **Video** | Prompt, resolution, duration, seed for a single clip |
+| **Video** | The composer: title, one large input, and a toolbar (`+` reference, video/image switch, model, mode, duration, resolution, `@` cite, submit). This task's result and the history sit underneath. Submits to `POST /v1/video` |
 | **Image** | Prompt, size, seed for a single still |
 | **Canvas** | Node graph: drag to arrange, wheel to zoom, drag empty space to pan, autosaves; videos and images can be **dragged straight in from Explorer** as media nodes |
 | **Drama** | Three sub-tabs: **Shots** (storyboard table and prompt editing), **Cast** (character reference images and lock status), **Storyboard review** (grid review of an episode's stills) |
+
+Uploading a **single** image does not silently make it the first frame: it lands as 待选 and the composer opens an inline chooser that spells out **first frame** (locks the opening framing, pose and light) versus **reference** (conditions the whole clip's face, palette, props and style without deciding the opening). Submission is blocked until you pick. Dropping several files at once keeps the old rule (first is the frame, the rest are references), and clicking any thumbnail's tag reopens the chooser (one frame at a time).
+
+| Mode | How the material is used |
+|---|---|
+| Versatile | Frames go out as `first_frame` with `mode: "keyframe"`; references go out as `images` with `mode: "reference"`. Both can be sent together |
+| Reference | Every attachment is a reference; no keyframe is sent |
+| First frame | Only the keyframe is used; references are ignored |
+| Text only | All attachments are ignored |
+
+Three kinds of reference input are accepted, four images per request: a public HTTPS URL (`referenceUrls`, fetched by the renderer), an image already in history (`referenceTaskIds` — the Host reuses its public CDN URL when there is one, otherwise copies the downloaded file), and a local upload (`referenceFrames`, a data URI whose acceptance depends on the model; a rejection degrades the task and is reported on the result card). `@` is a picker: the number matches the thumbnail and only a citation token is inserted — the binding lives in the Host.
 
 Results support preview, download (the Host route serves `Range`), open in a new tab, and copy link; a persistent history rail keeps finished items and allows per-item delete.
 
@@ -208,7 +219,8 @@ All routes sit under the `/agnes-media/api` prefix and are served by the Host pr
 | GET | `/task/:id` | One task state |
 | POST | `/task/:id/cancel` | Cancel one task |
 | POST | `/image` | Create an image task |
-| POST | `/video` | Create a video task |
+| POST | `/v1/video` | Create a video task — the submit route of the 生视频 entry (`{ prompt, size, seconds, seed?, firstFrame?, firstFrameTaskId?, referenceUrls?, referenceTaskIds?, referenceFrames? }`) |
+| POST | `/video` | Same handler, kept as the pre-0.8 path |
 | POST | `/history/delete` | Delete one entry and its file |
 | GET | `/media/:id?download=1` | Result file, supports `HEAD` and `Range` |
 

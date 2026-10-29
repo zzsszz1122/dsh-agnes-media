@@ -32,7 +32,7 @@ import { createProjects } from './lib/projects.js'
 import { createAssemble } from './lib/assemble.js'
 import { bindCharactersToShots, parseScript } from './lib/script.js'
 
-const VERSION = '0.8.1'
+const VERSION = '1.0.1'
 
 const DEFAULTS = {
   baseURL: 'https://api.agnes-ai.cn/v1',
@@ -65,6 +65,8 @@ const MAX_SECONDS = 30
 const MAX_PROMPT = 4000
 const HISTORY_LIMIT = 80
 const MAX_MEDIA_BYTES = 512 * 1024 * 1024
+// Reference images are inlined into the submit JSON, so they stay small.
+const MAX_INLINE_REFERENCE_BYTES = 4 * 1024 * 1024
 const TASK_DEADLINE_MS = 40 * 60 * 1000
 const POLL_INTERVAL_MS = 6000
 
@@ -187,8 +189,11 @@ function normalizeApiKey(value) {
     if (quoted) key = quoted[2].trim()
     if (key === before) break
   }
-  // Strip every whitespace and zero-width character that survived.
-  return key.replace(/[\s\u200B-\u200D\uFEFF]+/g, '')
+  // Strip every whitespace and zero-width character that survived, then any
+  // trailing YAML separator: a flow-style entry leaves its comma glued to the
+  // value (`sk-…,`), which is syntax and would otherwise be sent as part of the
+  // token and answered with a bare 401.
+  return key.replace(/[\s\u200B-\u200D\uFEFF]+/g, '').replace(/[,;]+$/, '')
 }
 
 /** A safe, non-reversible hint about which secret is actually in use. */
@@ -353,6 +358,45 @@ async function downloadMedia(kind, url) {
   return { buffer, mime, extension: mimeToExtension(mime, kind) }
 }
 
+/**
+ * Reference images for `mode: "reference"`, in the order the caller supplied.
+ *
+ * The gateway takes them on `images` — `reference_image_urls`, which this plugin
+ * used before, is rejected as an unknown field. Only public HTTPS URLs can be
+ * fetched by the renderer, so a local file travels as a data URI; whether the
+ * backend accepts that form for a given model is exactly what the submit-time
+ * degradation below reports back to the panel.
+ *
+ * Four is the documented ceiling for one request.
+ */
+/** A URL the renderer can fetch itself: absolute and https. */
+function isPublicImageUrl(value) {
+  try {
+    return new URL(String(value || '').trim()).protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+async function referenceImagesFor(item, hooks) {
+  const images = []
+  for (const url of Array.isArray(item.referenceUrls) ? item.referenceUrls : []) {
+    const value = String(url || '').trim()
+    if (isPublicImageUrl(value) && !images.includes(value)) images.push(value)
+    if (images.length >= 4) return images
+  }
+  for (const file of Array.isArray(item.referenceFiles) ? item.referenceFiles : []) {
+    if (images.length >= 4) break
+    if (!file || typeof hooks.frameDataUri !== 'function') continue
+    try {
+      images.push(await hooks.frameDataUri(file))
+    } catch {
+      /* an unreadable file must not fail the task before it starts */
+    }
+  }
+  return images
+}
+
 function publicItem(item) {
   if (!item) return undefined
   return {
@@ -375,6 +419,14 @@ function publicItem(item) {
     shotId: item.shotId || undefined,
     parentTaskId: item.parentTaskId || undefined,
     hasFirstFrame: Boolean(item.firstFrameFile),
+    referenceCount:
+      (Array.isArray(item.referenceUrls) ? item.referenceUrls.length : 0) +
+      (Array.isArray(item.referenceFiles) ? item.referenceFiles.length : 0),
+    // Set when the renderer refused `mode: "reference"`: the clip was produced
+    // without identity conditioning and the panel has to say so.
+    referenceDropped: item.referenceDropped || '',
+    // An upload too large to inline was left out of the request.
+    referenceSkipped: Boolean(item.referenceSkipped),
   }
 }
 
@@ -475,6 +527,9 @@ function createTasks(ctx, settings, store, hooks = {}) {
   function dropFirstFrame(id) {
     for (const extension of ['png', 'jpg', 'jpeg', 'webp']) {
       unlink(store.mediaPath(`${id}-firstframe.${extension}`)).catch(() => {})
+      for (let index = 1; index <= 4; index += 1) {
+        unlink(store.mediaPath(`${id}-ref${index}.${extension}`)).catch(() => {})
+      }
     }
   }
 
@@ -586,7 +641,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
       const deadline = Date.now() + TASK_DEADLINE_MS
       const key = await requireKey(ctx, settings)
       let carryFrame = item.firstFrameFile
-      let referenceUrls = Array.isArray(item.referenceUrls) ? item.referenceUrls.slice(0, 4) : []
+      let referenceImages = await referenceImagesFor(item, hooks)
 
       for (let index = 0; index < chunks.length; index += 1) {
         if (cancelled.has(id)) return
@@ -607,9 +662,11 @@ function createTasks(ctx, settings, store, hooks = {}) {
           seconds: String(seconds),
           size: item.size,
         }
-        if (index === 0 && referenceUrls.length > 0) {
+        // References condition the first chunk; later chunks inherit the look
+        // through the previous chunk's tail frame.
+        if (index === 0 && referenceImages.length > 0) {
           payload.mode = 'reference'
-          payload.reference_image_urls = referenceUrls
+          payload.images = referenceImages
         }
         if (carryFrame) {
           if (typeof hooks.frameDataUri !== 'function') {
@@ -667,7 +724,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
           const seam = store.mediaPath(`${id}-seam${index + 1}.jpg`)
           const frame = await hooks.extractTail(chunkFiles[chunkFiles.length - 1], seam)
           carryFrame = frame.ok ? seam : undefined
-          referenceUrls = []
+          referenceImages = []
         }
         await update(id, {
           progress: Math.round(((index + 1) / chunks.length) * 90),
@@ -747,11 +804,12 @@ function createTasks(ctx, settings, store, hooks = {}) {
           seconds: item.seconds,
           size: item.size,
         }
-        // Reference mode wins when the shot's cast has public HTTPS images:
-        // it locks identity, which a keyframe alone cannot do.
-        if (Array.isArray(item.referenceUrls) && item.referenceUrls.length > 0) {
+        // Reference mode wins when there are reference images: it conditions the
+        // whole clip on them, which a keyframe alone cannot do.
+        const references = await referenceImagesFor(item, hooks)
+        if (references.length > 0) {
           payload.mode = 'reference'
-          payload.reference_image_urls = item.referenceUrls.slice(0, 4)
+          payload.images = references
         }
         if (item.firstFrameFile) {
           if (typeof hooks.frameDataUri !== 'function') {
@@ -777,10 +835,13 @@ function createTasks(ctx, settings, store, hooks = {}) {
           // drop the reference images and retry exactly once, recording why.
           const rejected = error instanceof HttpError && !error.transient
           if (!rejected || payload.mode !== 'reference') throw error
-          delete payload.reference_image_urls
+          delete payload.images
           payload.mode = item.firstFrameFile ? 'keyframe' : 'text'
+          // Remembered on the item, not only in `note`: the panel has to be able
+          // to say "the references were dropped" after the task has finished.
           await update(id, {
-            note: `参考模式被拒绝（${error.message.slice(0, 120)}），已降级为 ${payload.mode}`,
+            referenceDropped: String(error.message || '').slice(0, 180),
+            note: `参考图未被接受（${String(error.message || '').slice(0, 120)}），已降级为 ${payload.mode}`,
           })
           data = await upstreamRetry(
             settings,
@@ -1058,6 +1119,12 @@ async function videoSubmitRoute(req, res, { store, tasks, frames, settings }) {
   // a task that claims a keyframe but has no file yet.
   const firstFrame = await resolveFirstFrame(body, id, { store, frames })
   if (firstFrame) item.firstFrameFile = firstFrame
+  // Reference images ride alongside the keyframe: a keyframe fixes the opening
+  // pixel, references condition the whole clip.
+  const references = await resolveReferences(body, id, { store, frames })
+  if (references.urls.length > 0) item.referenceUrls = references.urls
+  if (references.files.length > 0) item.referenceFiles = references.files
+  if (references.skipped) item.referenceSkipped = true
   await store.add(item)
   tasks.start(item.id)
   sendJson(res, 200, { ok: true, item: publicItem(store.find(item.id)) })
@@ -1094,6 +1161,77 @@ async function resolveFirstFrame(body, id, { store, frames }) {
   const target = store.mediaPath(`${id}-firstframe${extension.startsWith('.') ? extension : `.${extension}`}`)
   await copyFile(store.mediaPath(source.file), target)
   return target
+}
+
+/**
+ * Collect the composer's reference material, in the order it was attached.
+ *
+ * Three inputs, all optional, four images total:
+ *   - `referenceUrls`     already-public HTTPS URLs, passed through;
+ *   - `referenceTaskIds`  history images — their upstream URL when they have one
+ *                         (Agnes stores results on a public CDN), otherwise a
+ *                         copy of the downloaded file;
+ *   - `referenceFrames`   data URIs straight from the file picker.
+ */
+async function resolveReferences(body, id, { store, frames }) {
+  const urls = []
+  const files = []
+  const total = () => urls.length + files.length
+
+  const pushUrl = (value) => {
+    const url = String(value || '').trim()
+    if (total() >= 4 || !isPublicImageUrl(url) || urls.includes(url)) return
+    urls.push(url)
+  }
+
+  if (Array.isArray(body.referenceUrls)) for (const value of body.referenceUrls) pushUrl(value)
+
+  for (const taskId of Array.isArray(body.referenceTaskIds) ? body.referenceTaskIds : []) {
+    if (total() >= 4) break
+    const source = store.find(String(taskId))
+    if (!source || !source.file || source.kind !== 'image') continue
+    // A generated image already lives on a public CDN: no copy needed.
+    if (isPublicImageUrl(source.upstream)) {
+      pushUrl(source.upstream)
+      continue
+    }
+    const extension = path.extname(source.file).toLowerCase() || '.png'
+    const target = store.mediaPath(`${id}-ref${files.length + 1}${extension}`)
+    try {
+      await copyFile(store.mediaPath(source.file), target)
+      files.push(target)
+    } catch {
+      /* skip an asset that vanished */
+    }
+  }
+
+  let skipped = false
+  for (const value of Array.isArray(body.referenceFrames) ? body.referenceFrames : []) {
+    if (total() >= 4) break
+    const dataUri = String(value || '').trim()
+    const match = /^data:image\/(png|jpeg|jpg|webp);base64,/i.exec(dataUri)
+    if (!match) continue
+    const raw = match[1].toLowerCase()
+    const extension = raw === 'png' ? 'png' : raw === 'webp' ? 'webp' : 'jpg'
+    const target = store.mediaPath(`${id}-ref${files.length + 1}.${extension}`)
+    try {
+      await frames.saveDataUri(dataUri, target)
+      // A big blob is copied to disk but never inlined into the submit body: the
+      // JSON request would balloon and the renderer answers 413/400. References
+      // are meant to be small crops of a face, not full-resolution plates.
+      const info = await stat(target)
+      if (info.size > MAX_INLINE_REFERENCE_BYTES) {
+        await unlink(target).catch(() => {})
+        skipped = true
+        continue
+      }
+      files.push(target)
+    } catch {
+      /* an oversized or broken upload is dropped, not fatal */
+    }
+  }
+
+  return { urls, files, skipped }
 }
 
 function publicShot(shot) {

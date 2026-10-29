@@ -178,12 +178,19 @@ window.__ModuleLoader__.load({
       'home.mode.video': '视频生成',
       'home.mode.image': '图片生成',
       'home.compose.auto': '全能模式',
+      'home.compose.reference': '参考模式',
       'home.compose.keyframe': '首帧模式',
       'home.compose.text': '纯文本',
-      'home.compose.auto.hint': '有素材时自动作首帧，没有就按文字生成',
+      'home.compose.auto.hint': '首帧锁开场，其余素材作参考图；点素材标签可互换',
+      'home.compose.reference.hint': '全部素材作为参考图（最多 4 张），不占用首帧',
       'home.compose.keyframe.hint': '必须添加一张图片作首帧',
       'home.compose.text.hint': '忽略素材，只按文字生成',
       'home.compose.required': '首帧模式需要先添加一张图片作首帧。',
+      'home.compose.needReference': '参考模式至少要添加一张参考图。',
+      'home.tagToggle': '点开选择用途：首帧 / 参考',
+      'home.mention.hint': '把素材引用到提示词里，序号与缩略图一致',
+      'home.refDropped': '上游未接受参考图，本条已按降级模式生成：{reason}',
+      'home.refSkipped': '有参考图超过 4MB，已跳过内联；建议裁成脸部小图再传',
       'home.model.title': '当前模型',
       'home.model.upstream': '上游地址',
       'home.model.key': '密钥',
@@ -196,6 +203,12 @@ window.__ModuleLoader__.load({
       'home.submit': '生成',
       'home.frame': '首帧',
       'home.reference': '参考',
+      'home.role.choose': '待选',
+      'home.role.title': '这张图怎么用？',
+      'home.role.frameDesc': '从这张图开始：锁定第 0 秒的构图、姿态与光线，之后的镜头不再受它约束',
+      'home.role.referenceDesc': '整段参考它的外观：人物长相、配色、道具与风格，但不决定开场画面',
+      'home.role.diff': '一句话：首帧管「怎么开始」，参考管「像不像」。随时点标签可改。',
+      'home.role.pending': '有素材还没指定用途：点素材上的标签选「首帧」或「参考」。',
       'home.remove': '移除素材',
       'home.uploadFail': '读取图片失败：{name}',
       'home.tip': '任务在后台排队，切走或刷新都不会丢',
@@ -364,12 +377,19 @@ window.__ModuleLoader__.load({
       'home.mode.video': 'Video',
       'home.mode.image': 'Image',
       'home.compose.auto': 'Versatile',
+      'home.compose.reference': 'Reference',
       'home.compose.keyframe': 'First frame',
       'home.compose.text': 'Text only',
-      'home.compose.auto.hint': 'Uses the reference as the first frame when there is one',
+      'home.compose.auto.hint': 'The first frame anchors the opening, the rest condition the look; click a tag to swap',
+      'home.compose.reference.hint': 'Every attachment is a reference image (up to four); no keyframe is used',
       'home.compose.keyframe.hint': 'Requires one image as the first frame',
       'home.compose.text.hint': 'Ignores references, generates from text',
       'home.compose.required': 'First-frame mode needs an image reference.',
+      'home.compose.needReference': 'Reference mode needs at least one reference image.',
+      'home.tagToggle': 'Open the role picker: first frame or reference',
+      'home.mention.hint': 'Cite an attachment in the prompt; the number matches its thumbnail',
+      'home.refDropped': 'The renderer refused the reference images; this clip used a fallback: {reason}',
+      'home.refSkipped': 'A reference was larger than 4MB and was left out; crop it to the face and retry',
       'home.model.title': 'Current model',
       'home.model.upstream': 'Upstream',
       'home.model.key': 'Key',
@@ -382,6 +402,12 @@ window.__ModuleLoader__.load({
       'home.submit': 'Generate',
       'home.frame': 'First frame',
       'home.reference': 'Reference',
+      'home.role.choose': 'Choose',
+      'home.role.title': 'How should this image be used?',
+      'home.role.frameDesc': 'The clip starts here: locks the opening framing, pose and light. Later shots are not bound by it',
+      'home.role.referenceDesc': 'Conditions the whole clip: face, palette, props and style. Does not decide the opening frame',
+      'home.role.diff': 'In one line: the first frame decides how it starts, a reference decides what it looks like. Click the tag to change any time.',
+      'home.role.pending': 'An attachment has no role yet: click its tag and pick First frame or Reference.',
       'home.remove': 'Remove reference',
       'home.uploadFail': 'Could not read image: {name}',
       'home.tip': 'Tasks queue in the background; switching away or reloading will not lose them',
@@ -526,7 +552,16 @@ window.__ModuleLoader__.load({
         .join(' ')
     }
 
-    const APP_IMAGE_MIMES = /^image\/(png|jpeg|jpg|webp)$/i
+    /** Absolute https URL — the only kind the renderer can fetch by itself. */
+    function isHttpsUrl(value) {
+      try {
+        return new URL(String(value || '').trim()).protocol === 'https:'
+      } catch {
+        return false
+      }
+    }
+
+    const APP_IMAGE_MIMES = new RegExp('^image/(png|jpeg|jpg|webp)$', 'i')
 
     const STYLES = `
       .agnes-root{display:flex;flex-direction:column;height:100%;min-height:480px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-family:var(--dsw-font-family,inherit);overflow:hidden}
@@ -698,6 +733,7 @@ window.__ModuleLoader__.load({
       .agnes-menu-item:hover{background:rgba(127,127,127,.14)}
       .agnes-menu-item[data-active="true"]{color:#0f766e;font-weight:600;background:rgba(15,118,110,.08)}
       .agnes-menu-item[data-disabled="true"]{color:var(--dsw-alias-label-secondary);cursor:default;opacity:.6}
+      .agnes-menu-item img{width:26px;height:26px;flex:none;object-fit:cover;border-radius:6px;background:var(--dsw-alias-bg-layer-2)}
       .agnes-menu-note{padding:3px 9px 6px;font-size:11px;line-height:1.5;color:var(--dsw-alias-label-secondary);white-space:normal;max-width:260px}
       .agnes-menu-sep{height:1px;margin:4px 4px;background:var(--dsw-alias-border-l1)}
       .agnes-menu-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:4px 9px;font-size:11.5px;color:var(--dsw-alias-label-secondary)}
@@ -708,7 +744,26 @@ window.__ModuleLoader__.load({
       .agnes-attach{position:relative;width:98px;display:flex;flex-direction:column;gap:4px}
       .agnes-attach img{display:block;width:98px;height:66px;object-fit:cover;border-radius:9px;border:1px solid var(--dsw-alias-border-l1);background:#000}
       .agnes-attach-name{font-size:10.5px;color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .agnes-attach-tag{position:absolute;left:4px;bottom:26px;font-size:9.5px;line-height:1.5;padding:0 5px;border-radius:999px;background:rgba(0,0,0,.62);color:#fff}
+      .agnes-attach-tag{position:absolute;left:4px;bottom:26px;font:inherit;font-size:9.5px;line-height:1.5;padding:0 5px;border:0;border-radius:999px;background:rgba(0,0,0,.62);color:#fff;cursor:pointer}
+      .agnes-attach-tag[data-role="reference"]{background:rgba(15,118,110,.82)}
+      .agnes-attach-tag[data-role="frame"]{background:rgba(37,99,235,.82)}
+      .agnes-attach-tag[data-role="pending"]{background:rgba(186,117,23,.92)}
+      .agnes-attach[data-pending="true"] img{outline:2px dashed rgba(186,117,23,.75);outline-offset:1px}
+      .agnes-role-inline{display:flex;flex-direction:column;gap:7px;margin:0 2px 10px;padding:10px 11px;border-radius:12px;border:1px solid rgba(186,117,23,.45);background:rgba(186,117,23,.07)}
+      .agnes-role-head{display:flex;align-items:baseline;gap:8px;font-size:12px;font-weight:600;color:var(--dsw-alias-label-primary)}
+      .agnes-role-name{font-size:11px;font-weight:400;color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+      .agnes-role-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+      @media (max-width:720px){.agnes-role-cards{grid-template-columns:1fr}}
+      .agnes-role-option{display:flex;flex-direction:column;gap:3px;text-align:left;padding:8px 10px;border-radius:9px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font:inherit;cursor:pointer}
+      .agnes-role-option[data-active="true"]{border-color:#0f9f8f;box-shadow:0 0 0 1px rgba(15,159,143,.45)}
+      .agnes-role-option:hover{border-color:#0f9f8f;background:rgba(15,159,143,.08)}
+      .agnes-role-option b{font-size:12.5px;font-weight:600}
+      .agnes-role-option[data-kind="frame"] b{color:#2563eb}
+      .agnes-role-option[data-kind="reference"] b{color:#0f766e}
+      .agnes-role-option span{font-size:11.5px;line-height:1.5;color:var(--dsw-alias-label-secondary);white-space:normal}
+      .agnes-role-foot{font-size:11px;line-height:1.5;color:var(--dsw-alias-label-secondary);white-space:normal}
+      .agnes-round[data-open="true"]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
+      .agnes-warn{display:flex;gap:8px;align-items:flex-start;border:1px solid rgba(186,117,23,.5);background:rgba(186,117,23,.1);color:#a35b00;border-radius:10px;padding:9px 12px;font-size:12px;line-height:1.5}
       .agnes-attach-del{position:absolute;top:3px;right:3px;width:18px;height:18px;padding:0;border:0;border-radius:50%;background:rgba(0,0,0,.62);color:#fff;font-size:12px;line-height:1;cursor:pointer}
       .agnes-composer-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 4px 0}
       .agnes-composer-hint{font-size:11px;color:var(--dsw-alias-label-secondary)}
@@ -717,6 +772,15 @@ window.__ModuleLoader__.load({
       .agnes-composer-progress{margin:10px 4px 0}
       .agnes-stack{display:flex;flex-direction:column;gap:16px;margin-top:18px}
       .agnes-send-count{font-variant-numeric:tabular-nums;opacity:.85}
+      /* The accent green needs a lighter ink on a dark surface; the neutral
+         surfaces already ride on --dsw-alias-* and follow the theme. */
+      @media (prefers-color-scheme:dark){
+        .agnes-pill-accent{color:#7dd3c8;border-color:rgba(125,211,200,.4);background:rgba(125,211,200,.1)}
+        .agnes-pill-accent:hover:not(:disabled){color:#a7e8de;background:rgba(125,211,200,.16)}
+        .agnes-menu-item[data-active="true"]{color:#7dd3c8;background:rgba(125,211,200,.1)}
+        .agnes-composer{box-shadow:0 8px 26px rgba(0,0,0,.38)}
+        .agnes-menu{box-shadow:0 14px 34px rgba(0,0,0,.55)}
+      }
     `
 
     async function patchJson(path, body) {
@@ -2794,6 +2858,9 @@ window.__ModuleLoader__.load({
       const [attachments, setAttachments] = useState([])
       const [composeMode, setComposeMode] = useState('auto')
       const [menu, setMenu] = useState('')
+      // Id of the attachment whose 首帧/参考 picker is open. A newly added single
+      // image lands here instead of being silently promoted to a keyframe.
+      const [roleFor, setRoleFor] = useState('')
       const activeRef = useRef(null)
       const promptRef = useRef(null)
       const fileRef = useRef(null)
@@ -2897,59 +2964,106 @@ window.__ModuleLoader__.load({
       // does not advertise it and still answers on `/video`, so that is the
       // fallback — the panel keeps working across an app restart either way.
       const videoPath = (status && status.videoPath) || '/video'
-      const firstAttachment = attachments.length > 0 ? attachments[0] : null
-      const usesReference = Boolean(firstAttachment) && composeMode !== 'text'
+      // Roles are explicit: the first attachment defaults to the keyframe, the
+      // rest to references, and a click on the chip's tag swaps them. 参考模式
+      // ignores roles and treats every attachment as a reference.
+      const frameAttachment = attachments.find((entry) => entry.role === 'frame') || null
+      const referenceList =
+        composeMode === 'reference'
+          ? attachments
+          : composeMode === 'auto'
+            ? attachments.filter((entry) => entry.role === 'reference')
+            : []
+      const frameInUse = composeMode === 'reference' || composeMode === 'text' ? null : frameAttachment
 
       const toggleMenu = useCallback((name) => setMenu((current) => (current === name ? '' : name)), [])
 
       const addAttachment = useCallback((entry) => {
-        // Four references is the upstream ceiling for one request.
-        setAttachments((current) => (current.length >= 4 ? current : [...current, entry]))
+        // Four images is the upstream ceiling for one request.
+        setAttachments((current) => {
+          if (current.length >= 4) return current
+          // The first image stays undecided on purpose: the panel asks whether it
+          // is the opening frame or a reference before anything is submitted.
+          const role = entry.role || (current.length === 0 ? 'pending' : 'reference')
+          return [...current, { ...entry, role }]
+        })
+      }, [])
+
+      const setAttachmentRole = useCallback((id, role) => {
+        setAttachments((current) =>
+          current.map((entry) => {
+            if (entry.id === id) return { ...entry, role }
+            // Only one keyframe at a time: whatever held the role gives it up.
+            return role === 'frame' && entry.role === 'frame' ? { ...entry, role: 'reference' } : entry
+          }),
+        )
+        // 首帧模式 / 参考模式 override per-image roles, so an explicit choice
+        // switches back to 全能模式 where the choice actually decides.
+        setComposeMode((current) =>
+          (role === 'frame' && current === 'reference') || (role === 'reference' && current === 'keyframe')
+            ? 'auto'
+            : current,
+        )
+        setRoleFor('')
       }, [])
 
       const pickLocalFiles = useCallback(
         async (files) => {
           const picked = Array.from(files || []).filter((file) => APP_IMAGE_MIMES.test(String(file.type || '')))
           if (picked.length === 0) return
-          for (const file of picked) {
+          const askRole = picked.length === 1 && attachments.length === 0
+          for (let index = 0; index < picked.length; index += 1) {
+            const file = picked[index]
             try {
               const dataUri = await readFileAsDataUri(file)
-              addAttachment({ id: `${Date.now()}-${file.name}`, name: file.name, dataUri, preview: dataUri })
+              const id = `${Date.now()}-${file.name}`
+              // A multi-file drop keeps the old rule (first is the frame); a single
+              // file waits for the picker.
+              const role = askRole ? 'pending' : attachments.length === 0 && index === 0 ? 'frame' : 'reference'
+              addAttachment({ id, name: file.name, dataUri, preview: dataUri, role })
+              if (askRole) setRoleFor(id)
             } catch {
               setError(t('home.uploadFail').replace('{name}', file.name))
             }
           }
           setMenu('')
         },
-        [addAttachment, t],
+        [addAttachment, attachments.length, t],
       )
 
       const addFromLibrary = useCallback(
         (item) => {
+          const id = `lib-${item.id}`
+          const askRole = attachments.length === 0
           addAttachment({
-            id: `lib-${item.id}`,
+            id,
             name: item.prompt || t('home.assetFallback'),
             preview: item.url,
             taskId: item.id,
+            // Agnes keeps results on a public CDN, so a library pick can be a
+            // reference the renderer fetches itself — no re-upload involved.
+            referenceUrl: isHttpsUrl(item.upstream) ? item.upstream : '',
+            role: askRole ? 'pending' : undefined,
           })
+          if (askRole) setRoleFor(id)
           setMenu('')
         },
-        [addAttachment, t],
+        [addAttachment, attachments.length, t],
       )
 
       const removeAttachment = useCallback((id) => {
         setAttachments((current) => current.filter((entry) => entry.id !== id))
       }, [])
 
-      // `@` cites the first reference inside the prompt, at the caret. The host
-      // keeps the real binding (`firstFrame`), the token is just how a user
-      // refers to it while writing.
-      const insertMention = useCallback(() => {
+      // `@` cites one attachment inside the prompt, at the caret. The host keeps
+      // the real binding (`referenceFrames` / `referenceTaskIds`); the token is
+      // only how a user points at material while writing.
+      const insertMention = useCallback((index = 0) => {
         if (attachments.length === 0) {
           setError(t('home.mention.empty'))
           return
         }
-        const token = `@${t('home.mentionToken')}1`
+        const token = `@${t('home.mentionToken')}${Math.min(index, attachments.length - 1) + 1}`
         const node = promptRef.current
         let next = `${prompt}${prompt && !/\s$/.test(prompt) ? ' ' : ''}${token}`
         let caret = next.length
@@ -2970,8 +3084,19 @@ window.__ModuleLoader__.load({
           setError(t('error.prompt'))
           return
         }
-        if (tab !== 'image' && composeMode === 'keyframe' && !firstAttachment) {
+        // 参考模式 uses every attachment as a reference and 纯文本 ignores them, so
+        // an undecided role only blocks the modes that actually read roles.
+        const rolesMatter = composeMode === 'auto' || composeMode === 'keyframe'
+        if (tab !== 'image' && rolesMatter && attachments.some((entry) => entry.role === 'pending')) {
+          setError(t('home.role.pending'))
+          return
+        }
+        if (tab !== 'image' && composeMode === 'keyframe' && !frameAttachment) {
           setError(t('home.compose.required'))
+          return
+        }
+        if (tab !== 'image' && composeMode === 'reference' && referenceList.length === 0) {
+          setError(t('home.compose.needReference'))
           return
         }
         setError('')
@@ -2988,9 +3113,20 @@ window.__ModuleLoader__.load({
           if (tab === 'image') {
             data = await postJson('/image', { ...payload, size: imageSize })
           } else {
-            if (usesReference) {
-              if (firstAttachment.taskId) payload.firstFrameTaskId = firstAttachment.taskId
-              else if (firstAttachment.dataUri) payload.firstFrame = firstAttachment.dataUri
+            if (frameInUse) {
+              if (frameInUse.taskId) payload.firstFrameTaskId = frameInUse.taskId
+              else if (frameInUse.dataUri) payload.firstFrame = frameInUse.dataUri
+            }
+            if (referenceList.length > 0) {
+              // Split by kind so the host does not have to guess: a public URL
+              // is passed through, a library image is re-resolved there, an
+              // upload travels as a data URI.
+              const urls = referenceList.filter((entry) => entry.referenceUrl).map((entry) => entry.referenceUrl)
+              const taskIds = referenceList.filter((entry) => !entry.referenceUrl && entry.taskId).map((entry) => entry.taskId)
+              const frames = referenceList.filter((entry) => !entry.referenceUrl && !entry.taskId && entry.dataUri).map((entry) => entry.dataUri)
+              if (urls.length > 0) payload.referenceUrls = urls
+              if (taskIds.length > 0) payload.referenceTaskIds = taskIds
+              if (frames.length > 0) payload.referenceFrames = frames
             }
             data = await postJson(videoPath, {
               ...payload,
@@ -3020,8 +3156,9 @@ window.__ModuleLoader__.load({
         t,
         refresh,
         composeMode,
-        firstAttachment,
-        usesReference,
+        frameAttachment,
+        frameInUse,
+        referenceList,
         videoPath,
       ])
 
@@ -3086,16 +3223,26 @@ window.__ModuleLoader__.load({
         const composeLabel =
           composeMode === 'keyframe'
             ? t('home.compose.keyframe')
-            : composeMode === 'text'
-              ? t('home.compose.text')
-              : t('home.compose.auto')
+            : composeMode === 'reference'
+              ? t('home.compose.reference')
+              : composeMode === 'text'
+                ? t('home.compose.text')
+                : t('home.compose.auto')
         const composeHint =
           composeMode === 'keyframe'
             ? t('home.compose.keyframe.hint')
-            : composeMode === 'text'
-              ? t('home.compose.text.hint')
-              : t('home.compose.auto.hint')
+            : composeMode === 'reference'
+              ? t('home.compose.reference.hint')
+              : composeMode === 'text'
+                ? t('home.compose.text.hint')
+                : t('home.compose.auto.hint')
         const durationLabel = seconds === 'auto' ? t('home.duration.auto') : `${seconds}${t('note.seconds')}`
+        // The attachment the role picker is talking about: an explicitly opened
+        // one first, otherwise whichever upload is still undecided.
+        const roleTarget =
+          attachments.find((entry) => entry.id === roleFor) ||
+          attachments.find((entry) => entry.role === 'pending') ||
+          null
         const caret = h(Glyph, { name: 'chevron', size: 12 })
 
         // One popover at a time: `menu` holds the open one, so each chip just
@@ -3142,13 +3289,26 @@ window.__ModuleLoader__.load({
                   ...attachments.map((entry, index) =>
                     h(
                       'div',
-                      { key: entry.id, className: 'agnes-attach' },
+                      { key: entry.id, className: 'agnes-attach', 'data-pending': entry.role === 'pending' ? 'true' : 'false' },
                       h('img', { src: entry.preview, alt: entry.name }),
+                      // The tag opens the role picker: a single upload is never
+                      // promoted to a keyframe without an explicit choice.
                       h(
-                        'span',
-                        { className: 'agnes-attach-tag' },
-                        index === 0 && composeMode !== 'text' ? t('home.frame') : t('home.reference'),
+                        'button',
+                        {
+                          type: 'button',
+                          className: 'agnes-attach-tag',
+                          'data-role': entry.role || 'reference',
+                          title: t('home.tagToggle'),
+                          onClick: () => setRoleFor((current) => (current === entry.id ? '' : entry.id)),
+                        },
+                        entry.role === 'frame'
+                          ? t('home.frame')
+                          : entry.role === 'pending'
+                            ? t('home.role.choose')
+                            : t('home.reference'),
                       ),
+
                       h('button', {
                         type: 'button',
                         className: 'agnes-attach-del',
@@ -3158,6 +3318,49 @@ window.__ModuleLoader__.load({
                       h('span', { className: 'agnes-attach-name', title: entry.name }, entry.name),
                     ),
                   ),
+                )
+              : null,
+            // An undecided single upload opens this in place instead of being
+            // guessed at: nothing is submitted until the role is explicit.
+            roleTarget
+              ? h(
+                  'div',
+                  { className: 'agnes-role-inline' },
+                  h(
+                    'div',
+                    { className: 'agnes-role-head' },
+                    h('span', null, t('home.role.title')),
+                    h('span', { className: 'agnes-role-name' }, roleTarget.name),
+                  ),
+                  h(
+                    'div',
+                    { className: 'agnes-role-cards' },
+                    h(
+                      'button',
+                      {
+                        type: 'button',
+                        className: 'agnes-role-option',
+                        'data-kind': 'frame',
+                        'data-active': roleTarget.role === 'frame' ? 'true' : 'false',
+                        onClick: () => setAttachmentRole(roleTarget.id, 'frame'),
+                      },
+                      h('b', null, t('home.frame')),
+                      h('span', null, t('home.role.frameDesc')),
+                    ),
+                    h(
+                      'button',
+                      {
+                        type: 'button',
+                        className: 'agnes-role-option',
+                        'data-kind': 'reference',
+                        'data-active': roleTarget.role === 'reference' ? 'true' : 'false',
+                        onClick: () => setAttachmentRole(roleTarget.id, 'reference'),
+                      },
+                      h('b', null, t('home.reference')),
+                      h('span', null, t('home.role.referenceDesc')),
+                    ),
+                  ),
+                  h('div', { className: 'agnes-role-foot' }, t('home.role.diff')),
                 )
               : null,
             h('textarea', {
@@ -3344,6 +3547,19 @@ window.__ModuleLoader__.load({
                     {
                       type: 'button',
                       className: 'agnes-menu-item',
+                      'data-active': composeMode === 'reference' ? 'true' : 'false',
+                      onClick: () => {
+                        setComposeMode('reference')
+                        setMenu('')
+                      },
+                    },
+                    t('home.compose.reference'),
+                  ),
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'agnes-menu-item',
                       'data-active': composeMode === 'keyframe' ? 'true' : 'false',
                       onClick: () => {
                         setComposeMode('keyframe')
@@ -3433,15 +3649,43 @@ window.__ModuleLoader__.load({
               ),
               h('div', { className: 'agnes-bar-spacer' }),
               h(
-                'button',
-                {
-                  type: 'button',
-                  className: 'agnes-round',
-                  title: t('home.mention'),
-                  disabled: busy,
-                  onClick: () => insertMention(),
-                },
-                h(Glyph, { name: 'at', size: 15 }),
+                'div',
+                { className: 'agnes-menu-wrap' },
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'agnes-round',
+                    title: t('home.mention'),
+                    'data-open': menu === 'mention' ? 'true' : 'false',
+                    disabled: busy || attachments.length === 0,
+                    onClick: () => toggleMenu('mention'),
+                  },
+                  h(Glyph, { name: 'at', size: 15 }),
+                ),
+                popover('mention', [
+                  h('div', { className: 'agnes-menu-note' }, t('home.mention.hint')),
+                  ...attachments.map((entry, index) =>
+                    h(
+                      'button',
+                      {
+                        type: 'button',
+                        key: entry.id,
+                        className: 'agnes-menu-item',
+                        onClick: () => {
+                          insertMention(index)
+                          setMenu('')
+                        },
+                      },
+                      h('img', { src: entry.preview, alt: entry.name }),
+                      h(
+                        'span',
+                        { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } },
+                        `@${t('home.mentionToken')}${index + 1} · ${entry.name}`,
+                      ),
+                    ),
+                  ),
+                ], 'end'),
               ),
               busy
                 ? h(
@@ -3730,6 +3974,21 @@ window.__ModuleLoader__.load({
                     t('action.copy'),
                   ),
                 ),
+                result.referenceDropped
+                  ? h(
+                      'div',
+                      { className: 'agnes-warn', style: { marginTop: '10px' } },
+                      t('home.refDropped').replace('{reason}', result.referenceDropped),
+                    )
+                  : result.referenceSkipped
+                    ? h('div', { className: 'agnes-warn', style: { marginTop: '10px' } }, t('home.refSkipped'))
+                    : result.referenceCount
+                    ? h(
+                        'div',
+                        { className: 'agnes-foot' },
+                        h('span', null, `${t('home.reference')} × ${result.referenceCount}`),
+                      )
+                    : null,
                 h(
                   'div',
                   { className: 'agnes-foot' },

@@ -6,3 +6,8 @@
         apiKeyEnv: AGNES_API_KEY
         videoModel: agnes-video-2.5-flash
         imageModel: agnes-image-2.5-flash
+        # Panel route the composer entry submits to: POST <prefix>/v1/video.
+        # Deliberately not a chat route: video tasks never touch /v1/chat/completions.
+        videoPath: v1/video
+        # Upstream path that route calls, relative to baseURL.
+        videoUpstreamPath: /videos
