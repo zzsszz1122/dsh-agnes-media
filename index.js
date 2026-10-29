@@ -11,13 +11,18 @@
  *   - the upstream queue answers 429/5xx while it is busy, so every call retries
  *     with backoff instead of failing the task.
  *
+ * The panel side is deliberately *not* routed through the chat route: the
+ * composer entry submits to `POST <prefix>/v1/video` (`config.videoPath`), which
+ * owns the video task lifecycle end to end. `/video` remains as the pre-0.8
+ * alias of the same handler so older clients and scripts keep working.
+ *
  * Results are downloaded once and stored under `<DSH home>/agnes-media`, so the
  * history survives a Host restart and the browser never receives the API key.
  */
 
 import { randomUUID } from 'node:crypto'
 import { createReadStream } from 'node:fs'
-import { mkdir, readFile, readdir, rename, stat, unlink, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, readFile, readdir, rename, stat, unlink, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import path from 'node:path'
 
@@ -27,13 +32,18 @@ import { createProjects } from './lib/projects.js'
 import { createAssemble } from './lib/assemble.js'
 import { bindCharactersToShots, parseScript } from './lib/script.js'
 
-const VERSION = '0.7.1'
+const VERSION = '0.7.2'
 
 const DEFAULTS = {
   baseURL: 'https://api.agnes-ai.cn/v1',
   apiKeyEnv: 'AGNES_API_KEY',
   videoModel: 'agnes-video-2.5-flash',
   imageModel: 'agnes-image-2.5-flash',
+  // Panel route of the composer entry, not the upstream path. The entry talks
+  // to a video task route; it never goes through `/v1/chat/completions`.
+  videoPath: 'v1/video',
+  // Upstream path the task route ultimately calls (`<baseURL>/videos`).
+  videoUpstreamPath: '/videos',
 }
 
 const ROUTE_PREFIX = '/agnes-media/api'
@@ -80,6 +90,19 @@ function normalizeModel(value) {
   return String(value || '')
     .trim()
     .replace(/_/g, '-')
+}
+
+/** Panel-relative route: no leading/trailing slash, kept verbatim otherwise. */
+function normalizeRoute(value) {
+  return String(value || '')
+    .trim()
+    .replace(/^\/+|\/+$/g, '')
+}
+
+/** Upstream path always starts with a single slash. */
+function normalizeUpstreamPath(value) {
+  const path = normalizeRoute(value)
+  return path ? `/${path}` : ''
 }
 
 function buildUrl(baseURL, endpoint) {
@@ -443,6 +466,18 @@ function createTasks(ctx, settings, store, hooks = {}) {
 
   const update = (id, patch) => store.update(id, patch)
 
+  /**
+   * The composer's uploaded first frame is scratch, not history: it sits in the
+   * media dir under the task id and is dropped once the task is terminal.
+   * Shot-driven tasks point at project assets instead, whose names never match
+   * `${id}-firstframe.*`, so they are left alone.
+   */
+  function dropFirstFrame(id) {
+    for (const extension of ['png', 'jpg', 'jpeg', 'webp']) {
+      unlink(store.mediaPath(`${id}-firstframe.${extension}`)).catch(() => {})
+    }
+  }
+
   async function imageTask(id) {
     const item = store.find(id)
     if (!item) return
@@ -587,7 +622,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
         const submitted = await upstreamRetry(
           settings,
           key,
-          '/videos',
+          settings.videoUpstreamPath,
           { method: 'POST', body: payload, timeoutMs: 120000 },
           id,
           update,
@@ -604,9 +639,8 @@ function createTasks(ctx, settings, store, hooks = {}) {
           if (cancelled.has(id)) return
           let state
           try {
-            state = await upstream(settings, key, `/videos/${encodeURIComponent(chunkVideoId)}`, {
-              timeoutMs: 60000,
-            })
+            const statusPath = `${settings.videoUpstreamPath}/${encodeURIComponent(chunkVideoId)}`
+            state = await upstream(settings, key, statusPath, { timeoutMs: 60000 })
           } catch (error) {
             if (error && error.transient) continue
             throw error
@@ -656,6 +690,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
         parts: chunkFiles.length,
       })
       for (const part of chunkFiles) unlink(part).catch(() => {})
+      dropFirstFrame(id)
       if (typeof hooks.onVideoReady === 'function') {
         try {
           await hooks.onVideoReady(store.find(id))
@@ -665,6 +700,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
       }
     } catch (error) {
       for (const part of chunkFiles) unlink(part).catch(() => {})
+      dropFirstFrame(id)
       if (cancelled.has(id) || (error instanceof HttpError && error.status === 409)) {
         await update(id, { status: 'cancelled', stage: '', note: '', error: '已取消' })
         if (typeof hooks.onVideoCancelled === 'function') {
@@ -729,7 +765,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
           data = await upstreamRetry(
             settings,
             key,
-            '/videos',
+            settings.videoUpstreamPath,
             { method: 'POST', body: payload, timeoutMs: 120000 },
             id,
             update,
@@ -749,7 +785,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
           data = await upstreamRetry(
             settings,
             key,
-            '/videos',
+            settings.videoUpstreamPath,
             { method: 'POST', body: payload, timeoutMs: 120000 },
             id,
             update,
@@ -772,9 +808,12 @@ function createTasks(ctx, settings, store, hooks = {}) {
         let state
         try {
           const key = await requireKey(ctx, settings)
-          state = await upstream(settings, key, `/videos/${encodeURIComponent(videoId)}`, {
-            timeoutMs: 60000,
-          })
+          state = await upstream(
+            settings,
+            key,
+            `${settings.videoUpstreamPath}/${encodeURIComponent(videoId)}`,
+            { timeoutMs: 60000 },
+          )
         } catch (error) {
           if (error && error.transient) {
             await update(id, {
@@ -813,6 +852,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
               /* a frame problem must not fail the generation */
             }
           }
+          dropFirstFrame(id)
           return
         }
         await update(id, {
@@ -843,6 +883,7 @@ function createTasks(ctx, settings, store, hooks = {}) {
           }
         }
       }
+      dropFirstFrame(id)
     }
   }
 
@@ -884,6 +925,10 @@ async function statusRoute(ctx, settings, res, frames) {
     baseURL: settings.baseURL,
     videoModel: settings.videoModel,
     imageModel: settings.imageModel,
+    // What the composer entry submits to, so the panel never hard-codes it:
+    // `${ROUTE_PREFIX}${videoPath}`. Not a chat route by construction.
+    videoPath: `/${settings.videoPath}`,
+    videoUpstreamPath: settings.videoUpstreamPath,
     ffmpeg: frames ? Boolean(await frames.available()) : false,
     platformURL: 'https://platform.agnes-ai.cn',
   })
@@ -973,6 +1018,84 @@ async function mediaRoute(req, res, store, id, download) {
   stream.pipe(res)
 }
 
+/**
+ * Submit one video task from the panel.
+ *
+ * Shared by `/v1/video` (canonical) and `/video` (alias) so the two can never
+ * drift apart. An optional composite reference travels as `firstFrame` (a data
+ * URI straight from the browser's file picker) or `firstFrameTaskId` (an image
+ * already in the history), and either one becomes the upstream keyframe.
+ */
+async function videoSubmitRoute(req, res, { store, tasks, frames, settings }) {
+  await store.ready
+  const body = await readJson(req, 32 * 1024 * 1024)
+  const prompt = cleanPrompt(body.prompt)
+  const model = normalizeModel(body.model) || settings.videoModel
+  const requestedSize = String(body.size || '').trim()
+  const size = VIDEO_SIZES.has(requestedSize) ? requestedSize : '720P'
+  const requestedSeconds = String(body.seconds || '').trim()
+  const seconds = VIDEO_SECONDS.has(requestedSeconds) ? requestedSeconds : '5'
+  const seed = Number(body.seed)
+  const id = randomUUID()
+  const item = {
+    id,
+    kind: 'video',
+    status: 'queued',
+    prompt,
+    model,
+    size,
+    seconds,
+    progress: 0,
+    stage: 'queued',
+    note: '',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  }
+  if (Number.isFinite(seed)) item.seed = seed
+  if (body.projectId) item.projectId = String(body.projectId)
+  if (body.shotId) item.shotId = String(body.shotId)
+  // Resolved before `store.add` + `tasks.start`, so the runner can never observe
+  // a task that claims a keyframe but has no file yet.
+  const firstFrame = await resolveFirstFrame(body, id, { store, frames })
+  if (firstFrame) item.firstFrameFile = firstFrame
+  await store.add(item)
+  tasks.start(item.id)
+  sendJson(res, 200, { ok: true, item: publicItem(store.find(item.id)) })
+}
+
+/**
+ * Turn the composer's attachment into a local first-frame file.
+ *
+ * Local uploads arrive as a data URI because the panel never has a public URL;
+ * "add from library" arrives as a task id, and its downloaded file is copied so
+ * a later history prune cannot pull the frame out from under a running task.
+ */
+async function resolveFirstFrame(body, id, { store, frames }) {
+  const dataUri = typeof body.firstFrame === 'string' ? body.firstFrame.trim() : ''
+  if (dataUri) {
+    const match = /^data:image\/(png|jpeg|jpg|webp);base64,/i.exec(dataUri)
+    if (!match) throw new HttpError(400, '首帧图片格式不支持（仅支持 png / jpeg / webp）')
+    const raw = match[1].toLowerCase()
+    const extension = raw === 'png' ? 'png' : raw === 'webp' ? 'webp' : 'jpg'
+    const target = store.mediaPath(`${id}-firstframe.${extension}`)
+    try {
+      await frames.saveDataUri(dataUri, target)
+    } catch (error) {
+      throw new HttpError(400, messageOf(error))
+    }
+    return target
+  }
+  const sourceId = String(body.firstFrameTaskId || '').trim()
+  if (!sourceId) return ''
+  const source = store.find(sourceId)
+  if (!source || !source.file) throw new HttpError(404, '资产库里找不到这张图片')
+  if (source.kind !== 'image') throw new HttpError(400, '只有图片可以当作首帧')
+  const extension = path.extname(source.file).toLowerCase() || '.png'
+  const target = store.mediaPath(`${id}-firstframe${extension.startsWith('.') ? extension : `.${extension}`}`)
+  await copyFile(store.mediaPath(source.file), target)
+  return target
+}
+
 function publicShot(shot) {
   if (!shot) return undefined
   const { assetFile, tailFile, storyboardFile, ...rest } = shot
@@ -1037,36 +1160,10 @@ function createHandler(ctx, settings, store, tasks, services) {
         sendJson(res, 200, { ok: true, item: publicItem(store.find(item.id)) })
         return
       }
-      if (method === 'POST' && rest === '/video') {
-        await store.ready
-        const body = await readJson(req)
-        const prompt = cleanPrompt(body.prompt)
-        const model = normalizeModel(body.model) || settings.videoModel
-        const requestedSize = String(body.size || '').trim()
-        const size = VIDEO_SIZES.has(requestedSize) ? requestedSize : '720P'
-        const requestedSeconds = String(body.seconds || '').trim()
-        const seconds = VIDEO_SECONDS.has(requestedSeconds) ? requestedSeconds : '5'
-        const seed = Number(body.seed)
-        const item = {
-          id: randomUUID(),
-          kind: 'video',
-          status: 'queued',
-          prompt,
-          model,
-          size,
-          seconds,
-          progress: 0,
-          stage: 'queued',
-          note: '',
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        }
-        if (Number.isFinite(seed)) item.seed = seed
-        if (body.projectId) item.projectId = String(body.projectId)
-        if (body.shotId) item.shotId = String(body.shotId)
-        await store.add(item)
-        tasks.start(item.id)
-        sendJson(res, 200, { ok: true, item: publicItem(store.find(item.id)) })
+      if (method === 'POST' && (rest === `/${settings.videoPath}` || rest === '/video')) {
+        // `/v1/video` is the canonical path for the composer entry;
+        // `/video` is the pre-0.8 alias of the very same handler.
+        await videoSubmitRoute(req, res, { store, tasks, frames, settings })
         return
       }
       if (method === 'POST' && rest === '/history/delete') {
@@ -1772,6 +1869,8 @@ export function apply(ctx, config = {}) {
     apiKeyEnv: String(config.apiKeyEnv || DEFAULTS.apiKeyEnv),
     videoModel: normalizeModel(config.videoModel) || DEFAULTS.videoModel,
     imageModel: normalizeModel(config.imageModel) || DEFAULTS.imageModel,
+    videoPath: normalizeRoute(config.videoPath) || DEFAULTS.videoPath,
+    videoUpstreamPath: normalizeUpstreamPath(config.videoUpstreamPath) || DEFAULTS.videoUpstreamPath,
   }
 
   const home = process.env.DSH_HOME || path.join(homedir(), '.dsh')

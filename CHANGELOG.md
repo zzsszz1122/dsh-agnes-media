@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.7.2
+
+- **Delete shots from the drama shot list.** Right-clicking a row in 短剧模式 →
+  镜头 opens a small menu; the first click arms "再点一次确认删除" and the second
+  one deletes. Deleting a shot also drops its canvas edges. Previously there was
+  no way to remove a shot from this view at all.
+- **Delete a project.** The project toolbar (canvas and drama) gains a 删除项目
+  button that removes the project directory with all its shots, cast and assets.
+  It arms on the first click and **disarms itself after 4 seconds**, because a
+  destructive button left armed would let an unrelated later click wipe a project.
+- Both confirmations are in-app: `window.confirm` is inert in this WebView, the
+  same reason the cast URL editor had to stop using `window.prompt`.
+- The backend already supported `DELETE /projects/:id` and `/shots/:sid`; this
+  release adds the missing entry points (`delete.mjs` covers cascade cleanup,
+  the 404 on a second delete, and that other projects stay usable).
+
 ## 0.7.1
 
 - **API keys are normalized before being sent upstream.** A pasted key carrying a

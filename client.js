@@ -76,6 +76,13 @@ window.__ModuleLoader__.load({
       'canvas.newProject': '新建项目',
       'canvas.projectName': '项目名称',
       'canvas.create': '创建',
+      'canvas.deleteProject': '删除项目',
+      'canvas.deleteProjectConfirm': '确认删除当前项目？其全部镜头、角色与素材都会被删除，且不可恢复。',
+      'action.confirmDelete': '确认删除',
+      'canvas.deleteProjectHint': '删除当前项目及其全部镜头、角色与素材（不可恢复）',
+      'ctx.delete': '删除',
+      'ctx.confirmDelete': '再点一次确认删除',
+      'ctx.rightClickHint': '右键可删除该镜头',
       'canvas.addShot': '添加镜头',
       'canvas.runAll': '生成链路',
       'canvas.runFrom': '从此镜续跑',
@@ -158,6 +165,44 @@ window.__ModuleLoader__.load({
       'status.pending-review': '待审片',
       'status.approved': '已批准',
       'status.storyboard': '静帧生成中',
+      // ---- composer entry (the first nav item) ----
+      'home.title': '今天，你想创造什么？',
+      'home.placeholder':
+        '上传参考素材、输入文字，自由组合图、文、视频多元素，定义精彩互动。例如:@图片1模仿@视频1的动作',
+      'home.add': '添加素材',
+      'home.add.library': '从资产库添加',
+      'home.add.local': '本地上传',
+      'home.add.hint': '支持 png / jpeg / webp，单张不超过 16MB',
+      'home.assets.title': '从资产库添加',
+      'home.assets.empty': '资产库里还没有图片，先用「本地上传」或生成一张。',
+      'home.assets.hint': '选用历史里已生成的图片作为首帧',
+      'home.mode.video': '视频生成',
+      'home.mode.image': '图片生成',
+      'home.compose.title': '创作模式',
+      'home.compose.auto': '全能模式',
+      'home.compose.keyframe': '首帧模式',
+      'home.compose.text': '纯文本',
+      'home.compose.auto.hint': '有素材时自动作首帧，没有就按文字生成',
+      'home.compose.keyframe.hint': '必须添加一张图片作首帧',
+      'home.compose.text.hint': '忽略素材，只按文字生成',
+      'home.compose.required': '首帧模式需要先添加一张图片作首帧。',
+      'home.model.title': '当前模型',
+      'home.model.upstream': '上游地址',
+      'home.model.key': '密钥',
+      'home.model.route': '提交接口',
+      'home.duration': '时长',
+      'home.size': '分辨率',
+      'home.duration.auto': 'Auto',
+      'home.mention': '引用素材',
+      'home.mention.empty': '先添加素材，才能用 @ 引用。',
+      'home.submit': '生成',
+      'home.frame': '首帧',
+      'home.reference': '参考',
+      'home.remove': '移除素材',
+      'home.uploadFail': '读取图片失败：{name}',
+      'home.tip': '任务在后台排队，切走或刷新都不会丢',
+      'home.assetFallback': '资产图',
+      'home.mentionToken': '图片',
     }
 
     const EN = {
@@ -219,6 +264,13 @@ window.__ModuleLoader__.load({
       'canvas.newProject': 'New project',
       'canvas.projectName': 'Project name',
       'canvas.create': 'Create',
+      'canvas.deleteProject': 'Delete project',
+      'canvas.deleteProjectConfirm': 'Delete this project? All its shots, characters and assets go with it, and this cannot be undone.',
+      'action.confirmDelete': 'Delete',
+      'canvas.deleteProjectHint': 'Deletes this project with all its shots, characters and assets (cannot be undone)',
+      'ctx.delete': 'Delete',
+      'ctx.confirmDelete': 'Click again to confirm',
+      'ctx.rightClickHint': 'Right-click to delete this shot',
       'canvas.addShot': 'Add shot',
       'canvas.runAll': 'Run chain',
       'canvas.runFrom': 'Continue from here',
@@ -301,6 +353,44 @@ window.__ModuleLoader__.load({
       'status.pending-review': 'In review',
       'status.approved': 'Approved',
       'status.storyboard': 'Rendering still',
+      // ---- composer entry (the first nav item) ----
+      'home.title': 'What will you create today?',
+      'home.placeholder':
+        'Upload references, type text, and combine image, text or video elements. Example: @image1 mimics the motion of @video1',
+      'home.add': 'Add reference',
+      'home.add.library': 'From library',
+      'home.add.local': 'Upload from device',
+      'home.add.hint': 'png / jpeg / webp, up to 16MB each',
+      'home.assets.title': 'Add from library',
+      'home.assets.empty': 'No images in the library yet — upload one or generate one first.',
+      'home.assets.hint': 'Use an image already in history as the first frame',
+      'home.mode.video': 'Video',
+      'home.mode.image': 'Image',
+      'home.compose.title': 'Mode',
+      'home.compose.auto': 'Versatile',
+      'home.compose.keyframe': 'First frame',
+      'home.compose.text': 'Text only',
+      'home.compose.auto.hint': 'Uses the reference as the first frame when there is one',
+      'home.compose.keyframe.hint': 'Requires one image as the first frame',
+      'home.compose.text.hint': 'Ignores references, generates from text',
+      'home.compose.required': 'First-frame mode needs an image reference.',
+      'home.model.title': 'Current model',
+      'home.model.upstream': 'Upstream',
+      'home.model.key': 'Key',
+      'home.model.route': 'Submit route',
+      'home.duration': 'Duration',
+      'home.size': 'Resolution',
+      'home.duration.auto': 'Auto',
+      'home.mention': 'Reference a material',
+      'home.mention.empty': 'Add a reference first, then use @ to cite it.',
+      'home.submit': 'Generate',
+      'home.frame': 'First frame',
+      'home.reference': 'Reference',
+      'home.remove': 'Remove reference',
+      'home.uploadFail': 'Could not read image: {name}',
+      'home.tip': 'Tasks queue in the background; switching away or reloading will not lose them',
+      'home.assetFallback': 'Asset',
+      'home.mentionToken': 'image',
     }
 
     const IMAGE_SIZES = ['1024x1024', '1024x768', '768x1024', '1280x720', '720x1280', '1536x1536', '2048x2048']
@@ -371,6 +461,77 @@ window.__ModuleLoader__.load({
       )
     }
 
+    /**
+     * Composer glyphs. The reference design leans on a handful of 16px outline
+     * icons inside its toolbar; they are inlined so the panel stays a single
+     * file and never blocks on a webfont or sprite request.
+     */
+    const GLYPHS = {
+      plus: [['path', { d: 'M12 5v14M5 12h14' }]],
+      film: [
+        ['rect', { x: 3, y: 5, width: 18, height: 14, rx: 3 }],
+        ['path', { d: 'M7.5 5v14M16.5 5v14M3 10h4.5M16.5 10H21M3 14h4.5M16.5 14H21' }],
+      ],
+      chevron: [['path', { d: 'm6 9 6 6 6-6' }]],
+      sparkle: [['path', { d: 'M12 3.5 13.9 9l5.6 1.9-5.6 1.9L12 18.4l-1.9-5.6L4.5 10.9 10.1 9z' }]],
+      at: [
+        ['circle', { cx: 12, cy: 12, r: 3.8 }],
+        ['path', { d: 'M15.8 8.2V13a2.8 2.8 0 0 0 5.6 0v-1a9.4 9.4 0 1 0-3.3 7.2' }],
+      ],
+      upload: [
+        ['path', { d: 'M12 15.5V4m0 0L8 8m4-4 4 4' }],
+        ['path', { d: 'M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16' }],
+      ],
+      image: [
+        ['rect', { x: 3, y: 4.5, width: 18, height: 15, rx: 3 }],
+        ['circle', { cx: 9, cy: 10, r: 1.5 }],
+        ['path', { d: 'm5 18 4.5-4.5L13 17l2.6-2.6L19 18' }],
+      ],
+      layers: [
+        ['path', { d: 'm12 3 8.5 4.5L12 12 3.5 7.5 12 3z' }],
+        ['path', { d: 'm4 12.5 8 4.3 8-4.3M4 17l8 4.3 8-4.3' }],
+      ],
+    }
+
+    function Glyph(props) {
+      const name = (props && props.name) || 'plus'
+      const size = (props && props.size) || 14
+      const paths = GLYPHS[name] || GLYPHS.plus
+      return h(
+        'svg',
+        {
+          width: size,
+          height: size,
+          viewBox: '0 0 24 24',
+          fill: 'none',
+          stroke: 'currentColor',
+          strokeWidth: 1.8,
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+          'aria-hidden': true,
+          style: { display: 'block', flex: 'none' },
+        },
+        ...paths.map(([tag, attrs], index) => h(tag, { key: index, ...attrs })),
+      )
+    }
+
+    /**
+     * `agnes-video-2.5-flash` reads badly on a chip; the panel shows the label
+     * the Agnes console uses. Unknown ids are title-cased rather than hidden so
+     * a misconfigured model is still visible.
+     */
+    function prettyModel(id) {
+      const raw = String(id || '').trim()
+      if (!raw) return '—'
+      return raw
+        .split(/[-_\s]+/)
+        .filter(Boolean)
+        .map((part) => (/^\d/.test(part) ? part : part.charAt(0).toUpperCase() + part.slice(1)))
+        .join(' ')
+    }
+
+    const APP_IMAGE_MIMES = /^image\/(png|jpeg|jpg|webp)$/i
+
     const STYLES = `
       .agnes-root{display:flex;flex-direction:column;height:100%;min-height:480px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-family:var(--dsw-font-family,inherit);overflow:hidden}
       .agnes-scroll{flex:1;min-height:0;overflow:auto;padding:26px 30px 40px}
@@ -387,6 +548,8 @@ window.__ModuleLoader__.load({
       .agnes-tab[data-active="true"]{color:var(--dsw-alias-label-primary,inherit);font-weight:600;border-bottom-color:#2563eb}
       .agnes-grid{display:grid;grid-template-columns:minmax(300px,420px) minmax(0,1fr);gap:18px;align-items:start}
       @media (max-width:900px){.agnes-grid{grid-template-columns:1fr}}
+      /* The composer entry takes the full width; the result card stacks under it. */
+      .agnes-grid.agnes-grid-single{grid-template-columns:minmax(0,1fr)}
       .agnes-card{background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1);border-radius:14px;padding:16px;box-sizing:border-box}
       .agnes-card+.agnes-card{margin-top:14px}
       .agnes-label{display:block;font-size:11.5px;color:var(--dsw-alias-label-secondary);margin:0 0 6px}
@@ -470,6 +633,17 @@ window.__ModuleLoader__.load({
       .agnes-drama-row-status[data-status="ready"]{color:#22c55e}
       .agnes-drama-row-status[data-status="failed"]{color:#ef4444}
       .agnes-drama-row-prompt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--dsw-alias-label-secondary)}
+      .agnes-ctx-backdrop{position:fixed;inset:0;z-index:60}
+      .agnes-ctx{position:fixed;min-width:170px;padding:6px;border-radius:10px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);box-shadow:0 10px 28px rgba(0,0,0,.28);display:flex;flex-direction:column;gap:4px}
+      .agnes-ctx-title{padding:3px 8px 5px;font-size:11px;font-weight:600;color:var(--dsw-alias-label-secondary);border-bottom:1px solid var(--dsw-alias-border-l1);margin-bottom:2px}
+      .agnes-ctx-item{display:block;width:100%;text-align:left;padding:7px 9px;border:0;border-radius:7px;background:transparent;color:var(--dsw-alias-label-primary);font-family:inherit;font-size:12px;cursor:pointer}
+      .agnes-ctx-item:hover{background:rgba(127,127,127,.14)}
+      .agnes-ctx-danger{color:#fff;background:#dc2626}
+      .agnes-ctx-danger:hover{background:#b91c1c}
+      .agnes-button.agnes-danger{background:#dc2626;border-color:#dc2626;color:#fff}
+      .agnes-button.agnes-danger:hover{background:#b91c1c;border-color:#b91c1c}
+      .agnes-confirmbar{display:flex;align-items:center;gap:8px;margin:8px 0 2px;padding:9px 12px;border-radius:10px;border:1px solid #dc2626;background:rgba(220,38,38,.10);color:var(--dsw-alias-label-primary);font-size:12px}
+      .agnes-confirmbar>span{flex:1;min-width:0}
       .agnes-drama-row-duration{font-size:10px;color:var(--dsw-alias-label-secondary);text-align:right;white-space:nowrap}
       .agnes-drama-cancel{display:inline-block;white-space:nowrap;padding:3px 8px;border-radius:6px;border:1px solid rgba(59,130,246,.5);background:rgba(59,130,246,.14);color:#3b82f6;font-family:inherit;font-size:11px;font-weight:600;line-height:1.4;text-align:center;cursor:pointer;vertical-align:middle}
       .agnes-drama-cancel:hover{background:rgba(59,130,246,.24);border-color:rgba(59,130,246,.75)}
@@ -494,6 +668,58 @@ window.__ModuleLoader__.load({
       .agnes-cast-toggle{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
       .agnes-cast-pill{font-size:10.5px;padding:2px 7px;border-radius:999px;border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;font-family:inherit}
       .agnes-cast-pill[data-active="true"]{border-color:#2563eb;color:#2563eb;background:rgba(37,99,235,.1)}
+
+      /* ---- composer entry: the first nav item ---- */
+      .agnes-hero{display:flex;flex-direction:column;align-items:stretch;gap:14px;margin:2px 0 4px}
+      .agnes-hero-title{font-size:22px;font-weight:600;letter-spacing:.01em;line-height:1.35;text-align:center;margin:6px 0 2px}
+      .agnes-composer{position:relative;width:100%;max-width:900px;margin:0 auto;box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);border-radius:18px;padding:14px 14px 10px;box-shadow:0 8px 26px rgba(0,0,0,.07)}
+      .agnes-composer[data-busy="true"]{box-shadow:0 8px 26px rgba(0,0,0,.07),0 0 0 1px rgba(15,159,143,.35)}
+      .agnes-composer:focus-within{border-color:rgba(15,159,143,.5);box-shadow:0 8px 26px rgba(0,0,0,.08),0 0 0 3px rgba(15,159,143,.1)}
+      .agnes-composer-input{display:block;width:100%;box-sizing:border-box;min-height:88px;max-height:220px;resize:none;border:0;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:1.6;outline:none;padding:2px 4px 12px}
+      .agnes-composer-input::placeholder{color:var(--dsw-alias-label-secondary);opacity:.9}
+      .agnes-composer-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:32px}
+      .agnes-round{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex:none;padding:0;border-radius:50%;border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;font:inherit;font-size:16px;line-height:1}
+      .agnes-round:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
+      .agnes-round:disabled{opacity:.5;cursor:default}
+      .agnes-pill{display:inline-flex;align-items:center;gap:5px;height:30px;box-sizing:border-box;max-width:230px;padding:0 10px;border-radius:999px;border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:12px;line-height:1;cursor:pointer;white-space:nowrap}
+      .agnes-pill>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .agnes-pill:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
+      .agnes-pill:disabled{opacity:.55;cursor:default}
+      .agnes-pill[data-open="true"]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
+      .agnes-pill-accent{color:#0f766e;border-color:rgba(15,118,110,.35);background:rgba(15,118,110,.08)}
+      .agnes-pill-accent:hover:not(:disabled){color:#0b5f57;background:rgba(15,118,110,.14)}
+      .agnes-bar-spacer{flex:1 1 auto;min-width:6px}
+      .agnes-send{display:inline-flex;align-items:center;gap:6px;height:32px;flex:none;padding:0 14px;border-radius:999px;border:1px solid #0f9f8f;background:#0f9f8f;color:#fff;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+      .agnes-send:hover:not(:disabled){background:#0d8b7d;border-color:#0d8b7d}
+      .agnes-send:disabled{opacity:.5;cursor:default}
+      .agnes-send.agnes-send-stop{background:transparent;color:#dc2626;border-color:rgba(220,38,38,.45);font-weight:500}
+      .agnes-send.agnes-send-stop:hover{background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.7)}
+      .agnes-menu-wrap{position:relative;display:inline-flex;flex:none}
+      .agnes-menu{position:absolute;left:0;bottom:calc(100% + 8px);z-index:50;min-width:196px;padding:6px;border-radius:12px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);box-shadow:0 14px 34px rgba(0,0,0,.2);display:flex;flex-direction:column;gap:2px}
+      .agnes-menu[data-align="end"]{left:auto;right:0}
+      .agnes-menu-item{display:flex;align-items:center;gap:8px;width:100%;padding:7px 9px;border:0;border-radius:8px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;text-align:left;cursor:pointer;white-space:nowrap}
+      .agnes-menu-item:hover{background:rgba(127,127,127,.14)}
+      .agnes-menu-item[data-active="true"]{color:#0f766e;font-weight:600;background:rgba(15,118,110,.08)}
+      .agnes-menu-item[data-disabled="true"]{color:var(--dsw-alias-label-secondary);cursor:default;opacity:.6}
+      .agnes-menu-note{padding:3px 9px 6px;font-size:11px;line-height:1.5;color:var(--dsw-alias-label-secondary);white-space:normal;max-width:260px}
+      .agnes-menu-sep{height:1px;margin:4px 4px;background:var(--dsw-alias-border-l1)}
+      .agnes-menu-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:4px 9px;font-size:11.5px;color:var(--dsw-alias-label-secondary)}
+      .agnes-menu-row b{font-weight:600;color:var(--dsw-alias-label-primary);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .agnes-menu-scroll{max-height:224px;overflow:auto;display:flex;flex-direction:column;gap:2px}
+      .agnes-menu-backdrop{position:fixed;inset:0;z-index:45;background:transparent}
+      .agnes-attach-row{display:flex;gap:8px;flex-wrap:wrap;padding:0 2px 10px}
+      .agnes-attach{position:relative;width:98px;display:flex;flex-direction:column;gap:4px}
+      .agnes-attach img{display:block;width:98px;height:66px;object-fit:cover;border-radius:9px;border:1px solid var(--dsw-alias-border-l1);background:#000}
+      .agnes-attach-name{font-size:10.5px;color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .agnes-attach-tag{position:absolute;left:4px;bottom:26px;font-size:9.5px;line-height:1.5;padding:0 5px;border-radius:999px;background:rgba(0,0,0,.62);color:#fff}
+      .agnes-attach-del{position:absolute;top:3px;right:3px;width:18px;height:18px;padding:0;border:0;border-radius:50%;background:rgba(0,0,0,.62);color:#fff;font-size:12px;line-height:1;cursor:pointer}
+      .agnes-composer-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 4px 0}
+      .agnes-composer-hint{font-size:11px;color:var(--dsw-alias-label-secondary)}
+      .agnes-composer-actions{display:flex;align-items:center;gap:8px}
+      .agnes-hero-examples{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;max-width:900px;margin:0 auto}
+      .agnes-composer-progress{margin:10px 4px 0}
+      .agnes-stack{display:flex;flex-direction:column;gap:16px;margin-top:18px}
+      .agnes-send-count{font-variant-numeric:tabular-nums;opacity:.85}
     `
 
     async function patchJson(path, body) {
@@ -528,6 +754,7 @@ window.__ModuleLoader__.load({
     const addShotApi = (id, input) => postJson(`/projects/${id}/shots`, input)
     const patchShotApi = (id, shotId, patch) => patchJson(`/projects/${id}/shots/${shotId}`, patch)
     const deleteShotApi = (id, shotId) => deleteJson(`/projects/${id}/shots/${shotId}`)
+    const deleteProjectApi = (id) => deleteJson(`/projects/${id}`)
 
     class ViewBoundary extends React.Component {
       constructor(props) {
@@ -593,40 +820,94 @@ window.__ModuleLoader__.load({
     }
 
     function ProjectToolbar(props) {
-      const { t, projects, projectId, onPick, onCreate, newName, setNewName, extra } = props
+      const { t, projects, projectId, onPick, onCreate, newName, setNewName, extra, onDelete } = props
+      // Deleting a project takes its shots, cast and assets with it, so the
+      // button arms itself first and only acts on the second click. window.confirm
+      // is inert in this WebView, so the confirmation has to live in the UI.
+      const [confirming, setConfirming] = useState(false)
+      useEffect(() => {
+        setConfirming(false)
+      }, [projectId])
       return h(
         'div',
-        { className: 'agnes-projbar' },
-        h('label', { className: 'agnes-label', style: { margin: 0 } }, t('canvas.project')),
+        null,
         h(
-          'select',
-          {
-            className: 'agnes-select',
-            style: { maxWidth: '220px' },
-            value: projectId,
-            onChange: (event) => onPick(event.target.value),
-          },
-          ...(projects.length
-            ? projects.map((project) => h('option', { key: project.id, value: project.id }, project.name))
-            : [h('option', { key: 'none', value: '' }, '—')]),
+          'div',
+          { className: 'agnes-projbar' },
+          h('label', { className: 'agnes-label', style: { margin: 0 } }, t('canvas.project')),
+          h(
+            'select',
+            {
+              className: 'agnes-select',
+              style: { maxWidth: '220px' },
+              value: projectId,
+              onChange: (event) => onPick(event.target.value),
+            },
+            ...(projects.length
+              ? projects.map((project) => h('option', { key: project.id, value: project.id }, project.name))
+              : [h('option', { key: 'none', value: '' }, '—')]),
+          ),
+          h('input', {
+            className: 'agnes-input',
+            style: { maxWidth: '180px' },
+            placeholder: t('canvas.projectName'),
+            value: newName,
+            onChange: (event) => setNewName(event.target.value),
+          }),
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'agnes-button agnes-ghost',
+              onClick: () => onCreate(newName),
+            },
+            t('canvas.create'),
+          ),
+          onDelete && projectId
+            ? h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'agnes-button agnes-ghost',
+                  title: t('canvas.deleteProjectHint'),
+                  onClick: () => setConfirming((value) => !value),
+                },
+                t('canvas.deleteProject'),
+              )
+            : null,
+          ...(extra || []),
         ),
-        h('input', {
-          className: 'agnes-input',
-          style: { maxWidth: '180px' },
-          placeholder: t('canvas.projectName'),
-          value: newName,
-          onChange: (event) => setNewName(event.target.value),
-        }),
-        h(
-          'button',
-          {
-            type: 'button',
-            className: 'agnes-button agnes-ghost',
-            onClick: () => onCreate(newName),
-          },
-          t('canvas.create'),
-        ),
-        ...(extra || []),
+        // An explicit confirm bar rather than a self-arming button: it can be
+        // cancelled, and it stays put until answered instead of deleting the
+        // project on some unrelated later click.
+        confirming && projectId
+          ? h(
+              'div',
+              { className: 'agnes-confirmbar' },
+              h('span', null, t('canvas.deleteProjectConfirm')),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'agnes-button agnes-danger',
+                  onClick: () => {
+                    setConfirming(false)
+                    onDelete(projectId)
+                  },
+                },
+                t('action.confirmDelete'),
+              ),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'agnes-button agnes-ghost',
+                  onClick: () => setConfirming(false),
+                },
+                t('action.cancel'),
+              ),
+            )
+          : null,
       )
     }
 
@@ -868,6 +1149,26 @@ window.__ModuleLoader__.load({
         }
       }
 
+      const removeProject = async (id) => {
+        if (!id) return
+        try {
+          await deleteProjectApi(id)
+          const list = await loadProjects()
+          setProjects(list)
+          if (id === projectId) {
+            const next = list[0] ? list[0].id : ''
+            setProjectId(next)
+            // Clear immediately: leaving stale nodes behind shows a project
+            // that no longer exists.
+            setDetail(null)
+            setNodes([])
+            setEdges([])
+          }
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
       const removeShot = async (shotId) => {
         if (!projectId) return
         try {
@@ -965,6 +1266,7 @@ window.__ModuleLoader__.load({
           projectId,
           onPick: setProjectId,
           onCreate: createProject,
+          onDelete: removeProject,
           newName,
           setNewName,
           extra: [
@@ -1247,6 +1549,8 @@ window.__ModuleLoader__.load({
       const [urlDraft, setUrlDraft] = useState('')
       const [storyBusy, setStoryBusy] = useState({})
       const [blockers, setBlockers] = useState([])
+      // Right-click menu for the shot list: { id, x, y, confirm }.
+      const [shotMenu, setShotMenu] = useState(null)
 
       const shots = detail ? detail.shots || [] : []
       const chain = detail && detail.project ? detail.project.chain : null
@@ -1312,6 +1616,38 @@ window.__ModuleLoader__.load({
         setDetail(data)
         return data
       }, [projectId])
+
+      const removeShot = async (shotId) => {
+        if (!projectId) return
+        try {
+          await deleteShotApi(projectId, shotId)
+          const data = await reload()
+          if (data && data.shots && data.shots.length) setSelected(data.shots[0].id)
+          else setSelected('')
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const removeProject = async (id) => {
+        if (!id) return
+        try {
+          await deleteProjectApi(id)
+          const list = await loadProjects()
+          setProjects(list)
+          if (id === projectId) {
+            const next = list[0] ? list[0].id : ''
+            setProjectId(next)
+            // Drop the selection and cached detail so the pane cannot keep
+            // showing shots from the project that was just removed.
+            setSelected('')
+            setDetail(null)
+            setCast([])
+          }
+        } catch (err) {
+          setError(String(err))
+        }
+      }
 
       const reloadCast = useCallback(async () => {
         if (!projectId) return []
@@ -1629,6 +1965,7 @@ window.__ModuleLoader__.load({
           projectId,
           onPick: setProjectId,
           onCreate: createProject,
+          onDelete: removeProject,
           newName,
           setNewName,
           extra: [
@@ -1852,6 +2189,58 @@ window.__ModuleLoader__.load({
           : null,
         error ? h('div', { className: 'agnes-error' }, error) : null,
         chain && chain.error ? h('div', { className: 'agnes-error' }, chain.error) : null,
+        shotMenu
+          ? h(
+              'div',
+              {
+                className: 'agnes-ctx-backdrop',
+                onClick: () => setShotMenu(null),
+                onContextMenu: (event) => {
+                  event.preventDefault()
+                  setShotMenu(null)
+                },
+              },
+              h(
+                'div',
+                {
+                  className: 'agnes-ctx',
+                  style: {
+                    // Keep the menu inside the viewport when the click lands low.
+                    left: Math.max(4, Math.min(shotMenu.x, (window.innerWidth || 900) - 190)),
+                    top: Math.max(4, Math.min(shotMenu.y, (window.innerHeight || 700) - 132)),
+                  },
+                  onClick: (event) => event.stopPropagation(),
+                },
+                h('div', { className: 'agnes-ctx-title' }, `#${shotMenu.index}`),
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: shotMenu.confirm ? 'agnes-ctx-item agnes-ctx-danger' : 'agnes-ctx-item',
+                    onClick: () => {
+                      if (!shotMenu.confirm) {
+                        setShotMenu({ ...shotMenu, confirm: true })
+                        return
+                      }
+                      const id = shotMenu.id
+                      setShotMenu(null)
+                      removeShot(id).catch(() => {})
+                    },
+                  },
+                  shotMenu.confirm ? t('ctx.confirmDelete') : t('ctx.delete'),
+                ),
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'agnes-ctx-item',
+                    onClick: () => setShotMenu(null),
+                  },
+                  t('action.cancel'),
+                ),
+              ),
+            )
+          : null,
         pane === 'shots' && (shots.length === 0
           ? h('div', { className: 'agnes-empty' }, h('b', null, t('drama.empty')))
           : h(
@@ -1868,7 +2257,19 @@ window.__ModuleLoader__.load({
                       type: 'button',
                       className: 'agnes-drama-row',
                       'data-active': shot.id === selected ? 'true' : 'false',
+                      title: t('ctx.rightClickHint'),
                       onClick: () => setSelected(shot.id),
+                      onContextMenu: (event) => {
+                        event.preventDefault()
+                        setSelected(shot.id)
+                        setShotMenu({
+                          id: shot.id,
+                          index: shot.index,
+                          x: event.clientX,
+                          y: event.clientY,
+                          confirm: false,
+                        })
+                      },
                     },
                     h('b', null, `#${shot.index}`),
                     h('span', { className: 'agnes-drama-row-status', 'data-status': shot.status }, t(`status.${shot.status || 'draft'}`)),
@@ -2361,7 +2762,7 @@ window.__ModuleLoader__.load({
       const [prompt, setPrompt] = useState('')
       const [imageSize, setImageSize] = useState('1024x1024')
       const [videoSize, setVideoSize] = useState('720P')
-      const [seconds, setSeconds] = useState('5')
+      const [seconds, setSeconds] = useState('auto')
       const [seed, setSeed] = useState('')
       const [status, setStatus] = useState(null)
       const [history, setHistory] = useState([])
@@ -2372,7 +2773,14 @@ window.__ModuleLoader__.load({
       const [error, setError] = useState('')
       const [result, setResult] = useState(null)
       const [refreshTick, setRefreshTick] = useState(0)
+      // Composer entry state: references (first frame), the compose mode behind
+      // 「全能模式」, and which toolbar popover is open (only one at a time).
+      const [attachments, setAttachments] = useState([])
+      const [composeMode, setComposeMode] = useState('auto')
+      const [menu, setMenu] = useState('')
       const activeRef = useRef(null)
+      const promptRef = useRef(null)
+      const fileRef = useRef(null)
 
       const stageText = useCallback(
         (item) => {
@@ -2468,13 +2876,88 @@ window.__ModuleLoader__.load({
         return () => clearInterval(timer)
       }, [hasPending, refresh])
 
+      // Host-advertised submit route for this entry: a video task route
+      // (`/v1/video`), never a chat completion route.
+      const videoPath = (status && status.videoPath) || '/v1/video'
+      const firstAttachment = attachments.length > 0 ? attachments[0] : null
+      const usesReference = Boolean(firstAttachment) && composeMode !== 'text'
+
+      const toggleMenu = useCallback((name) => setMenu((current) => (current === name ? '' : name)), [])
+
+      const addAttachment = useCallback((entry) => {
+        // Four references is the upstream ceiling for one request.
+        setAttachments((current) => (current.length >= 4 ? current : [...current, entry]))
+      }, [])
+
+      const pickLocalFiles = useCallback(
+        async (files) => {
+          const picked = Array.from(files || []).filter((file) => APP_IMAGE_MIMES.test(String(file.type || '')))
+          if (picked.length === 0) return
+          for (const file of picked) {
+            try {
+              const dataUri = await readFileAsDataUri(file)
+              addAttachment({ id: `${Date.now()}-${file.name}`, name: file.name, dataUri, preview: dataUri })
+            } catch {
+              setError(t('home.uploadFail').replace('{name}', file.name))
+            }
+          }
+          setMenu('')
+        },
+        [addAttachment, t],
+      )
+
+      const addFromLibrary = useCallback(
+        (item) => {
+          addAttachment({
+            id: `lib-${item.id}`,
+            name: item.prompt || t('home.assetFallback'),
+            preview: item.url,
+            taskId: item.id,
+          })
+          setMenu('')
+        },
+        [addAttachment, t],
+      )
+
+      const removeAttachment = useCallback((id) => {
+        setAttachments((current) => current.filter((entry) => entry.id !== id))
+      }, [])
+
+      // `@` cites the first reference inside the prompt, at the caret. The host
+      // keeps the real binding (`firstFrame`), the token is just how a user
+      // refers to it while writing.
+      const insertMention = useCallback(() => {
+        if (attachments.length === 0) {
+          setError(t('home.mention.empty'))
+          return
+        }
+        const token = `@${t('home.mentionToken')}1`
+        const node = promptRef.current
+        let next = `${prompt}${prompt && !/\s$/.test(prompt) ? ' ' : ''}${token}`
+        let caret = next.length
+        if (node && typeof node.selectionStart === 'number') {
+          const start = node.selectionStart
+          const end = typeof node.selectionEnd === 'number' ? node.selectionEnd : start
+          next = `${prompt.slice(0, start)}${token}${prompt.slice(end)}`
+          caret = start + token.length
+        }
+        setPrompt(next)
+        setError('')
+        if (node && typeof node.setSelectionRange === 'function') setTimeout(() => node.setSelectionRange(caret, caret), 0)
+      }, [attachments.length, prompt, t])
+
       const generate = useCallback(async () => {
         const text = prompt.trim()
         if (!text) {
           setError(t('error.prompt'))
           return
         }
+        if (tab !== 'image' && composeMode === 'keyframe' && !firstAttachment) {
+          setError(t('home.compose.required'))
+          return
+        }
         setError('')
+        setMenu('')
         setProgress(0)
         setPhase(tab === 'image' ? t('phase.image') : t('phase.submitting'))
         setNote('')
@@ -2483,10 +2966,20 @@ window.__ModuleLoader__.load({
           const payload = { prompt: text }
           const seedValue = Number(seed)
           if (seed.trim() !== '' && Number.isFinite(seedValue)) payload.seed = seedValue
-          const data =
-            tab === 'image'
-              ? await postJson('/image', { ...payload, size: imageSize })
-              : await postJson('/video', { ...payload, size: videoSize, seconds })
+          let data
+          if (tab === 'image') {
+            data = await postJson('/image', { ...payload, size: imageSize })
+          } else {
+            if (usesReference) {
+              if (firstAttachment.taskId) payload.firstFrameTaskId = firstAttachment.taskId
+              else if (firstAttachment.dataUri) payload.firstFrame = firstAttachment.dataUri
+            }
+            data = await postJson(videoPath, {
+              ...payload,
+              size: videoSize,
+              seconds: seconds === 'auto' ? '5' : seconds,
+            })
+          }
           const item = data.item
           if (!item) throw new Error(t('error.title'))
           activeRef.current = item.id
@@ -2499,7 +2992,20 @@ window.__ModuleLoader__.load({
           setPhase('')
           setError(caught instanceof Error ? caught.message : String(caught))
         }
-      }, [prompt, tab, imageSize, videoSize, seconds, seed, t, refresh])
+      }, [
+        prompt,
+        tab,
+        imageSize,
+        videoSize,
+        seconds,
+        seed,
+        t,
+        refresh,
+        composeMode,
+        firstAttachment,
+        usesReference,
+        videoPath,
+      ])
 
       const cancelActive = useCallback(async () => {
         const id = activeRef.current
@@ -2543,6 +3049,797 @@ window.__ModuleLoader__.load({
         tab === 'image'
           ? ['example.image.1', 'example.image.2', 'example.image.3']
           : ['example.video.1', 'example.video.2', 'example.video.3']
+
+
+      /* ---------------------- composer entry (first nav item) ---------------------- */
+
+      /**
+       * The reference image's landing view: a hero title, one large composer, and
+       * a toolbar of chips.
+       *
+       * None of the chips are decorative — `+` imports a reference that travels
+       * upstream as the keyframe, `@` cites it inside the prompt, 「视频生成」
+       * switches to the image entry, and the mode / 时长 / 分辨率 chips write the
+       * same fields the flat form used to expose.
+       */
+      function renderComposer() {
+        const model = (status && status.videoModel) || 'agnes-video-2.5-flash'
+        const library = history.filter((item) => item.kind === 'image' && item.status === 'ready' && item.url)
+        const composeLabel =
+          composeMode === 'keyframe'
+            ? t('home.compose.keyframe')
+            : composeMode === 'text'
+              ? t('home.compose.text')
+              : t('home.compose.auto')
+        const composeHint =
+          composeMode === 'keyframe'
+            ? t('home.compose.keyframe.hint')
+            : composeMode === 'text'
+              ? t('home.compose.text.hint')
+              : t('home.compose.auto.hint')
+        const durationLabel = seconds === 'auto' ? t('home.duration.auto') : `${seconds}${t('note.seconds')}`
+        const caret = h(Glyph, { name: 'chevron', size: 12 })
+
+        // One popover at a time: `menu` holds the open one, so each chip just
+        // toggles its own name and the backdrop clears it.
+        const popover = (name, children, align) => {
+          if (menu !== name) return null
+          return [
+            h('div', { key: `${name}-backdrop`, className: 'agnes-menu-backdrop', onClick: () => setMenu('') }),
+            h(
+              'div',
+              { key: `${name}-panel`, className: 'agnes-menu', 'data-align': align || 'start' },
+              ...children,
+            ),
+          ]
+        }
+
+        const chip = (name, glyph, label, title) =>
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'agnes-pill',
+              'data-open': menu === name ? 'true' : 'false',
+              title: title || label,
+              disabled: busy,
+              onClick: () => toggleMenu(name),
+            },
+            glyph ? h(Glyph, { name: glyph, size: 13 }) : null,
+            h('span', null, label),
+            caret,
+          )
+
+        return h(
+          'div',
+          { className: 'agnes-hero' },
+          h('div', { className: 'agnes-hero-title' }, t('home.title')),
+          h(
+            'div',
+            { className: 'agnes-composer', 'data-busy': busy ? 'true' : 'false' },
+            attachments.length > 0
+              ? h(
+                  'div',
+                  { className: 'agnes-attach-row' },
+                  ...attachments.map((entry, index) =>
+                    h(
+                      'div',
+                      { key: entry.id, className: 'agnes-attach' },
+                      h('img', { src: entry.preview, alt: entry.name }),
+                      h(
+                        'span',
+                        { className: 'agnes-attach-tag' },
+                        index === 0 && composeMode !== 'text' ? t('home.frame') : t('home.reference'),
+                      ),
+                      h('button', {
+                        type: 'button',
+                        className: 'agnes-attach-del',
+                        title: t('home.remove'),
+                        onClick: () => removeAttachment(entry.id),
+                      }, '×'),
+                      h('span', { className: 'agnes-attach-name', title: entry.name }, entry.name),
+                    ),
+                  ),
+                )
+              : null,
+            h('textarea', {
+              className: 'agnes-composer-input',
+              ref: promptRef,
+              rows: 3,
+              value: prompt,
+              placeholder: t('home.placeholder'),
+              disabled: busy,
+              onChange: (event) => {
+                setPrompt(event.target.value)
+                if (error) setError('')
+              },
+              onKeyDown: (event) => {
+                if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+                  event.preventDefault()
+                  if (!busy && configured) generate().catch(() => {})
+                }
+              },
+            }),
+            h(
+              'div',
+              { className: 'agnes-composer-bar' },
+              // + : import a reference from the device or from the library
+              h(
+                'div',
+                { className: 'agnes-menu-wrap' },
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'agnes-round',
+                    title: t('home.add'),
+                    'aria-haspopup': 'menu',
+                    'aria-expanded': menu === 'add' || menu === 'assets' ? 'true' : 'false',
+                    disabled: busy,
+                    onClick: () => toggleMenu('add'),
+                  },
+                  h(Glyph, { name: 'plus', size: 16 }),
+                ),
+                popover('add', [
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'agnes-menu-item',
+                      onClick: () => setMenu('assets'),
+                    },
+                    h(Glyph, { name: 'image', size: 14 }),
+                    h('span', null, t('home.add.library')),
+                  ),
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'agnes-menu-item',
+                      onClick: () => {
+                        setMenu('')
+                        if (fileRef.current && typeof fileRef.current.click === 'function') fileRef.current.click()
+                      },
+                    },
+                    h(Glyph, { name: 'upload', size: 14 }),
+                    h('span', null, t('home.add.local')),
+                  ),
+                  h('div', { className: 'agnes-menu-sep' }),
+                  h('div', { className: 'agnes-menu-note' }, t('home.add.hint')),
+                ]),
+                popover('assets', [
+                  h('div', { className: 'agnes-menu-note' }, t('home.assets.hint')),
+                  library.length === 0
+                    ? h('div', { className: 'agnes-menu-note' }, t('home.assets.empty'))
+                    : h(
+                        'div',
+                        { className: 'agnes-menu-scroll' },
+                        ...library.slice(0, 12).map((item) =>
+                          h(
+                            'button',
+                            {
+                              type: 'button',
+                              key: item.id,
+                              className: 'agnes-menu-item',
+                              title: item.prompt,
+                              onClick: () => addFromLibrary(item),
+                            },
+                            h('img', { src: item.url, alt: item.prompt || '' }),
+                            h(
+                              'span',
+                              { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } },
+                              item.prompt || t('home.assetFallback'),
+                            ),
+                          ),
+                        ),
+                      ),
+                ]),
+              ),
+              // 视频生成 / 图片生成
+              h(
+                'div',
+                { className: 'agnes-menu-wrap' },
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'agnes-pill agnes-pill-accent',
+                    'data-open': menu === 'mode' ? 'true' : 'false',
+                    disabled: busy,
+                    onClick: () => toggleMenu('mode'),
+                  },
+                  h(Glyph, { name: 'film', size: 13 }),
+                  h('span', null, t('home.mode.video')),
+                  caret,
+                ),
+                popover('mode', [
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'agnes-menu-item',
+                      'data-active': 'true',
+                      onClick: () => setMenu(''),
+                    },
+                    h(Glyph, { name: 'film', size: 14 }),
+                    h('span', null, t('home.mode.video')),
+                  ),
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'agnes-menu-item',
+                      onClick: () => {
+                        setMenu('')
+                        setTab('image')
+                      },
+                    },
+                    h(Glyph, { name: 'image', size: 14 }),
+                    h('span', null, t('home.mode.image')),
+                  ),
+                ]),
+              ),
+              // model chip: shows what will actually be called, and on which route
+              h(
+                'div',
+                { className: 'agnes-menu-wrap' },
+                chip('model', 'sparkle', prettyModel(model), t('home.model.title')),
+                popover('model', [
+                  h('div', { className: 'agnes-menu-note' }, t('home.model.title')),
+                  h('div', { className: 'agnes-menu-row' }, h('span', null, t('model.video')), h('b', null, model)),
+                  h('div', { className: 'agnes-menu-row' }, h('span', null, t('home.model.route')), h('b', null, videoPath)),
+                  h(
+                    'div',
+                    { className: 'agnes-menu-row' },
+                    h('span', null, t('home.model.upstream')),
+                    h('b', null, (status && status.baseURL) || '—'),
+                  ),
+                  h(
+                    'div',
+                    { className: 'agnes-menu-row' },
+                    h('span', null, t('home.model.key')),
+                    h('b', null, status && status.keyHint ? status.keyHint : t('status.key.missing')),
+                  ),
+                ]),
+              ),
+              // 全能模式 / 首帧模式 / 纯文本
+              h(
+                'div',
+                { className: 'agnes-menu-wrap' },
+                chip('compose', 'layers', composeLabel, composeHint),
+                popover('compose', [
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'agnes-menu-item',
+                      'data-active': composeMode === 'auto' ? 'true' : 'false',
+                      onClick: () => {
+                        setComposeMode('auto')
+                        setMenu('')
+                      },
+                    },
+                    t('home.compose.auto'),
+                  ),
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'agnes-menu-item',
+                      'data-active': composeMode === 'keyframe' ? 'true' : 'false',
+                      onClick: () => {
+                        setComposeMode('keyframe')
+                        setMenu('')
+                      },
+                    },
+                    t('home.compose.keyframe'),
+                  ),
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'agnes-menu-item',
+                      'data-active': composeMode === 'text' ? 'true' : 'false',
+                      onClick: () => {
+                        setComposeMode('text')
+                        setMenu('')
+                      },
+                    },
+                    t('home.compose.text'),
+                  ),
+                  h('div', { className: 'agnes-menu-sep' }),
+                  h('div', { className: 'agnes-menu-note' }, composeHint),
+                ]),
+              ),
+              // duration
+              h(
+                'div',
+                { className: 'agnes-menu-wrap' },
+                chip('duration', null, durationLabel, t('home.duration')),
+                popover('duration', [
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'agnes-menu-item',
+                      'data-active': seconds === 'auto' ? 'true' : 'false',
+                      onClick: () => {
+                        setSeconds('auto')
+                        setMenu('')
+                      },
+                    },
+                    t('home.duration.auto'),
+                  ),
+                  h('div', { className: 'agnes-menu-sep' }),
+                  ...VIDEO_SECONDS.map((value) =>
+                    h(
+                      'button',
+                      {
+                        type: 'button',
+                        key: value,
+                        className: 'agnes-menu-item',
+                        'data-active': seconds === value ? 'true' : 'false',
+                        onClick: () => {
+                          setSeconds(value)
+                          setMenu('')
+                        },
+                      },
+                      `${value}${t('note.seconds')}`,
+                    ),
+                  ),
+                ]),
+              ),
+              // resolution
+              h(
+                'div',
+                { className: 'agnes-menu-wrap' },
+                chip('size', null, videoSize, t('home.size')),
+                popover('size', [
+                  ...VIDEO_SIZES.map((value) =>
+                    h(
+                      'button',
+                      {
+                        type: 'button',
+                        key: value,
+                        className: 'agnes-menu-item',
+                        'data-active': videoSize === value ? 'true' : 'false',
+                        onClick: () => {
+                          setVideoSize(value)
+                          setMenu('')
+                        },
+                      },
+                      value,
+                    ),
+                  ),
+                ]),
+              ),
+              h('div', { className: 'agnes-bar-spacer' }),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'agnes-round',
+                  title: t('home.mention'),
+                  disabled: busy,
+                  onClick: () => insertMention(),
+                },
+                h(Glyph, { name: 'at', size: 15 }),
+              ),
+              busy
+                ? h(
+                    'button',
+                    { type: 'button', className: 'agnes-send agnes-send-stop', onClick: () => cancelActive() },
+                    t('action.cancelTask'),
+                  )
+                : h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'agnes-send',
+                      disabled: !configured,
+                      title: t('home.submit'),
+                      onClick: () => generate().catch(() => {}),
+                    },
+                    h(Glyph, { name: 'sparkle', size: 14 }),
+                    h('span', null, t('home.submit')),
+                  ),
+            ),
+            busy
+              ? h(
+                  'div',
+                  { className: 'agnes-composer-progress' },
+                  h(
+                    'div',
+                    { className: 'agnes-progress' },
+                    h('i', { style: { width: `${Math.max(4, Math.min(100, progress))}%` } }),
+                  ),
+                  h(
+                    'div',
+                    { className: 'agnes-stagemark' },
+                    h('span', null, note || phase || t('action.generating')),
+                    h('span', null, `${Math.round(progress)}%`),
+                  ),
+                )
+              : null,
+            h(
+              'div',
+              { className: 'agnes-composer-foot' },
+              h('span', { className: 'agnes-composer-hint' }, t('home.tip')),
+            ),
+            // Kept inside the composer so a picker fired from the `+` menu stays
+            // scoped to this panel instance.
+            h('input', {
+              ref: fileRef,
+              type: 'file',
+              accept: 'image/png,image/jpeg,image/webp',
+              multiple: true,
+              style: { display: 'none' },
+              onChange: (event) => {
+                const picked = event.target && event.target.files ? event.target.files : []
+                pickLocalFiles(picked).catch(() => {})
+                if (event.target) event.target.value = ''
+              },
+            }),
+          ),
+          h(
+            'div',
+            { className: 'agnes-hero-examples' },
+            h('span', null, t('examples.title')),
+            ...examples.map((key) =>
+              h(
+                'button',
+                {
+                  type: 'button',
+                  key,
+                  className: 'agnes-example',
+                  disabled: busy,
+                  onClick: () => {
+                    setPrompt(t(key))
+                    setError('')
+                  },
+                },
+                t(key),
+              ),
+            ),
+          ),
+          error ? h('div', { className: 'agnes-error' }, h('div', null, error)) : null,
+        )
+      }
+
+      /* --------------------------- shared result cards --------------------------- */
+
+      function renderImageForm() {
+        return h(
+          'div',
+          null,
+          h(
+            'div',
+            { className: 'agnes-card' },
+            h(
+              'label',
+              { className: 'agnes-label' },
+              tab === 'image' ? t('model.image') : t('model.video'),
+            ),
+            h(
+              'div',
+              { className: 'agnes-model' },
+              h('b', null, activeModel),
+              h('span', null, configured ? t('status.key.ok') : t('status.key.missing')),
+            ),
+            h(
+              'div',
+              { className: 'agnes-field' },
+              h('label', { className: 'agnes-label' }, t('field.prompt')),
+            ),
+            h('textarea', {
+              className: 'agnes-textarea',
+              value: prompt,
+              placeholder: tab === 'image' ? t('placeholder.image') : t('placeholder.video'),
+              onChange: (event) => setPrompt(event.target.value),
+              disabled: busy,
+            }),
+            h(
+              'div',
+              { className: 'agnes-examples' },
+              h('span', null, t('examples.title')),
+              ...examples.map((key) =>
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    key,
+                    className: 'agnes-example',
+                    disabled: busy,
+                    onClick: () => {
+                      setPrompt(t(key))
+                      setError('')
+                    },
+                  },
+                  t(key),
+                ),
+              ),
+            ),
+            h(
+              'div',
+              { className: 'agnes-row agnes-field' },
+              h(
+                'div',
+                null,
+                h('label', { className: 'agnes-label' }, t('field.size')),
+                tab === 'image'
+                  ? h(
+                      'select',
+                      {
+                        className: 'agnes-select',
+                        value: imageSize,
+                        disabled: busy,
+                        onChange: (event) => setImageSize(event.target.value),
+                      },
+                      ...IMAGE_SIZES.map((size) => h('option', { key: size, value: size }, size)),
+                    )
+                  : h(
+                      'select',
+                      {
+                        className: 'agnes-select',
+                        value: videoSize,
+                        disabled: busy,
+                        onChange: (event) => setVideoSize(event.target.value),
+                      },
+                      ...VIDEO_SIZES.map((size) => h('option', { key: size, value: size }, size)),
+                    ),
+              ),
+              tab === 'video'
+                ? h(
+                    'div',
+                    null,
+                    h('label', { className: 'agnes-label' }, t('field.seconds')),
+                    h(
+                      'select',
+                      {
+                        className: 'agnes-select',
+                        value: seconds,
+                        disabled: busy,
+                        onChange: (event) => setSeconds(event.target.value),
+                      },
+                      ...VIDEO_SECONDS.map((value) =>
+                        h('option', { key: value, value }, `${value}${t('note.seconds')}`),
+                      ),
+                    ),
+                  )
+                : h(
+                    'div',
+                    null,
+                    h('label', { className: 'agnes-label' }, t('field.seed')),
+                    h('input', {
+                      className: 'agnes-input',
+                      value: seed,
+                      inputMode: 'numeric',
+                      placeholder: '—',
+                      disabled: busy,
+                      onChange: (event) => setSeed(event.target.value),
+                    }),
+                  ),
+            ),
+            h(
+              'div',
+              { className: 'agnes-actions' },
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'agnes-button agnes-primary',
+                  disabled: busy || !configured,
+                  onClick: () => generate(),
+                  style: { flex: 1 },
+                },
+                busy
+                  ? t('action.generating')
+                  : tab === 'image'
+                    ? t('action.generate.image')
+                    : t('action.generate.video'),
+              ),
+              busy
+                ? h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'agnes-button agnes-ghost',
+                      onClick: () => cancelActive(),
+                    },
+                    t('action.cancelTask'),
+                  )
+                : null,
+              result
+                ? h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'agnes-button agnes-ghost',
+                      onClick: () => setResult(null),
+                    },
+                    t('action.clear'),
+                  )
+                : null,
+            ),
+            busy
+              ? h(
+                  'div',
+                  null,
+                  h(
+                    'div',
+                    { className: 'agnes-progress' },
+                    h('i', { style: { width: `${Math.max(4, Math.min(100, progress))}%` } }),
+                  ),
+                  h(
+                    'div',
+                    { className: 'agnes-stagemark' },
+                    h('span', null, note || phase || t('action.generating')),
+                    h('span', null, `${Math.round(progress)}%`),
+                  ),
+                )
+              : null,
+            error ? h('div', { className: 'agnes-error' }, h('div', null, error)) : null,
+          ),
+        )
+
+      }
+
+      function renderResultCard() {
+        return h(
+          'div',
+          { className: 'agnes-card' },
+          result
+            ? h(
+                'div',
+                null,
+                result.kind === 'video'
+                  ? h('video', {
+                      className: 'agnes-media',
+                      src: result.url,
+                      controls: true,
+                      autoPlay: true,
+                      loop: true,
+                      playsInline: true,
+                    })
+                  : h('img', {
+                      className: 'agnes-media',
+                      src: result.url,
+                      alt: result.prompt || 'agnes image',
+                      style: { maxHeight: 'calc(100vh - 320px)' },
+                    }),
+                h(
+                  'div',
+                  { className: 'agnes-actions' },
+                  h(
+                    'a',
+                    {
+                      className: 'agnes-button agnes-primary',
+                      href: `${result.url}${result.url.indexOf('?') >= 0 ? '&' : '?'}download=1`,
+                      download: `agnes-${result.kind}`,
+                    },
+                    t('action.download'),
+                  ),
+                  result.upstream
+                    ? h(
+                        'a',
+                        {
+                          className: 'agnes-button agnes-ghost',
+                          href: result.upstream,
+                          target: '_blank',
+                          rel: 'noreferrer noopener',
+                        },
+                        t('action.open'),
+                      )
+                    : null,
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'agnes-button agnes-ghost',
+                      onClick: () => {
+                        if (result.upstream && navigator.clipboard) {
+                          navigator.clipboard.writeText(result.upstream).catch(() => {})
+                        }
+                      },
+                    },
+                    t('action.copy'),
+                  ),
+                ),
+                h(
+                  'div',
+                  { className: 'agnes-foot' },
+                  h(
+                    'span',
+                    { className: 'agnes-result-prompt', title: result.prompt },
+                    result.prompt,
+                  ),
+                ),
+              )
+            : h(
+                'div',
+                { className: 'agnes-empty' },
+                h('b', null, t('empty.title')),
+                h('span', null, t('empty.hint')),
+              ),
+        )
+      }
+
+      function renderHistoryCard(style) {
+        return h(
+          'div',
+          { className: 'agnes-card', style: style || undefined },
+          h(
+            'div',
+            { className: 'agnes-history-head' },
+            h('label', { className: 'agnes-label', style: { margin: 0 } }, t('history.title')),
+            h(
+              'span',
+              { style: { fontSize: '11px', color: 'var(--dsw-alias-label-secondary)' } },
+              t('history.hint'),
+            ),
+          ),
+          history.length === 0
+            ? h(
+                'div',
+                {
+                  style: {
+                    fontSize: '12px',
+                    color: 'var(--dsw-alias-label-secondary)',
+                    padding: '10px 0',
+                  },
+                },
+                t('history.empty'),
+              )
+            : h(
+                'div',
+                { className: 'agnes-history' },
+                ...history.map((item) =>
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      key: item.id,
+                      className: 'agnes-thumb',
+                      'data-active': result && result.id === item.id ? 'true' : 'false',
+                      title: item.prompt,
+                      onClick: () => {
+                        if (item.status === 'ready' && item.url) {
+                          setResult(item)
+                          setError('')
+                        }
+                      },
+                    },
+                    item.status === 'ready' && item.url
+                      ? item.kind === 'video'
+                        ? h('video', { src: item.url, muted: true, preload: 'metadata' })
+                        : h('img', { src: item.url, alt: item.prompt || '' })
+                      : h('span', { className: 'agnes-thumb-state' }, historyLabel(item)),
+                    item.status === 'ready'
+                      ? h(
+                          'span',
+                          { className: 'agnes-thumb-badge' },
+                          item.kind === 'video' ? t('tab.video') : t('tab.image'),
+                        )
+                      : null,
+                    h(
+                      'span',
+                      {
+                        className: 'agnes-thumb-del',
+                        role: 'button',
+                        tabIndex: -1,
+                        title: t('action.delete'),
+                        onClick: (event) => {
+                          event.stopPropagation()
+                          removeItem(item.id).catch(() => {})
+                        },
+                      },
+                      '×',
+                    ),
+                  ),
+                ),
+              ),
+        )
+      }
 
       return h(
         'div',
@@ -2652,331 +3949,11 @@ window.__ModuleLoader__.load({
                   null,
                   h(
                     'div',
-                    { className: 'agnes-grid' },
-            h(
-              'div',
-              null,
-              h(
-                'div',
-                { className: 'agnes-card' },
-                h(
-                  'label',
-                  { className: 'agnes-label' },
-                  tab === 'image' ? t('model.image') : t('model.video'),
-                ),
-                h(
-                  'div',
-                  { className: 'agnes-model' },
-                  h('b', null, activeModel),
-                  h('span', null, configured ? t('status.key.ok') : t('status.key.missing')),
-                ),
-                h(
-                  'div',
-                  { className: 'agnes-field' },
-                  h('label', { className: 'agnes-label' }, t('field.prompt')),
-                ),
-                h('textarea', {
-                  className: 'agnes-textarea',
-                  value: prompt,
-                  placeholder: tab === 'image' ? t('placeholder.image') : t('placeholder.video'),
-                  onChange: (event) => setPrompt(event.target.value),
-                  disabled: busy,
-                }),
-                h(
-                  'div',
-                  { className: 'agnes-examples' },
-                  h('span', null, t('examples.title')),
-                  ...examples.map((key) =>
-                    h(
-                      'button',
-                      {
-                        type: 'button',
-                        key,
-                        className: 'agnes-example',
-                        disabled: busy,
-                        onClick: () => {
-                          setPrompt(t(key))
-                          setError('')
-                        },
-                      },
-                      t(key),
-                    ),
+                    { className: tab === 'video' ? 'agnes-grid agnes-grid-single' : 'agnes-grid' },
+                    tab === 'video' ? h('div', null, renderComposer()) : renderImageForm(),
+                    renderResultCard(),
                   ),
-                ),
-                h(
-                  'div',
-                  { className: 'agnes-row agnes-field' },
-                  h(
-                    'div',
-                    null,
-                    h('label', { className: 'agnes-label' }, t('field.size')),
-                    tab === 'image'
-                      ? h(
-                          'select',
-                          {
-                            className: 'agnes-select',
-                            value: imageSize,
-                            disabled: busy,
-                            onChange: (event) => setImageSize(event.target.value),
-                          },
-                          ...IMAGE_SIZES.map((size) => h('option', { key: size, value: size }, size)),
-                        )
-                      : h(
-                          'select',
-                          {
-                            className: 'agnes-select',
-                            value: videoSize,
-                            disabled: busy,
-                            onChange: (event) => setVideoSize(event.target.value),
-                          },
-                          ...VIDEO_SIZES.map((size) => h('option', { key: size, value: size }, size)),
-                        ),
-                  ),
-                  tab === 'video'
-                    ? h(
-                        'div',
-                        null,
-                        h('label', { className: 'agnes-label' }, t('field.seconds')),
-                        h(
-                          'select',
-                          {
-                            className: 'agnes-select',
-                            value: seconds,
-                            disabled: busy,
-                            onChange: (event) => setSeconds(event.target.value),
-                          },
-                          ...VIDEO_SECONDS.map((value) =>
-                            h('option', { key: value, value }, `${value}${t('note.seconds')}`),
-                          ),
-                        ),
-                      )
-                    : h(
-                        'div',
-                        null,
-                        h('label', { className: 'agnes-label' }, t('field.seed')),
-                        h('input', {
-                          className: 'agnes-input',
-                          value: seed,
-                          inputMode: 'numeric',
-                          placeholder: '—',
-                          disabled: busy,
-                          onChange: (event) => setSeed(event.target.value),
-                        }),
-                      ),
-                ),
-                h(
-                  'div',
-                  { className: 'agnes-actions' },
-                  h(
-                    'button',
-                    {
-                      type: 'button',
-                      className: 'agnes-button agnes-primary',
-                      disabled: busy || !configured,
-                      onClick: () => generate(),
-                      style: { flex: 1 },
-                    },
-                    busy
-                      ? t('action.generating')
-                      : tab === 'image'
-                        ? t('action.generate.image')
-                        : t('action.generate.video'),
-                  ),
-                  busy
-                    ? h(
-                        'button',
-                        {
-                          type: 'button',
-                          className: 'agnes-button agnes-ghost',
-                          onClick: () => cancelActive(),
-                        },
-                        t('action.cancelTask'),
-                      )
-                    : null,
-                  result
-                    ? h(
-                        'button',
-                        {
-                          type: 'button',
-                          className: 'agnes-button agnes-ghost',
-                          onClick: () => setResult(null),
-                        },
-                        t('action.clear'),
-                      )
-                    : null,
-                ),
-                busy
-                  ? h(
-                      'div',
-                      null,
-                      h(
-                        'div',
-                        { className: 'agnes-progress' },
-                        h('i', { style: { width: `${Math.max(4, Math.min(100, progress))}%` } }),
-                      ),
-                      h(
-                        'div',
-                        { className: 'agnes-stagemark' },
-                        h('span', null, note || phase || t('action.generating')),
-                        h('span', null, `${Math.round(progress)}%`),
-                      ),
-                    )
-                  : null,
-                error ? h('div', { className: 'agnes-error' }, h('div', null, error)) : null,
-              ),
-            ),
-            h(
-              'div',
-              { className: 'agnes-card' },
-              result
-                ? h(
-                    'div',
-                    null,
-                    result.kind === 'video'
-                      ? h('video', {
-                          className: 'agnes-media',
-                          src: result.url,
-                          controls: true,
-                          autoPlay: true,
-                          loop: true,
-                          playsInline: true,
-                        })
-                      : h('img', {
-                          className: 'agnes-media',
-                          src: result.url,
-                          alt: result.prompt || 'agnes image',
-                          style: { maxHeight: 'calc(100vh - 320px)' },
-                        }),
-                    h(
-                      'div',
-                      { className: 'agnes-actions' },
-                      h(
-                        'a',
-                        {
-                          className: 'agnes-button agnes-primary',
-                          href: `${result.url}${result.url.indexOf('?') >= 0 ? '&' : '?'}download=1`,
-                          download: `agnes-${result.kind}`,
-                        },
-                        t('action.download'),
-                      ),
-                      result.upstream
-                        ? h(
-                            'a',
-                            {
-                              className: 'agnes-button agnes-ghost',
-                              href: result.upstream,
-                              target: '_blank',
-                              rel: 'noreferrer noopener',
-                            },
-                            t('action.open'),
-                          )
-                        : null,
-                      h(
-                        'button',
-                        {
-                          type: 'button',
-                          className: 'agnes-button agnes-ghost',
-                          onClick: () => {
-                            if (result.upstream && navigator.clipboard) {
-                              navigator.clipboard.writeText(result.upstream).catch(() => {})
-                            }
-                          },
-                        },
-                        t('action.copy'),
-                      ),
-                    ),
-                    h(
-                      'div',
-                      { className: 'agnes-foot' },
-                      h(
-                        'span',
-                        { className: 'agnes-result-prompt', title: result.prompt },
-                        result.prompt,
-                      ),
-                    ),
-                  )
-                : h(
-                    'div',
-                    { className: 'agnes-empty' },
-                    h('b', null, t('empty.title')),
-                    h('span', null, t('empty.hint')),
-                  ),
-            ),
-          ),
-          h(
-            'div',
-            { className: 'agnes-card', style: { marginTop: '16px' } },
-            h(
-              'div',
-              { className: 'agnes-history-head' },
-              h('label', { className: 'agnes-label', style: { margin: 0 } }, t('history.title')),
-              h(
-                'span',
-                { style: { fontSize: '11px', color: 'var(--dsw-alias-label-secondary)' } },
-                t('history.hint'),
-              ),
-            ),
-            history.length === 0
-              ? h(
-                  'div',
-                  {
-                    style: {
-                      fontSize: '12px',
-                      color: 'var(--dsw-alias-label-secondary)',
-                      padding: '10px 0',
-                    },
-                  },
-                  t('history.empty'),
-                )
-              : h(
-                  'div',
-                  { className: 'agnes-history' },
-                  ...history.map((item) =>
-                    h(
-                      'button',
-                      {
-                        type: 'button',
-                        key: item.id,
-                        className: 'agnes-thumb',
-                        'data-active': result && result.id === item.id ? 'true' : 'false',
-                        title: item.prompt,
-                        onClick: () => {
-                          if (item.status === 'ready' && item.url) {
-                            setResult(item)
-                            setError('')
-                          }
-                        },
-                      },
-                      item.status === 'ready' && item.url
-                        ? item.kind === 'video'
-                          ? h('video', { src: item.url, muted: true, preload: 'metadata' })
-                          : h('img', { src: item.url, alt: item.prompt || '' })
-                        : h('span', { className: 'agnes-thumb-state' }, historyLabel(item)),
-                      item.status === 'ready'
-                        ? h(
-                            'span',
-                            { className: 'agnes-thumb-badge' },
-                            item.kind === 'video' ? t('tab.video') : t('tab.image'),
-                          )
-                        : null,
-                      h(
-                        'span',
-                        {
-                          className: 'agnes-thumb-del',
-                          role: 'button',
-                          tabIndex: -1,
-                          title: t('action.delete'),
-                          onClick: (event) => {
-                            event.stopPropagation()
-                            removeItem(item.id).catch(() => {})
-                          },
-                        },
-                        '×',
-                      ),
-                    ),
-                  ),
-                ),
-          ),
+                  renderHistoryCard({ marginTop: '16px' }),
                 ),
         ),
       )
