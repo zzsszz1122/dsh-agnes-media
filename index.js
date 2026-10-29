@@ -143,21 +143,29 @@ function cleanPrompt(value) {
 /**
  * Clean an API key before it is sent upstream.
  *
- * A pasted key very often carries a trailing newline, wrapping quotes, or an
- * accidental `Bearer ` prefix. Upstream answers all of those with HTTP 401
+ * A pasted key very often carries a trailing newline, wrapping quotes, an
+ * accidental `Bearer ` prefix, or an invisible zero-width character picked up
+ * from a terminal or a web console. Upstream answers all of those with HTTP 401
  * "无效的令牌", which reads like a broken key when the key itself is fine — so the
  * token is normalized here instead of being sent verbatim.
+ *
+ * A token never contains whitespace, so everything whitespace-like is removed
+ * outright rather than collapsed: collapsing a mid-string newline into a space
+ * would leave a still-invalid key.
  */
 function normalizeApiKey(value) {
-  let key = String(value ?? '')
-  // Collapse any embedded whitespace/newlines, then trim the ends.
-  key = key.replace(/\s+/g, ' ').trim()
-  // Drop a scheme someone pasted along with the secret.
-  key = key.replace(/^(Bearer|bearer|token)\s+/i, '')
-  // Drop one layer of wrapping quotes from a copy out of JSON or a shell line.
-  const quoted = /^(['"])(.*)\1$/.exec(key)
-  if (quoted) key = quoted[2].trim()
-  return key
+  let key = String(value ?? '').trim()
+  // Peel a pasted scheme and one layer of wrapping quotes, in whichever order
+  // they arrived ("Bearer sk-x", "\"Bearer sk-x\"", "Bearer \"sk-x\"").
+  for (let round = 0; round < 3; round += 1) {
+    const before = key
+    key = key.replace(/^(Bearer|token)\s+/i, '')
+    const quoted = /^(['"])([\s\S]*)\1$/.exec(key)
+    if (quoted) key = quoted[2].trim()
+    if (key === before) break
+  }
+  // Strip every whitespace and zero-width character that survived.
+  return key.replace(/[\s\u200B-\u200D\uFEFF]+/g, '')
 }
 
 /** A safe, non-reversible hint about which secret is actually in use. */

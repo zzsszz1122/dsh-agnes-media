@@ -3,11 +3,12 @@
 ## 0.7.1
 
 - **API keys are normalized before being sent upstream.** A pasted key carrying a
-  trailing newline, wrapping quotes, or an accidental `Bearer `/`token ` prefix
-  used to be forwarded verbatim, and upstream answered `HTTP 401：无效的令牌` —
-  which reads like a broken key when the key itself is fine. Whitespace is now
-  collapsed and trimmed, a pasted scheme is stripped, and one layer of wrapping
-  quotes is removed.
+  trailing newline, wrapping quotes, an accidental `Bearer `/`token ` prefix, or
+  an invisible zero-width character used to be forwarded verbatim, and upstream
+  answered `HTTP 401：无效的令牌` — which reads like a broken key when the key
+  itself is fine. Whitespace and zero-width characters are now removed outright
+  (a token never contains them), and a pasted scheme or one layer of wrapping
+  quotes is stripped first, in whichever order they arrived.
 - **401/403 errors are self-diagnosing.** The message now names the credential
   source, a non-reversible fingerprint of the token actually sent (first 4 +
   last 4 + length, never the full key), and the upstream URL, so "is the plugin
