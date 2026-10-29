@@ -6,7 +6,7 @@
 [![dsh](https://img.shields.io/badge/dsh-%E2%89%A50.2.1--rc.3-4B6BFB)](https://github.com/deepseek-ai)
 [![node](https://img.shields.io/badge/node-%E2%89%A520-339933)](https://nodejs.org)
 
-![Agnes 创作室面板](docs/panel.jpg)
+![Agnes 创作室：1.0 的创作台](docs/screenshot-composer.png)
 
 ---
 

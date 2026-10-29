@@ -47,7 +47,8 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "docs/panel.jpg",
+    "docs/screenshot-composer.png",
+    "docs/screenshot-panel.jpg",
     "docs/screenshot-cast.png",
     "screenshots.json"
   ],

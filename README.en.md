@@ -8,7 +8,7 @@
 
 [中文说明](README.md)
 
-![Agnes Studio panel](docs/panel.jpg)
+![Agnes Studio: the 1.0 composer](docs/screenshot-composer.png)
 
 ---
 
