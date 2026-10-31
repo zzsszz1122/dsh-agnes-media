@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.3
+
+- **The composer uses the app's blue accent instead of its own teal.** The 1.0
+  composer hard-coded `#0f9f8f` (and a `#7dd3c8` dark-mode variant) for the
+  submit button, the 视频生成 pill, the focus ring, the active menu row and the
+  reference role tag, so this one tab read green while every other page in the
+  Harness is blue. Those values are now a single `--agnes-accent` /
+  `--agnes-accent-strong` / `--agnes-accent-soft` / `--agnes-accent-line` set
+  defined once on `.agnes-root`, all `#2563eb`-based — the same blue the canvas,
+  the drama tabs and DSH itself already use. Because the accent now matches the
+  theme, the dark-mode ink overrides are gone; only the shadows still vary.
+- Semantic colours are unchanged: red still means destructive/failed, green
+  still means ready, amber still means warning.
+
 ## 1.0.2
 
 - **Storefront screenshots refreshed for the 1.0 composer.** The old panel shot

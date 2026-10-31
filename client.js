@@ -564,7 +564,7 @@ window.__ModuleLoader__.load({
     const APP_IMAGE_MIMES = new RegExp('^image/(png|jpeg|jpg|webp)$', 'i')
 
     const STYLES = `
-      .agnes-root{display:flex;flex-direction:column;height:100%;min-height:480px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-family:var(--dsw-font-family,inherit);overflow:hidden}
+      .agnes-root{display:flex;flex-direction:column;height:100%;min-height:480px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-family:var(--dsw-font-family,inherit);overflow:hidden;--agnes-accent:#2563eb;--agnes-accent-strong:#1d4ed8;--agnes-accent-soft:rgba(37,99,235,.10);--agnes-accent-line:rgba(37,99,235,.45)}
       .agnes-scroll{flex:1;min-height:0;overflow:auto;padding:26px 30px 40px}
       .agnes-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
       .agnes-title{font-size:20px;font-weight:600;letter-spacing:.01em;line-height:1.25}
@@ -705,8 +705,8 @@ window.__ModuleLoader__.load({
       .agnes-hero{display:flex;flex-direction:column;align-items:stretch;gap:14px;margin:2px 0 4px}
       .agnes-hero-title{font-size:22px;font-weight:600;letter-spacing:.01em;line-height:1.35;text-align:center;margin:6px 0 2px}
       .agnes-composer{position:relative;width:100%;max-width:900px;margin:0 auto;box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);border-radius:18px;padding:14px 14px 10px;box-shadow:0 8px 26px rgba(0,0,0,.07)}
-      .agnes-composer[data-busy="true"]{box-shadow:0 8px 26px rgba(0,0,0,.07),0 0 0 1px rgba(15,159,143,.35)}
-      .agnes-composer:focus-within{border-color:rgba(15,159,143,.5);box-shadow:0 8px 26px rgba(0,0,0,.08),0 0 0 3px rgba(15,159,143,.1)}
+      .agnes-composer[data-busy="true"]{box-shadow:0 8px 26px rgba(0,0,0,.07),0 0 0 1px var(--agnes-accent-line)}
+      .agnes-composer:focus-within{border-color:var(--agnes-accent-line);box-shadow:0 8px 26px rgba(0,0,0,.08),0 0 0 3px var(--agnes-accent-soft)}
       .agnes-composer-input{display:block;width:100%;box-sizing:border-box;min-height:88px;max-height:220px;resize:none;border:0;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:1.6;outline:none;padding:2px 4px 12px}
       .agnes-composer-input::placeholder{color:var(--dsw-alias-label-secondary);opacity:.9}
       .agnes-composer-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:32px}
@@ -718,11 +718,11 @@ window.__ModuleLoader__.load({
       .agnes-pill:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
       .agnes-pill:disabled{opacity:.55;cursor:default}
       .agnes-pill[data-open="true"]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
-      .agnes-pill-accent{color:#0f766e;border-color:rgba(15,118,110,.35);background:rgba(15,118,110,.08)}
-      .agnes-pill-accent:hover:not(:disabled){color:#0b5f57;background:rgba(15,118,110,.14)}
+      .agnes-pill-accent{color:var(--agnes-accent);border-color:var(--agnes-accent-line);background:var(--agnes-accent-soft)}
+      .agnes-pill-accent:hover:not(:disabled){color:var(--agnes-accent-strong);background:rgba(37,99,235,.16)}
       .agnes-bar-spacer{flex:1 1 auto;min-width:6px}
-      .agnes-send{display:inline-flex;align-items:center;gap:6px;height:32px;flex:none;padding:0 14px;border-radius:999px;border:1px solid #0f9f8f;background:#0f9f8f;color:#fff;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
-      .agnes-send:hover:not(:disabled){background:#0d8b7d;border-color:#0d8b7d}
+      .agnes-send{display:inline-flex;align-items:center;gap:6px;height:32px;flex:none;padding:0 14px;border-radius:999px;border:1px solid var(--agnes-accent);background:var(--agnes-accent);color:#fff;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+      .agnes-send:hover:not(:disabled){background:var(--agnes-accent-strong);border-color:var(--agnes-accent-strong)}
       .agnes-send:disabled{opacity:.5;cursor:default}
       .agnes-send.agnes-send-stop{background:transparent;color:#dc2626;border-color:rgba(220,38,38,.45);font-weight:500}
       .agnes-send.agnes-send-stop:hover{background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.7)}
@@ -731,7 +731,7 @@ window.__ModuleLoader__.load({
       .agnes-menu[data-align="end"]{left:auto;right:0}
       .agnes-menu-item{display:flex;align-items:center;gap:8px;width:100%;padding:7px 9px;border:0;border-radius:8px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;text-align:left;cursor:pointer;white-space:nowrap}
       .agnes-menu-item:hover{background:rgba(127,127,127,.14)}
-      .agnes-menu-item[data-active="true"]{color:#0f766e;font-weight:600;background:rgba(15,118,110,.08)}
+      .agnes-menu-item[data-active="true"]{color:var(--agnes-accent);font-weight:600;background:var(--agnes-accent-soft)}
       .agnes-menu-item[data-disabled="true"]{color:var(--dsw-alias-label-secondary);cursor:default;opacity:.6}
       .agnes-menu-item img{width:26px;height:26px;flex:none;object-fit:cover;border-radius:6px;background:var(--dsw-alias-bg-layer-2)}
       .agnes-menu-note{padding:3px 9px 6px;font-size:11px;line-height:1.5;color:var(--dsw-alias-label-secondary);white-space:normal;max-width:260px}
@@ -745,7 +745,7 @@ window.__ModuleLoader__.load({
       .agnes-attach img{display:block;width:98px;height:66px;object-fit:cover;border-radius:9px;border:1px solid var(--dsw-alias-border-l1);background:#000}
       .agnes-attach-name{font-size:10.5px;color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .agnes-attach-tag{position:absolute;left:4px;bottom:26px;font:inherit;font-size:9.5px;line-height:1.5;padding:0 5px;border:0;border-radius:999px;background:rgba(0,0,0,.62);color:#fff;cursor:pointer}
-      .agnes-attach-tag[data-role="reference"]{background:rgba(15,118,110,.82)}
+      .agnes-attach-tag[data-role="reference"]{background:rgba(37,99,235,.82)}
       .agnes-attach-tag[data-role="frame"]{background:rgba(37,99,235,.82)}
       .agnes-attach-tag[data-role="pending"]{background:rgba(186,117,23,.92)}
       .agnes-attach[data-pending="true"] img{outline:2px dashed rgba(186,117,23,.75);outline-offset:1px}
@@ -755,11 +755,11 @@ window.__ModuleLoader__.load({
       .agnes-role-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
       @media (max-width:720px){.agnes-role-cards{grid-template-columns:1fr}}
       .agnes-role-option{display:flex;flex-direction:column;gap:3px;text-align:left;padding:8px 10px;border-radius:9px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font:inherit;cursor:pointer}
-      .agnes-role-option[data-active="true"]{border-color:#0f9f8f;box-shadow:0 0 0 1px rgba(15,159,143,.45)}
-      .agnes-role-option:hover{border-color:#0f9f8f;background:rgba(15,159,143,.08)}
+      .agnes-role-option[data-active="true"]{border-color:var(--agnes-accent);box-shadow:0 0 0 1px var(--agnes-accent-line)}
+      .agnes-role-option:hover{border-color:var(--agnes-accent);background:var(--agnes-accent-soft)}
       .agnes-role-option b{font-size:12.5px;font-weight:600}
       .agnes-role-option[data-kind="frame"] b{color:#2563eb}
-      .agnes-role-option[data-kind="reference"] b{color:#0f766e}
+      .agnes-role-option[data-kind="reference"] b{color:var(--agnes-accent)}
       .agnes-role-option span{font-size:11.5px;line-height:1.5;color:var(--dsw-alias-label-secondary);white-space:normal}
       .agnes-role-foot{font-size:11px;line-height:1.5;color:var(--dsw-alias-label-secondary);white-space:normal}
       .agnes-round[data-open="true"]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
@@ -772,12 +772,9 @@ window.__ModuleLoader__.load({
       .agnes-composer-progress{margin:10px 4px 0}
       .agnes-stack{display:flex;flex-direction:column;gap:16px;margin-top:18px}
       .agnes-send-count{font-variant-numeric:tabular-nums;opacity:.85}
-      /* The accent green needs a lighter ink on a dark surface; the neutral
-         surfaces already ride on --dsw-alias-* and follow the theme. */
+      /* Accent ink is theme-independent: the blue reads correctly on both the
+         light and dark surfaces, so only the shadows need a dark variant. */
       @media (prefers-color-scheme:dark){
-        .agnes-pill-accent{color:#7dd3c8;border-color:rgba(125,211,200,.4);background:rgba(125,211,200,.1)}
-        .agnes-pill-accent:hover:not(:disabled){color:#a7e8de;background:rgba(125,211,200,.16)}
-        .agnes-menu-item[data-active="true"]{color:#7dd3c8;background:rgba(125,211,200,.1)}
         .agnes-composer{box-shadow:0 8px 26px rgba(0,0,0,.38)}
         .agnes-menu{box-shadow:0 14px 34px rgba(0,0,0,.55)}
       }
