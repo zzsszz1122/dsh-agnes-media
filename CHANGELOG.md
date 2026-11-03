@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.4
+
+- **Opening the panel no longer autoplays the last generated video.** The result
+  card is restored from history on mount, and its `<video>` carried
+  `autoPlay` + `loop`, so entering 生视频 replayed the previous clip every time
+  — including when you just wanted to type a new prompt. Autoplay and looping are
+  gone; the player now preloads metadata and waits for a click. The other five
+  `<video>` elements (canvas nodes, drama preview, assembled episode, history
+  thumbnails) never autoplayed and are unchanged.
+
 ## 1.0.3
 
 - **The composer uses the app's blue accent instead of its own teal.** The 1.0

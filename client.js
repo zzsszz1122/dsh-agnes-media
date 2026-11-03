@@ -3923,8 +3923,10 @@ window.__ModuleLoader__.load({
                       className: 'agnes-media',
                       src: result.url,
                       controls: true,
-                      autoPlay: true,
-                      loop: true,
+                      // Never autoplay: the result card is restored from history
+                      // on mount, so autoplay made opening the panel blast the
+                      // last generated clip every single time.
+                      preload: 'metadata',
                       playsInline: true,
                     })
                   : h('img', {
