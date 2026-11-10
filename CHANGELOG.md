@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.0.5
+
+- **Fixed the hard scene-change in the middle of a chunked (15s+) video.** The
+  tail-frame handoff was verified to work (the extracted seam frame matches the
+  true last frame at SSIM 0.975), but the upstream renderer treats the keyframe
+  as *guidance*, not a strict first frame — the next chunk re-interprets the
+  scene, drifts a little, and the hard cut at the join read as a sudden cut.
+- Chunks of one continuous shot are now stitched with a **0.5s crossfade**
+  (`lib/assemble.js` `concat(..., { crossfade })`): each seam dissolves instead
+  of cutting, which absorbs the re-interpretation drift. Verified with
+  red→blue test clips: the blend ramps smoothly (255,0,0 → 147,0,106 →
+  0,0,254) with no jump, and the total duration shortens by exactly the overlap
+  (8s → 7.5s for a 4s+4s pair).
+- The drama `/assemble` episode path keeps hard cuts — those are different
+  shots and should stay cuts; only same-shot chunks crossfade.
+- Old 15s results cannot be re-stitched (their part files are gone after
+  success); regenerate them to get the smooth seam.
+
 ## 1.0.4
 
 - **Opening the panel no longer autoplays the last generated video.** The result

@@ -32,7 +32,7 @@ import { createProjects } from './lib/projects.js'
 import { createAssemble } from './lib/assemble.js'
 import { bindCharactersToShots, parseScript } from './lib/script.js'
 
-const VERSION = '1.0.4'
+const VERSION = '1.0.5'
 
 const DEFAULTS = {
   baseURL: 'https://api.agnes-ai.cn/v1',
@@ -734,7 +734,11 @@ function createTasks(ctx, settings, store, hooks = {}) {
 
       await update(id, { stage: 'download', progress: 94, note: '正在拼接分段' })
       const joined = store.mediaPath(`${id}.mp4`)
-      const result = await hooks.concat(chunkFiles, joined)
+      // Chunks are one continuous shot: dissolve the seam instead of hard-cutting,
+      // because the upstream renderer treats the tail-frame handoff as guidance
+      // rather than a strict first frame and the two chunks can drift apart.
+      // 0.5s covers the drift without eating visible action.
+      const result = await hooks.concat(chunkFiles, joined, { crossfade: 0.5 })
       if (!result.ok) throw new HttpError(502, result.error)
       await update(id, {
         status: 'ready',
@@ -2089,9 +2093,9 @@ export function apply(ctx, config = {}) {
   const tasks = createTasks(ctx, settings, store, {
     frameDataUri: (file) => frames.dataUri(file),
     extractTail: (videoFile, outFile) => frames.extractTail(videoFile, outFile),
-    concat: async (inputs, outFile) => {
+    concat: async (inputs, outFile, options) => {
       const assemble = createAssemble({ ffmpegPath: await frames.detect() })
-      return assemble.concat(inputs, outFile, {})
+      return assemble.concat(inputs, outFile, options || {})
     },
     onVideoReady,
     onVideoFailed,

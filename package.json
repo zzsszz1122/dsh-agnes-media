@@ -1,6 +1,6 @@
 {
   "name": "dsh-agnes-media",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Agnes image and video models inside a DeepSeek Harness sidebar panel, with durable background tasks and history.",
   "type": "module",
   "license": "MIT",
