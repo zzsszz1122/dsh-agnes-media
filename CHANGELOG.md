@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.0
+## 1.1.1
 
 The canvas was the one page that did not do what it looked like it did. Through
 1.0 it stored node positions and a decorative `edges` array, but the executor

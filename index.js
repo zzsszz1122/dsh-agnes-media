@@ -46,7 +46,7 @@ import {
   validateGraph,
 } from './lib/graph.js'
 
-const VERSION = '1.1.0'
+const VERSION = '1.1.1'
 
 const DEFAULTS = {
   baseURL: 'https://api.agnes-ai.cn/v1',
