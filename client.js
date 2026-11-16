@@ -94,6 +94,94 @@ window.__ModuleLoader__.load({
       'canvas.imported': '导入',
       'canvas.unsupported': '只支持拖入视频或图片',
       'canvas.dropHint': '松开即可导入到画布',
+      // ---- canvas node graph (1.1.0) ----
+      'canvas.newProjectName': '未命名项目',
+      'graph.modeGraph': '连线模式',
+      'graph.modeLinear': '线性模式',
+      'graph.modeGraphHint': '执行顺序与首帧来源只由连线决定',
+      'graph.modeLinearHint': '按镜头序号顺序执行，上一镜尾帧接下一镜',
+      'graph.modeSwitched': '已切到连线模式：执行顺序由连线决定，随时可切回线性模式。',
+      'graph.generate': '生成',
+      'graph.fit': '适应视图',
+      'graph.undo': '撤销',
+      'graph.redo': '重做',
+      'graph.addNode': '添加节点',
+      'graph.blockers': '阻塞',
+      'graph.saving': '保存中…',
+      'graph.blockersTitle': '无法启动的原因',
+      'graph.cycle': '存在环',
+      'graph.jumpToNode': '定位节点',
+      'graph.hintConnect': '拖到相容的输入口落位；松手在空白处可新建节点；从已连线的输入口按下等于摘下重连。',
+      'graph.selected': '已选',
+      'graph.marquee': '框选',
+      'graph.marqueeHint': '打开后：在空白处拖拽为框选（默认拖拽是平移；按住 Shift/Ctrl 也总是框选）',
+      'graph.cached': '已缓存',
+      'graph.badgeMuted': '静音',
+      'graph.badgeBypassed': '旁路',
+      'graph.badgePinned': '置顶',
+      'graph.modeNormal': '正常',
+      'graph.collapse': '折叠',
+      'graph.expand': '展开',
+      'graph.close': '关闭',
+      'graph.noPrompt': '（还没有提示词）',
+      'graph.assetMissing': '（素材缺失）',
+      'graph.type.shot': '镜头',
+      'graph.type.image': '图片',
+      'graph.type.clip': '视频素材',
+      'graph.type.note': '便签',
+      'graph.type.reroute': '转接',
+      'graph.port.first_frame': '首帧',
+      'graph.port.reference': '参考图',
+      'graph.port.prev': '承接片段',
+      'graph.port.video': '成片',
+      'graph.port.tail': '尾帧',
+      'graph.port.still': '静帧',
+      'graph.port.image': '图像',
+      'graph.port.frame': '尾帧',
+      'graph.paletteSearch': '搜索节点…',
+      'graph.paletteEmpty': '没有可用的节点类型',
+      'graph.paletteConnect': '可自动连线',
+      'graph.fieldStatus': '状态',
+      'graph.fieldProgress': '进度',
+      'graph.fieldMode': '模式',
+      'graph.fieldLock': '锁脸',
+      'graph.fieldFirstFrame': '首帧来源',
+      'graph.fieldTitle': '标题',
+      'graph.fieldPrompt': '提示词',
+      'graph.fieldCamera': '镜头语言',
+      'graph.fieldContinuity': '承接说明',
+      'graph.fieldDuration': '时长',
+      'graph.fieldSize': '分辨率',
+      'graph.fieldSeed': 'seed',
+      'graph.fieldNegative': '负面提示词',
+      'graph.fieldCharacters': '出场角色',
+      'graph.fieldRefs': '参考镜头',
+      'graph.fieldNote': '便签内容',
+      'graph.fieldAsset': '素材',
+      'graph.fieldKind': '类型',
+      'graph.fieldBytes': '大小',
+      'graph.generateThis': '生成此镜',
+      'graph.edit': '编辑',
+      'graph.mute': '静音',
+      'graph.unmute': '解除静音',
+      'graph.bypass': '旁路',
+      'graph.unbypass': '取消旁路',
+      'graph.clone': '克隆',
+      'graph.pin': '置顶',
+      'graph.unpin': '取消置顶',
+      'graph.deleteLink': '删除连线',
+      'graph.disableLink': '禁用连线',
+      'graph.enableLink': '启用连线',
+      'graph.linkMenu': '连线',
+      'graph.canvasMenu': '画布',
+      'graph.selectAll': '全选',
+      'graph.clearSelection': '清空选择',
+      'graph.deleteNodesConfirm': '确认删除选中的 {n} 个节点？',
+      'graph.deleteShotsConfirm': '确认删除选中的 {n} 个镜头？其生成结果与连线一并删除。',
+      'graph.firstFrameManual': '手动上传',
+      'graph.firstFrameLinked': '来自连线',
+      'graph.firstFramePrev': '上一镜尾帧',
+      'graph.firstFrameNone': '无（纯文本）',
       'drama.hint': '线性编排：每镜承接上一镜尾帧，可按顺序一键生成。',
       'drama.addShot': '添加镜头',
       'drama.runAll': '一键生成',
@@ -293,6 +381,94 @@ window.__ModuleLoader__.load({
       'canvas.imported': 'Imported',
       'canvas.unsupported': 'Only video or image files can be dropped',
       'canvas.dropHint': 'Release to import onto the canvas',
+      // ---- canvas node graph (1.1.0) ----
+      'canvas.newProjectName': 'Untitled project',
+      'graph.modeGraph': 'Graph',
+      'graph.modeLinear': 'Linear',
+      'graph.modeGraphHint': 'Execution order and first frames come from the links alone',
+      'graph.modeLinearHint': 'Run in shot order, each shot continuing from the previous tail frame',
+      'graph.modeSwitched': 'Switched to graph mode: execution order now follows the links. Switch back to linear any time.',
+      'graph.generate': 'Generate',
+      'graph.fit': 'Fit view',
+      'graph.undo': 'Undo',
+      'graph.redo': 'Redo',
+      'graph.addNode': 'Add node',
+      'graph.blockers': 'Blockers',
+      'graph.saving': 'Saving…',
+      'graph.blockersTitle': 'Why this cannot run',
+      'graph.cycle': 'cycle',
+      'graph.jumpToNode': 'Jump to node',
+      'graph.hintConnect': 'Drop on a compatible input; releasing on empty space offers a new node; pressing a connected input detaches the link for rewiring.',
+      'graph.selected': 'selected',
+      'graph.marquee': 'Marquee',
+      'graph.marqueeHint': 'When on, dragging on empty space box-selects (by default it pans; Shift/Ctrl always box-selects)',
+      'graph.cached': 'cached',
+      'graph.badgeMuted': 'muted',
+      'graph.badgeBypassed': 'bypass',
+      'graph.badgePinned': 'pinned',
+      'graph.modeNormal': 'normal',
+      'graph.collapse': 'Collapse',
+      'graph.expand': 'Expand',
+      'graph.close': 'Close',
+      'graph.noPrompt': '(no prompt yet)',
+      'graph.assetMissing': '(asset missing)',
+      'graph.type.shot': 'Shot',
+      'graph.type.image': 'Image',
+      'graph.type.clip': 'Video clip',
+      'graph.type.note': 'Note',
+      'graph.type.reroute': 'Reroute',
+      'graph.port.first_frame': 'First frame',
+      'graph.port.reference': 'Reference',
+      'graph.port.prev': 'Incoming clip',
+      'graph.port.video': 'Video',
+      'graph.port.tail': 'Tail frame',
+      'graph.port.still': 'Still',
+      'graph.port.image': 'Image',
+      'graph.port.frame': 'Tail frame',
+      'graph.paletteSearch': 'Search nodes…',
+      'graph.paletteEmpty': 'No node types available',
+      'graph.paletteConnect': 'auto-connects',
+      'graph.fieldStatus': 'Status',
+      'graph.fieldProgress': 'Progress',
+      'graph.fieldMode': 'Mode',
+      'graph.fieldLock': 'Identity lock',
+      'graph.fieldFirstFrame': 'First frame',
+      'graph.fieldTitle': 'Title',
+      'graph.fieldPrompt': 'Prompt',
+      'graph.fieldCamera': 'Camera',
+      'graph.fieldContinuity': 'Continuity note',
+      'graph.fieldDuration': 'Duration',
+      'graph.fieldSize': 'Resolution',
+      'graph.fieldSeed': 'seed',
+      'graph.fieldNegative': 'Negative prompt',
+      'graph.fieldCharacters': 'Characters',
+      'graph.fieldRefs': 'Reference shots',
+      'graph.fieldNote': 'Note text',
+      'graph.fieldAsset': 'Asset',
+      'graph.fieldKind': 'Kind',
+      'graph.fieldBytes': 'Size',
+      'graph.generateThis': 'Generate this shot',
+      'graph.edit': 'Edit',
+      'graph.mute': 'Mute',
+      'graph.unmute': 'Unmute',
+      'graph.bypass': 'Bypass',
+      'graph.unbypass': 'Remove bypass',
+      'graph.clone': 'Clone',
+      'graph.pin': 'Pin',
+      'graph.unpin': 'Unpin',
+      'graph.deleteLink': 'Delete link',
+      'graph.disableLink': 'Disable link',
+      'graph.enableLink': 'Enable link',
+      'graph.linkMenu': 'Link',
+      'graph.canvasMenu': 'Canvas',
+      'graph.selectAll': 'Select all',
+      'graph.clearSelection': 'Clear selection',
+      'graph.deleteNodesConfirm': 'Delete the {n} selected nodes?',
+      'graph.deleteShotsConfirm': 'Delete the {n} selected shots? Their renders and links go with them.',
+      'graph.firstFrameManual': 'uploaded',
+      'graph.firstFrameLinked': 'from a link',
+      'graph.firstFramePrev': 'previous tail frame',
+      'graph.firstFrameNone': 'none (text only)',
       'drama.hint': 'Linear editing: every shot continues from the previous tail frame and can be generated in order.',
       'drama.addShot': 'Add shot',
       'drama.runAll': 'Generate all',
@@ -630,32 +806,97 @@ window.__ModuleLoader__.load({
       .agnes-view{display:flex;flex-direction:column;gap:10px}
       .agnes-projbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
       .agnes-view-hint{font-size:11.5px;color:var(--dsw-alias-label-secondary);min-height:16px}
-      .agnes-canvas{position:relative;height:min(62vh,560px);min-height:360px;border:1px solid var(--dsw-alias-border-l1);border-radius:12px;overflow:hidden;background:var(--dsw-alias-bg-layer-1);touch-action:none;cursor:grab}
-      .agnes-canvas-inner{position:absolute;left:0;top:0;transform-origin:0 0;background-image:radial-gradient(rgba(127,127,127,.18) 1px, transparent 1px);background-size:24px 24px}
-      .agnes-canvas-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dsw-alias-label-secondary);font-size:12.5px}
-      .agnes-canvas[data-drag="true"]{outline:2px dashed #2563eb;outline-offset:-6px}
-      .agnes-canvas[data-drag="true"]::after{content:'';position:absolute;inset:0;background:rgba(37,99,235,.08);pointer-events:none}
-      .agnes-node-media video,.agnes-node-media img.agnes-node-media{width:100%;display:block;border-radius:8px;background:#000}
-      .agnes-node-media{border-left:3px solid #8b5cf6}
-      .agnes-node-media .agnes-node-head{color:#8b5cf6}
-      .agnes-edges{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
-      .agnes-node{position:absolute;background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l1);border-radius:10px;padding:8px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;box-shadow:var(--dsw-shadow-lv1,none)}
+      /* ---- canvas node graph (1.1.0) ---- */
+      .agnes-graph-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+      .agnes-graph-toolbar .agnes-button[data-active="true"]{border-color:#2563eb;color:#2563eb;background:rgba(37,99,235,.1)}
+      .agnes-mode-group{display:inline-flex;border:1px solid var(--dsw-alias-border-l1);border-radius:9px;overflow:hidden}
+      .agnes-mode-group>button{border:0;border-radius:0;padding:6px 11px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:12px;cursor:pointer}
+      .agnes-mode-group>button[data-active="true"]{background:rgba(37,99,235,.12);color:#2563eb;font-weight:600}
+      .agnes-graph-main{display:flex;gap:10px;align-items:stretch;min-width:0}
+      .agnes-graph{position:relative;flex:1 1 auto;min-width:0;height:min(62vh,560px);min-height:380px;border:1px solid var(--dsw-alias-border-l1);border-radius:12px;overflow:hidden;background-color:var(--dsw-alias-bg-layer-1);background-image:radial-gradient(rgba(127,127,127,.20) 1px, transparent 1px);background-size:24px 24px;touch-action:none;outline:none;user-select:none;-webkit-user-select:none}
+      .agnes-graph:focus-visible{box-shadow:inset 0 0 0 1px var(--agnes-accent-line)}
+      .agnes-graph[data-space="true"]{cursor:grab}
+      .agnes-graph[data-panning="true"]{cursor:grabbing}
+      .agnes-graph[data-linking="true"]{cursor:crosshair}
+      .agnes-graph[data-drag="true"]{outline:2px dashed #2563eb;outline-offset:-6px}
+      .agnes-graph[data-drag="true"]::after{content:'';position:absolute;inset:0;background:rgba(37,99,235,.08);pointer-events:none}
+      .agnes-graph-inner{position:absolute;left:0;top:0;transform-origin:0 0}
+      .agnes-graph-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;box-sizing:border-box;color:var(--dsw-alias-label-secondary);font-size:12.5px;line-height:1.6;pointer-events:none}
+      .agnes-graph-zoom{position:absolute;right:8px;bottom:8px;font-size:10.5px;padding:2px 7px;border-radius:999px;background:rgba(0,0,0,.45);color:#fff;pointer-events:none;font-variant-numeric:tabular-nums}
+      .agnes-edges{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+      .agnes-link{fill:none;stroke-width:2;pointer-events:none;stroke-linecap:round}
+      .agnes-link-hit{fill:none;stroke:transparent;stroke-width:16;pointer-events:stroke;cursor:pointer}
+      .agnes-link[data-disabled="true"]{stroke-dasharray:7 5;opacity:.5}
+      .agnes-link[data-selected="true"]{stroke-width:4}
+      .agnes-link-draft{fill:none;stroke-width:2;stroke-dasharray:7 5;animation:agnes-dash .6s linear infinite}
+      @keyframes agnes-dash{to{stroke-dashoffset:-24}}
+      .agnes-marquee{position:absolute;border:1px solid #2563eb;background:rgba(37,99,235,.12);border-radius:2px;pointer-events:none}
+      .agnes-node{position:absolute;box-sizing:border-box;background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l1);border-radius:10px;display:flex;flex-direction:column;box-shadow:var(--dsw-shadow-lv1,none);cursor:grab}
+      .agnes-node:hover{border-color:var(--agnes-accent-line)}
+      .agnes-node:active{cursor:grabbing}
       .agnes-node[data-selected="true"]{border-color:#2563eb;box-shadow:0 0 0 1px #2563eb}
-      .agnes-node[data-status="failed"]{border-color:rgba(239,68,68,.7)}
-      .agnes-node[data-status="ready"]{border-color:rgba(34,197,94,.55)}
-      .agnes-node-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;cursor:grab;user-select:none}
-      .agnes-node-status{font-size:10.5px;color:var(--dsw-alias-label-secondary)}
-      .agnes-node[data-status="failed"] .agnes-node-status{color:#ef4444}
-      .agnes-node[data-status="ready"] .agnes-node-status{color:#22c55e}
-      .agnes-node-prompt{font-size:11.5px;line-height:1.4;color:var(--dsw-alias-label-secondary);max-height:44px;overflow-y:auto;overflow-x:hidden;white-space:pre-wrap;word-break:break-word;scrollbar-width:thin;overscroll-behavior:contain}
-      .agnes-node-media{width:100%;height:74px;object-fit:cover;border-radius:6px;background:#000}
+      .agnes-node[data-status="failed"]{border-color:rgba(239,68,68,.8)}
+      .agnes-node[data-status="ready"]{border-color:rgba(34,197,94,.6)}
+      .agnes-node[data-status="running"]{border-color:rgba(37,99,235,.9);animation:agnes-breathe 1.6s ease-in-out infinite}
+      .agnes-node[data-status="queued"]{border-color:rgba(37,99,235,.55)}
+      .agnes-node[data-blocked="true"]{border-color:rgba(245,158,11,.95)}
+      .agnes-node[data-cached="true"]{border-style:dashed}
+      .agnes-node[data-muted="true"]{opacity:.45}
+      @keyframes agnes-breathe{0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}50%{box-shadow:0 0 0 3px rgba(37,99,235,.28)}}
+      .agnes-node-head{display:flex;align-items:center;gap:6px;height:28px;padding:0 6px 0 10px;box-sizing:border-box;border-bottom:1px solid var(--dsw-alias-border-l1);font-size:11.5px;cursor:grab;user-select:none;flex:none}
+      .agnes-node[data-collapsed="true"] .agnes-node-head{border-bottom:0}
+      .agnes-node-icon{flex:none;font-size:11px;line-height:1}
+      .agnes-node-title{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+      .agnes-node-badge{flex:none;font-size:10px;color:var(--dsw-alias-label-secondary);white-space:nowrap}
+      .agnes-node-badge[data-mode="2"]{color:#f59e0b}
+      .agnes-node-badge[data-mode="4"]{color:#d946ef}
+      .agnes-node-collapse{flex:none;width:18px;height:18px;padding:0;border:0;border-radius:4px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:11px;line-height:1;cursor:pointer}
+      .agnes-node-collapse:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
+      .agnes-node-body{flex:1 1 auto;min-height:0;padding:6px 8px 8px;display:flex;flex-direction:column;gap:5px;overflow:hidden}
+      .agnes-node-prompt{margin:0;font-size:11px;line-height:1.45;color:var(--dsw-alias-label-secondary);overflow:hidden;white-space:pre-wrap;word-break:break-word}
+      .agnes-node-media{width:100%;min-height:0;flex:1 1 auto;object-fit:cover;border-radius:6px;background:#000;display:block}
+      .agnes-node-note{font-size:11px;line-height:1.5;color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word;overflow:hidden;height:100%}
       .agnes-node-error{font-size:10px;color:#ef4444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .agnes-node-actions{display:flex;gap:4px;flex-wrap:wrap}
+      .agnes-node-foot{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:10px;color:var(--dsw-alias-label-secondary);flex:none}
+      .agnes-node-foot[data-status="failed"]{color:#ef4444}
+      .agnes-node-foot[data-status="ready"]{color:#22c55e}
+      .agnes-node-foot[data-status="running"]{color:#2563eb}
+      .agnes-node-progress{position:absolute;left:0;right:0;bottom:0;height:4px;border-radius:0 0 9px 9px;background:rgba(127,127,127,.22);overflow:hidden;pointer-events:none}
+      .agnes-node-progress>i{display:block;height:100%;background:#2563eb;transition:width .4s ease}
+      .agnes-node-cached{position:absolute;right:6px;top:31px;font-size:9px;line-height:1.6;padding:0 5px;border-radius:999px;background:rgba(148,163,184,.24);color:var(--dsw-alias-label-secondary);pointer-events:none}
+      .agnes-node-bypass{position:absolute;inset:0;border-radius:9px;pointer-events:none;background:repeating-linear-gradient(135deg, rgba(217,70,239,.26) 0 6px, transparent 6px 12px)}
+      .agnes-port{position:absolute;width:16px;height:16px;margin:0;padding:0;box-sizing:border-box;border-radius:50%;border:2px solid #94a3b8;background:var(--dsw-alias-bg-base);cursor:crosshair;z-index:3}
+      .agnes-port:hover{box-shadow:0 0 0 3px rgba(127,127,127,.25)}
+      .agnes-port[data-filled="true"]{background:currentColor}
+      .agnes-port[data-compatible="false"]{border-color:#ef4444;background:rgba(239,68,68,.25);cursor:not-allowed}
+      .agnes-port[data-snap="true"]{box-shadow:0 0 0 4px rgba(37,99,235,.4)}
+      .agnes-inspector{width:300px;flex:none;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;height:min(62vh,560px);min-height:380px;overflow:auto;padding:10px;border:1px solid var(--dsw-alias-border-l1);border-radius:12px;background:var(--dsw-alias-bg-layer-1);font-size:12px;scrollbar-width:thin;overscroll-behavior:contain}
+      .agnes-inspector-head{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
+      .agnes-inspector-head>span{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .agnes-inspector-field{display:flex;flex-direction:column;gap:3px}
+      .agnes-inspector-field>label{font-size:10.5px;color:var(--dsw-alias-label-secondary)}
+      .agnes-inspector-field>.agnes-input,.agnes-inspector-field>.agnes-select{font-size:11.5px;padding:6px 8px;border-radius:8px}
+      .agnes-inspector-field>textarea.agnes-input{min-height:64px;resize:vertical;font-family:inherit;line-height:1.45}
+      .agnes-inspector-row{display:flex;gap:6px}
+      .agnes-inspector-row>*{flex:1 1 0;min-width:0}
+      .agnes-inspector-meta{font-size:10.5px;color:var(--dsw-alias-label-secondary);line-height:1.6;word-break:break-word}
+      .agnes-inspector-thumb{width:100%;max-height:110px;object-fit:contain;border-radius:8px;background:#000;display:block}
+      .agnes-inspector-actions{display:flex;gap:6px;flex-wrap:wrap}
+      .agnes-inspector-actions .agnes-button,.agnes-inspector-actions .agnes-mini{font-size:11px;padding:5px 9px}
+      .agnes-blockers{border:1px solid rgba(245,158,11,.65);background:rgba(245,158,11,.10);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;font-size:11.5px}
+      .agnes-blockers-head{font-weight:600;color:#b45309}
+      .agnes-blocker-row{display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+      .agnes-blocker-row>span{flex:1 1 auto;min-width:0;word-break:break-word}
+      .agnes-blocker-row>.agnes-mini{flex:none}
+      .agnes-palette{position:absolute;z-index:20;width:230px;max-height:260px;overflow:auto;padding:6px;box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1);border-radius:10px;background:var(--dsw-alias-bg-layer-1);box-shadow:0 10px 28px rgba(0,0,0,.28);display:flex;flex-direction:column;gap:4px;scrollbar-width:thin}
+      .agnes-palette>.agnes-input{font-size:11.5px;padding:5px 8px;border-radius:7px}
+      .agnes-palette-empty{font-size:11px;color:var(--dsw-alias-label-secondary);padding:6px 4px;text-align:center}
+      .agnes-palette-item{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:6px 8px;border:0;border-radius:7px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;cursor:pointer}
+      .agnes-palette-item:hover,.agnes-palette-item[data-active="true"]{background:rgba(37,99,235,.12)}
+      .agnes-palette-item>span{margin-left:auto;font-size:10px;color:var(--dsw-alias-label-secondary);white-space:nowrap}
+      .agnes-port-label{font-size:9.5px;color:var(--dsw-alias-label-secondary);white-space:nowrap}
       .agnes-mini{font-size:10.5px;padding:2px 6px;border-radius:6px;border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;font-family:inherit}
       .agnes-mini:hover{color:var(--dsw-alias-label-primary)}
-      .agnes-port{position:absolute;top:46px;width:16px;height:16px;border-radius:50%;border:2px solid #2563eb;background:var(--dsw-alias-bg-base);padding:0;cursor:crosshair}
-      .agnes-port-in{left:-9px}
-      .agnes-port-out{right:-9px}
       .agnes-mini[data-active="true"]{border-color:#2563eb;color:#2563eb}
       .agnes-drama{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:14px;align-items:start}
       .agnes-drama-list{display:flex;flex-direction:column;gap:6px;max-height:min(62vh,560px);overflow:auto}
@@ -859,29 +1100,390 @@ window.__ModuleLoader__.load({
       }
     }
 
-    const NODE_W = 232
-    const NODE_H = 168
+    /* ----------------------------------------------------------------------- *
+     * Canvas node graph (canvas.json v2, see docs/canvas-graph-spec.md)
+     *
+     * The registry below mirrors spec §2 exactly (same slot numbers, same
+     * colours) and doubles as the fallback when `GET /canvas/schema` is absent
+     * or malformed — the Host may be older than this client, and a payload that
+     * merely answers `{ ok: true }` (which is what a fetch stub hands back) must
+     * not leave the canvas without port types.
+     * --------------------------------------------------------------------- */
 
-    function mergeNodes(existing, shots) {
-      const byId = new Map((existing || []).map((node) => [node.id, node]))
-      const shotIds = new Set((shots || []).map((shot) => shot.id))
-      // Imported media nodes are not backed by a shot, so they survive as-is.
-      const extras = (existing || []).filter(
-        (node) => node && node.type !== 'shot' && !shotIds.has(node.id),
+    const CANVAS_SCHEMA_FALLBACK = {
+      version: 2,
+      modes: [0, 2, 4],
+      slotTypes: {
+        IMAGE: { color: '#3b82f6', label: '图像' },
+        VIDEO: { color: '#a855f7', label: '视频' },
+        '*': { color: '#94a3b8', label: '任意' },
+      },
+      nodeTypes: {
+        shot: {
+          title: '镜头',
+          executable: true,
+          inputs: [
+            { slot: 0, name: 'first_frame', type: 'IMAGE', label: '首帧' },
+            { slot: 1, name: 'reference', type: 'IMAGE', label: '参考图' },
+            { slot: 2, name: 'prev', type: 'VIDEO', label: '承接片段' },
+          ],
+          outputs: [
+            { slot: 0, name: 'video', type: 'VIDEO', label: '成片' },
+            { slot: 1, name: 'tail', type: 'IMAGE', label: '尾帧' },
+            { slot: 2, name: 'still', type: 'IMAGE', label: '静帧' },
+          ],
+        },
+        image: {
+          title: '图片',
+          executable: false,
+          inputs: [],
+          outputs: [{ slot: 0, name: 'image', type: 'IMAGE', label: '图像' }],
+        },
+        clip: {
+          title: '视频素材',
+          executable: false,
+          inputs: [],
+          outputs: [
+            { slot: 0, name: 'video', type: 'VIDEO', label: '视频' },
+            { slot: 1, name: 'frame', type: 'IMAGE', label: '尾帧' },
+          ],
+        },
+        note: { title: '便签', executable: false, inputs: [], outputs: [] },
+        reroute: {
+          title: '转接',
+          executable: false,
+          virtual: true,
+          inputs: [{ slot: 0, name: 'in', type: '*', label: '' }],
+          outputs: [{ slot: 0, name: 'out', type: '*', label: '' }],
+        },
+      },
+    }
+
+    const GRAPH_NODE_TYPES = ['shot', 'image', 'clip', 'note', 'reroute']
+    const GRAPH_HEAD_H = 28
+    const GRAPH_MIN_SIZE = [120, 60]
+    const GRAPH_MAX_SIZE = [640, 900]
+    const GRAPH_GRID = 10
+    const GRAPH_PORT_SNAP = 24
+    const GRAPH_ZOOM_MIN = 0.25
+    const GRAPH_ZOOM_MAX = 2.5
+    const GRAPH_HISTORY_LIMIT = 50
+    const GRAPH_DRAG_THRESHOLD = 4
+    const GRAPH_SIZE_DEFAULTS = {
+      shot: [268, 220],
+      image: [232, 196],
+      clip: [232, 196],
+      note: [220, 150],
+      reroute: [120, 60],
+    }
+    const GRAPH_ICONS = { shot: '🎬', image: '🖼', clip: '🎞', note: '📝', reroute: '••' }
+
+    function graphNum(value) {
+      const num = Number(value)
+      return Number.isFinite(num) ? num : 0
+    }
+
+    function graphClampZoom(value) {
+      return Math.min(GRAPH_ZOOM_MAX, Math.max(GRAPH_ZOOM_MIN, graphNum(value) || 1))
+    }
+
+    /** The server payload only counts when it actually carries the registry. */
+    function isUsableSchema(raw) {
+      return Boolean(
+        raw &&
+          typeof raw === 'object' &&
+          raw.slotTypes &&
+          typeof raw.slotTypes === 'object' &&
+          raw.nodeTypes &&
+          typeof raw.nodeTypes === 'object' &&
+          raw.nodeTypes.shot &&
+          Array.isArray(raw.nodeTypes.shot.inputs) &&
+          Array.isArray(raw.nodeTypes.shot.outputs),
       )
-      const shotNodes = (shots || []).map((shot, index) => {
-        const node = byId.get(shot.id)
-        const fallbackX = 40 + (index % 4) * (NODE_W + 48)
-        const fallbackY = 70 + Math.floor(index / 4) * (NODE_H + 56)
-        return {
+    }
+
+    /** Merge a server schema over the built-in one so a partial payload is safe. */
+    function resolveSchema(raw) {
+      if (!isUsableSchema(raw)) return CANVAS_SCHEMA_FALLBACK
+      const nodeTypes = { ...CANVAS_SCHEMA_FALLBACK.nodeTypes }
+      for (const [key, value] of Object.entries(raw.nodeTypes)) {
+        if (!value || typeof value !== 'object') continue
+        nodeTypes[key] = {
+          title: String(value.title || (CANVAS_SCHEMA_FALLBACK.nodeTypes[key] || {}).title || key),
+          executable: value.executable === true,
+          virtual: value.virtual === true,
+          inputs: Array.isArray(value.inputs) ? value.inputs : [],
+          outputs: Array.isArray(value.outputs) ? value.outputs : [],
+        }
+      }
+      return {
+        version: 2,
+        modes: Array.isArray(raw.modes) ? raw.modes : CANVAS_SCHEMA_FALLBACK.modes,
+        slotTypes: { ...CANVAS_SCHEMA_FALLBACK.slotTypes, ...(raw.slotTypes || {}) },
+        nodeTypes,
+      }
+    }
+
+    function graphNodeDef(schema, type) {
+      const types = (schema && schema.nodeTypes) || CANVAS_SCHEMA_FALLBACK.nodeTypes
+      return types[type] || types.note || { title: type, inputs: [], outputs: [] }
+    }
+
+    function graphSlotColor(schema, type) {
+      const types = (schema && schema.slotTypes) || CANVAS_SCHEMA_FALLBACK.slotTypes
+      const entry = types[type] || types['*']
+      return (entry && entry.color) || '#94a3b8'
+    }
+
+    /** Spec §2: two ports can be linked when the types match or either is `*`. */
+    function typesCompatible(a, b) {
+      return a === b || a === '*' || b === '*' || !a || !b
+    }
+
+    function graphSizeOf(node) {
+      const fallback = GRAPH_SIZE_DEFAULTS[node && node.type] || GRAPH_SIZE_DEFAULTS.shot
+      const size = node && Array.isArray(node.size) ? node.size : fallback
+      const width = Math.min(GRAPH_MAX_SIZE[0], Math.max(GRAPH_MIN_SIZE[0], Math.round(graphNum(size[0]) || fallback[0])))
+      const height = Math.min(GRAPH_MAX_SIZE[1], Math.max(GRAPH_MIN_SIZE[1], Math.round(graphNum(size[1]) || fallback[1])))
+      return [width, height]
+    }
+
+    function graphCollapsed(node) {
+      return Boolean(node && node.flags && node.flags.collapsed)
+    }
+
+    /** Vertical offset of a port centre inside its node box. */
+    function graphPortY(node, def, side, slot) {
+      const [, height] = graphSizeOf(node)
+      if (graphCollapsed(node)) return GRAPH_HEAD_H / 2
+      if (def && def.virtual) return height / 2
+      const list = (side === 'in' ? def && def.inputs : def && def.outputs) || []
+      const index = Math.max(0, list.findIndex((port) => Number(port.slot) === Number(slot)))
+      const top = GRAPH_HEAD_H + 8
+      const span = Math.max(22, height - top - 12)
+      return top + (span * (index + 0.5)) / Math.max(1, list.length)
+    }
+
+    /** Canvas-space anchor of a port; links and port buttons share this maths. */
+    function graphPortAnchor(node, def, side, slot) {
+      const [width] = graphSizeOf(node)
+      const x = side === 'in' ? node.pos[0] : node.pos[0] + width
+      return [x, node.pos[1] + graphPortY(node, def, side, slot)]
+    }
+
+    function graphLinkPath(x1, y1, x2, y2) {
+      const bend = Math.max(36, Math.abs(x2 - x1) * 0.45)
+      return `M ${x1} ${y1} C ${x1 + bend} ${y1}, ${x2 - bend} ${y2}, ${x2} ${y2}`
+    }
+
+    function graphCloneNode(node) {
+      return {
+        ...node,
+        pos: [node.pos[0], node.pos[1]],
+        size: Array.isArray(node.size) ? [node.size[0], node.size[1]] : node.size,
+        flags: { ...(node.flags || {}) },
+        data: { ...(node.data || {}) },
+      }
+    }
+
+    function graphCloneLink(link) {
+      return { ...link }
+    }
+
+    function emptyCanvasFor(projectId) {
+      return {
+        version: 2,
+        projectId: projectId || '',
+        mode: 'linear',
+        viewport: { x: 0, y: 0, zoom: 1 },
+        nodes: [],
+        links: [],
+      }
+    }
+
+    function graphCleanNode(raw, index) {
+      if (!raw || typeof raw !== 'object') return null
+      const id = raw.id === undefined || raw.id === null ? '' : String(raw.id).trim()
+      if (!id) return null
+      let type = String(raw.type || '')
+      if (type === 'media') type = raw.data && raw.data.kind === 'video' ? 'clip' : 'image'
+      if (!GRAPH_NODE_TYPES.includes(type)) type = 'shot'
+      const pos = Array.isArray(raw.pos)
+        ? [Math.round(graphNum(raw.pos[0])), Math.round(graphNum(raw.pos[1]))]
+        : [Math.round(graphNum(raw.x)), Math.round(graphNum(raw.y))]
+      if (!Array.isArray(raw.pos) && raw.x === undefined && raw.y === undefined) {
+        pos[0] = 40 + (index % 3) * 328
+        pos[1] = 60 + Math.floor(index / 3) * 300
+      }
+      const size = Array.isArray(raw.size)
+        ? [Math.round(graphNum(raw.size[0])), Math.round(graphNum(raw.size[1]))]
+        : GRAPH_SIZE_DEFAULTS[type]
+      const mode = [0, 2, 4].includes(Number(raw.mode)) ? Number(raw.mode) : 0
+      return {
+        id,
+        type,
+        pos,
+        size,
+        mode,
+        flags: {
+          collapsed: Boolean(raw.flags && raw.flags.collapsed),
+          pinned: Boolean(raw.flags && raw.flags.pinned),
+        },
+        data: raw.data && typeof raw.data === 'object' ? { ...raw.data } : {},
+      }
+    }
+
+    function graphCleanLink(raw, index) {
+      if (!raw || typeof raw !== 'object') return null
+      const originId = raw.origin_id !== undefined ? String(raw.origin_id) : raw.from !== undefined ? String(raw.from) : ''
+      const targetId = raw.target_id !== undefined ? String(raw.target_id) : raw.to !== undefined ? String(raw.to) : ''
+      if (!originId || !targetId || originId === targetId) return null
+      const rawId = Math.floor(graphNum(raw.id))
+      // v1 `edges` carried `kind: 'reference'`, which maps to target slot 1.
+      const targetSlot = raw.target_slot !== undefined ? Number(raw.target_slot) : raw.kind === 'reference' ? 1 : 0
+      return {
+        id: rawId > 0 ? rawId : -(index + 1),
+        origin_id: originId,
+        origin_slot: raw.origin_slot !== undefined ? Number(raw.origin_slot) : 0,
+        target_id: targetId,
+        target_slot: Number.isFinite(targetSlot) ? targetSlot : 0,
+        type: typeof raw.type === 'string' && raw.type ? raw.type : 'IMAGE',
+        disabled: raw.disabled === true,
+      }
+    }
+
+    function nextLinkId(links) {
+      let max = 0
+      for (const link of links || []) max = Math.max(max, Math.floor(graphNum(link.id)))
+      return max + 1
+    }
+
+    /**
+     * Shape whatever the Host returned into a v2 canvas: positive unique link
+     * ids, no dangling/self links, one link per input slot (the later one wins,
+     * like the Host normaliser).
+     */
+    function canvasShape(raw, projectId) {
+      const canvas = emptyCanvasFor(projectId)
+      if (raw && typeof raw === 'object') {
+        canvas.mode = raw.mode === 'graph' ? 'graph' : 'linear'
+        const viewport = raw.viewport && typeof raw.viewport === 'object' ? raw.viewport : {}
+        canvas.viewport = {
+          x: graphNum(viewport.x),
+          y: graphNum(viewport.y),
+          zoom: graphClampZoom(viewport.zoom || 1),
+        }
+        const rawNodes = Array.isArray(raw.nodes) ? raw.nodes : []
+        canvas.nodes = rawNodes.map(graphCleanNode).filter(Boolean)
+        const rawLinks = Array.isArray(raw.links) ? raw.links : Array.isArray(raw.edges) ? raw.edges : []
+        // Endpoint pruning happens in `shapeCanvas`, *after* missing shot nodes
+        // are materialised — otherwise a v1 canvas loses every edge, because its
+        // edges point at shots that had no node yet.
+        let links = rawLinks.map(graphCleanLink).filter(Boolean)
+        let maxId = 0
+        for (const link of links) if (link.id > 0) maxId = Math.max(maxId, link.id)
+        const used = new Set()
+        const kept = []
+        for (const link of links) {
+          const key = `${link.target_id}#${link.target_slot}`
+          const duplicate = kept.findIndex((entry) => `${entry.target_id}#${entry.target_slot}` === key)
+          // Later links win, matching the Host normaliser.
+          if (duplicate >= 0) kept.splice(duplicate, 1)
+          let id = link.id
+          if (id <= 0 || used.has(id)) {
+            maxId += 1
+            id = maxId
+          }
+          used.add(id)
+          kept.push({ ...link, id })
+        }
+        canvas.links = kept
+      }
+      return canvas
+    }
+
+    /** Make sure every shot owns a node, and drop nodes whose shot is gone. */
+    function mergeShotNodes(canvas, shots) {
+      const list = Array.isArray(shots) ? shots : []
+      const shotIds = new Set(list.map((shot) => shot.id))
+      const nodes = canvas.nodes.filter((node) => node.type !== 'shot' || shotIds.has(node.id))
+      const present = new Set(nodes.map((node) => node.id))
+      const fresh = []
+      list.forEach((shot, index) => {
+        if (present.has(shot.id)) return
+        fresh.push({
           id: shot.id,
           type: 'shot',
-          x: Number.isFinite(Number(node && node.x)) ? Number(node.x) : fallbackX,
-          y: Number.isFinite(Number(node && node.y)) ? Number(node.y) : fallbackY,
+          pos: [40 + (index % 3) * 328, 60 + Math.floor(index / 3) * 300],
+          size: [GRAPH_SIZE_DEFAULTS.shot[0], GRAPH_SIZE_DEFAULTS.shot[1]],
+          mode: 0,
+          flags: { collapsed: false, pinned: false },
           data: {},
-        }
+        })
       })
-      return [...shotNodes, ...extras]
+      return fresh.length === 0 ? canvas : { ...canvas, nodes: [...fresh, ...nodes] }
+    }
+
+    /** A snapshot of the mutable graph state, shared by history and rewire. */
+    function snapshotCanvas(canvas) {
+      return {
+        mode: canvas.mode,
+        nodes: canvas.nodes.map(graphCloneNode),
+        links: canvas.links.map(graphCloneLink),
+      }
+    }
+
+    /** Full read path: shape the payload, add missing shot nodes, prune links. */
+    function shapeCanvas(raw, projectId, shots) {
+      const shaped = mergeShotNodes(canvasShape(raw, projectId), shots)
+      const known = new Set(shaped.nodes.map((node) => node.id))
+      const links = shaped.links.filter((link) => known.has(link.origin_id) && known.has(link.target_id))
+      return links.length === shaped.links.length ? shaped : { ...shaped, links }
+    }
+
+    /** Human-readable first-frame origin for the inspector (spec §3.2). */
+    function describeFirstFrame(t, node, shot, links) {
+      if (!shot) return '—'
+      const manual = shot.firstFrame && shot.firstFrame.source === 'manual' && shot.firstFrame.file
+      if (manual) return t('graph.firstFrameManual')
+      const into = (links || []).filter((link) => link.target_id === node.id && link.disabled !== true)
+      if (into.some((link) => Number(link.target_slot) === 0)) return t('graph.firstFrameLinked')
+      if (into.some((link) => Number(link.target_slot) === 2)) return t('graph.firstFrameLinked')
+      if (into.some((link) => Number(link.target_slot) === 1)) return t('graph.firstFrameLinked')
+      if (shot.lockMode === 'keyframe') return t('graph.firstFramePrev')
+      return t('graph.firstFrameNone')
+    }
+
+    /** Canvas-space bounding box used to size the link layer. */    function graphBounds(nodes) {
+      let minX = 0
+      let minY = 0
+      let maxX = 800
+      let maxY = 600
+      let first = true
+      for (const node of nodes || []) {
+        const [width, height] = graphSizeOf(node)
+        const x = node.pos[0]
+        const y = node.pos[1]
+        if (first) {
+          minX = x
+          minY = y
+          maxX = x + width
+          maxY = y + height
+          first = false
+        } else {
+          minX = Math.min(minX, x)
+          minY = Math.min(minY, y)
+          maxX = Math.max(maxX, x + width)
+          maxY = Math.max(maxY, y + height)
+        }
+      }
+      const pad = 240
+      return {
+        x: Math.floor(minX - pad),
+        y: Math.floor(minY - pad),
+        w: Math.ceil(maxX - minX + pad * 2),
+        h: Math.ceil(maxY - minY + pad * 2),
+      }
     }
 
     function statusColor(status) {
@@ -984,26 +1586,698 @@ window.__ModuleLoader__.load({
       )
     }
 
+    /** Type title through `t()` when a key exists, else the schema title. */
+    function graphTypeLabel(t, type, def) {
+      const key = `graph.type.${type}`
+      const text = t(key)
+      return text === key ? String((def && def.title) || type) : text
+    }
+
+    /** Port label through `t()`; the schema label is the fallback. */
+    function graphPortLabel(t, port) {
+      const name = port && port.name ? String(port.name) : ''
+      const key = `graph.port.${name}`
+      const text = t(key)
+      if (name && text !== key) return text
+      return String((port && (port.label || port.name)) || '')
+    }
+
+    function graphModeStatus(shot) {
+      const status = String((shot && shot.status) || 'draft')
+      if (status === 'ready' || status === 'approved') return 'ready'
+      if (status === 'failed') return 'failed'
+      if (status === 'running' || status === 'storyboard') return 'running'
+      if (status === 'queued') return 'queued'
+      if (status === 'blocked') return 'blocked'
+      return 'draft'
+    }
+
+    /**
+     * One node card. Ports are absolutely positioned on the left/right edge and
+     * carry the schema slot colour; a draft link flags compatible inputs and
+     * marks the rest as forbidden targets.
+     */
+    function GraphNode(props) {
+      const {
+        t,
+        schema,
+        node,
+        shot,
+        selected,
+        cached,
+        blocked,
+        draft,
+        filledInputs,
+        onPointerDown,
+        onOpen,
+        onMenu,
+        onPortDown,
+        onToggleCollapse,
+      } = props
+      const def = graphNodeDef(schema, node.type)
+      const size = graphSizeOf(node)
+      const collapsed = graphCollapsed(node)
+      const virtual = node.type === 'reroute'
+      const muted = node.mode === 2
+      const bypassed = node.mode === 4
+      const status = node.type === 'shot' ? graphModeStatus(shot) : 'static'
+      const progress = Math.max(0, Math.min(100, Math.round(graphNum(shot && shot.progress))))
+      const draftType = draft ? draft.type : null
+      const title =
+        node.type === 'shot' && shot
+          ? `#${shot.index === undefined ? '?' : shot.index}${shot.title ? ` ${shot.title}` : ''}`
+          : graphTypeLabel(t, node.type, def)
+
+      const head = h(
+        'div',
+        {
+          className: 'agnes-node-head',
+          onPointerDown: (event) => onPointerDown(event, node),
+          onDoubleClick: () => onOpen(node.id),
+        },
+        h('span', { className: 'agnes-node-icon' }, GRAPH_ICONS[node.type] || '•'),
+        h('span', { className: 'agnes-node-title', title }, title),
+        node.mode === 2 ? h('span', { className: 'agnes-node-badge', 'data-mode': '2' }, t('graph.badgeMuted')) : null,
+        node.mode === 4 ? h('span', { className: 'agnes-node-badge', 'data-mode': '4' }, t('graph.badgeBypassed')) : null,
+        node.flags && node.flags.pinned ? h('span', { className: 'agnes-node-badge' }, t('graph.badgePinned')) : null,
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'agnes-node-collapse',
+            title: collapsed ? t('graph.expand') : t('graph.collapse'),
+            onPointerDown: (event) => event.stopPropagation(),
+            onClick: (event) => {
+              event.stopPropagation()
+              onToggleCollapse(node.id)
+            },
+          },
+          collapsed ? '▸' : '▾',
+        ),
+      )
+
+      const bodyChildren = []
+      if (!collapsed && !virtual) {
+        if (node.type === 'shot' && shot) {
+          bodyChildren.push(
+            h(
+              'p',
+              { className: 'agnes-node-prompt', title: shot.prompt || '' },
+              shot.prompt || t('graph.noPrompt'),
+            ),
+          )
+          const thumb = shot.storyboardUrl || shot.assetUrl || ''
+          if (thumb) {
+            bodyChildren.push(
+              shot.assetUrl && !shot.storyboardUrl
+                ? h('video', { className: 'agnes-node-media', src: shot.assetUrl, muted: true, preload: 'metadata' })
+                : h('img', { className: 'agnes-node-media', src: thumb, alt: '' }),
+            )
+          }
+          if (shot.error) {
+            bodyChildren.push(h('div', { className: 'agnes-node-error', title: shot.error }, shot.error))
+          }
+        } else if (node.type === 'image' || node.type === 'clip') {
+          const asset = node.data || {}
+          if (asset.url) {
+            bodyChildren.push(
+              node.type === 'clip'
+                ? h('video', { className: 'agnes-node-media', src: asset.url, controls: true, preload: 'metadata' })
+                : h('img', { className: 'agnes-node-media', src: asset.url, alt: String(asset.name || '') }),
+            )
+          } else {
+            bodyChildren.push(h('div', { className: 'agnes-node-prompt' }, String(asset.name || t('graph.assetMissing'))))
+          }
+          bodyChildren.push(
+            h('div', { className: 'agnes-node-foot' }, String(asset.name || asset.id || '')),
+          )
+        } else if (node.type === 'note') {
+          bodyChildren.push(h('div', { className: 'agnes-node-note' }, String((node.data && node.data.text) || '')))
+        }
+        if (node.type === 'shot' && shot) {
+          const meaning = status === 'running' ? `${t('status.running')} ${progress}%` : t(`status.${shot.status || 'draft'}`)
+          bodyChildren.push(
+            h(
+              'div',
+              { className: 'agnes-node-foot', 'data-status': status },
+              h('span', null, meaning),
+              shot.lockMode ? h('span', null, t(`lock.${shot.lockMode}`)) : null,
+            ),
+          )
+        }
+      }
+
+      const ports = []
+      const portStyle = (top, color) => ({ top: `${top - 8}px`, borderColor: color, color })
+      if (!collapsed) {
+        for (const port of def.inputs || []) {
+          const filled = (filledInputs || []).some((slot) => Number(slot) === Number(port.slot))
+          const compatible = draftType ? typesCompatible(draftType, port.type) : null
+          const snap = draft && draft.targetId === node.id && Number(draft.targetSlot) === Number(port.slot)
+          ports.push(
+            h('button', {
+              key: `in-${port.slot}`,
+              type: 'button',
+              className: 'agnes-port agnes-port-in',
+              title: graphPortLabel(t, port),
+              'data-slot': port.slot,
+              'data-filled': filled ? 'true' : 'false',
+              'data-compatible': compatible === null ? undefined : compatible ? 'true' : 'false',
+              'data-snap': snap ? 'true' : 'false',
+              style: portStyle(graphPortY(node, def, 'in', port.slot), graphSlotColor(schema, port.type)),
+              onPointerDown: (event) => onPortDown(event, node, 'in', port.slot),
+              onContextMenu: (event) => {
+                event.preventDefault()
+                event.stopPropagation()
+              },
+            }),
+          )
+        }
+        for (const port of def.outputs || []) {
+          ports.push(
+            h('button', {
+              key: `out-${port.slot}`,
+              type: 'button',
+              className: 'agnes-port agnes-port-out',
+              title: graphPortLabel(t, port),
+              'data-slot': port.slot,
+              'data-filled': 'true',
+              style: portStyle(graphPortY(node, def, 'out', port.slot), graphSlotColor(schema, port.type)),
+              onPointerDown: (event) => onPortDown(event, node, 'out', port.slot),
+              onContextMenu: (event) => {
+                event.preventDefault()
+                event.stopPropagation()
+              },
+            }),
+          )
+        }
+      }
+
+      return h(
+        'div',
+        {
+          className: 'agnes-node',
+          'data-node-id': node.id,
+          'data-node-type': node.type,
+          'data-selected': selected ? 'true' : 'false',
+          'data-status': status,
+          'data-muted': muted ? 'true' : 'false',
+          'data-bypassed': bypassed ? 'true' : 'false',
+          'data-cached': cached ? 'true' : 'false',
+          'data-blocked': blocked ? 'true' : 'false',
+          'data-collapsed': collapsed || virtual ? 'true' : 'false',
+          style: { left: node.pos[0], top: node.pos[1], width: size[0], height: size[1] },
+          onPointerDown: (event) => onPointerDown(event, node),
+          onDoubleClick: () => onOpen(node.id),
+          onContextMenu: (event) => onMenu(event, 'node', node.id),
+        },
+        head,
+        virtual ? null : h('div', { className: 'agnes-node-body' }, ...bodyChildren),
+        ...ports,
+        cached ? h('span', { className: 'agnes-node-cached' }, t('graph.cached')) : null,
+        bypassed ? h('div', { className: 'agnes-node-bypass' }) : null,
+        status === 'running' || status === 'queued'
+          ? h('div', { className: 'agnes-node-progress' }, h('i', { style: { width: `${progress}%` } }))
+          : null,
+      )
+    }
+
+    /**
+     * Right-hand drawer for a single selected node: shot fields (PATCH with a
+     * 400ms debounce), or note text / asset facts for the other node kinds.
+     */
+    function GraphInspector(props) {
+      const {
+        t,
+        node,
+        shot,
+        castList,
+        shotList,
+        firstFrameSource,
+        onClose,
+        onPatchShot,
+        onPatchNode,
+        onGenerate,
+        onRunFrom,
+        onUploadFirstFrame,
+        onApprove,
+        onReject,
+        onDelete,
+      } = props
+      const [form, setForm] = useState(() => inspectorForm(shot))
+      const timer = useRef(null)
+      const dirty = useRef(false)
+      const latest = useRef(form)
+      latest.current = form
+      const shotId = shot ? shot.id : ''
+
+      useEffect(() => {
+        setForm(inspectorForm(shot))
+        dirty.current = false
+        if (timer.current) {
+          clearTimeout(timer.current)
+          timer.current = null
+        }
+      }, [shotId])
+
+      // Closing the drawer (or switching nodes) must not swallow what was typed:
+      // a pending debounce is committed on unmount instead of cancelled.
+      useEffect(
+        () => () => {
+          if (timer.current) clearTimeout(timer.current)
+          timer.current = null
+          if (!dirty.current || !shotId) return
+          dirty.current = false
+          const value = latest.current
+          onPatchShot(shotId, {
+            title: value.title,
+            prompt: value.prompt,
+            camera: value.camera,
+            negativePrompt: value.negativePrompt,
+            duration: Number(value.duration) || 5,
+            size: value.size,
+            seed: value.seed === '' ? null : Number(value.seed),
+            context: { continuity: value.continuity, characters: value.characters, scene: value.scene },
+          })
+        },
+        [shotId],
+      )
+
+      const flush = useCallback(() => {
+        if (timer.current) {
+          clearTimeout(timer.current)
+          timer.current = null
+        }
+        if (!dirty.current || !shotId) return
+        dirty.current = false
+        const value = latest.current
+        onPatchShot(shotId, {
+          title: value.title,
+          prompt: value.prompt,
+          camera: value.camera,
+          negativePrompt: value.negativePrompt,
+          duration: Number(value.duration) || 5,
+          size: value.size,
+          seed: value.seed === '' ? null : Number(value.seed),
+          context: { continuity: value.continuity, characters: value.characters, scene: value.scene },
+        })
+      }, [shotId, onPatchShot])
+
+      const edit = (field, value) => {
+        dirty.current = true
+        setForm((current) => {
+          const next = { ...current, [field]: value }
+          latest.current = next
+          return next
+        })
+        if (timer.current) clearTimeout(timer.current)
+        timer.current = setTimeout(flush, 400)
+      }
+
+      if (!node) return null
+      const def = graphNodeDef(props.schema, node.type)
+      const head = h(
+        'div',
+        { className: 'agnes-inspector-head' },
+        h('span', null, `${GRAPH_ICONS[node.type] || '•'} ${graphTypeLabel(t, node.type, def)}`),
+        h(
+          'button',
+          { type: 'button', className: 'agnes-node-collapse', title: t('graph.close'), onClick: onClose },
+          '×',
+        ),
+      )
+
+      if (node.type === 'shot' && shot) {
+        const cast = Array.isArray(castList) ? castList : []
+        const earlier = (Array.isArray(shotList) ? shotList : []).filter((entry) => entry.id !== shot.id)
+        const characters = Array.isArray(form.characters) ? form.characters : []
+        const refs = Array.isArray(shot.refs) ? shot.refs : []
+        return h(
+          'aside',
+          { className: 'agnes-inspector' },
+          head,
+          h(
+            'div',
+            { className: 'agnes-inspector-meta' },
+            `${t('graph.fieldStatus')}：${t(`status.${shot.status || 'draft'}`)} · ${t('graph.fieldProgress')} ${Math.round(
+              graphNum(shot.progress),
+            )}% · ${t('graph.fieldMode')} ${node.mode === 2 ? t('graph.badgeMuted') : node.mode === 4 ? t('graph.badgeBypassed') : t('graph.modeNormal')}`,
+          ),
+          h(
+            'div',
+            { className: 'agnes-inspector-meta' },
+            `${t('graph.fieldLock')}：${shot.lockMode ? t(`lock.${shot.lockMode}`) : '—'} · ${t('graph.fieldFirstFrame')}：${firstFrameSource}`,
+          ),
+          h('div', { className: 'agnes-inspector-field' }, h('label', null, t('graph.fieldTitle')), h('input', {
+            className: 'agnes-input',
+            value: form.title,
+            onBlur: flush,
+            onChange: (event) => edit('title', event.target.value),
+          })),
+          h('div', { className: 'agnes-inspector-field' }, h('label', null, t('graph.fieldPrompt')), h('textarea', {
+            className: 'agnes-input',
+            value: form.prompt,
+            onBlur: flush,
+            onChange: (event) => edit('prompt', event.target.value),
+          })),
+          h('div', { className: 'agnes-inspector-field' }, h('label', null, t('graph.fieldCamera')), h('input', {
+            className: 'agnes-input',
+            value: form.camera,
+            onBlur: flush,
+            onChange: (event) => edit('camera', event.target.value),
+          })),
+          h('div', { className: 'agnes-inspector-field' }, h('label', null, t('graph.fieldContinuity')), h('input', {
+            className: 'agnes-input',
+            value: form.continuity,
+            onBlur: flush,
+            onChange: (event) => edit('continuity', event.target.value),
+          })),
+          h(
+            'div',
+            { className: 'agnes-inspector-row' },
+            h('div', { className: 'agnes-inspector-field' }, h('label', null, t('graph.fieldDuration')), h('input', {
+              className: 'agnes-input',
+              value: form.duration,
+              onBlur: flush,
+              onChange: (event) => edit('duration', event.target.value),
+            })),
+            h('div', { className: 'agnes-inspector-field' }, h('label', null, t('graph.fieldSize')), h('input', {
+              className: 'agnes-input',
+              value: form.size,
+              onBlur: flush,
+              onChange: (event) => edit('size', event.target.value),
+            })),
+          ),
+          h(
+            'div',
+            { className: 'agnes-inspector-row' },
+            h('div', { className: 'agnes-inspector-field' }, h('label', null, t('graph.fieldSeed')), h('input', {
+              className: 'agnes-input',
+              value: form.seed,
+              onBlur: flush,
+              onChange: (event) => edit('seed', event.target.value),
+            })),
+            h('div', { className: 'agnes-inspector-field' }, h('label', null, t('graph.fieldNegative')), h('input', {
+              className: 'agnes-input',
+              value: form.negativePrompt,
+              onBlur: flush,
+              onChange: (event) => edit('negativePrompt', event.target.value),
+            })),
+          ),
+          cast.length
+            ? h(
+                'div',
+                { className: 'agnes-inspector-field' },
+                h('label', null, t('graph.fieldCharacters')),
+                h(
+                  'div',
+                  { className: 'agnes-cast-toggle' },
+                  ...cast.map((character) =>
+                    h(
+                      'button',
+                      {
+                        key: character.id,
+                        type: 'button',
+                        className: 'agnes-cast-pill',
+                        'data-active': characters.includes(character.id) ? 'true' : 'false',
+                        onClick: () => {
+                          const next = characters.includes(character.id)
+                            ? characters.filter((id) => id !== character.id)
+                            : [...characters, character.id]
+                          setForm((current) => ({ ...current, characters: next }))
+                          onPatchShot(shot.id, {
+                            context: { continuity: form.continuity, characters: next, scene: form.scene },
+                          })
+                        },
+                      },
+                      character.name,
+                    ),
+                  ),
+                ),
+              )
+            : null,
+          earlier.length
+            ? h(
+                'div',
+                { className: 'agnes-inspector-field' },
+                h('label', null, t('graph.fieldRefs')),
+                h(
+                  'div',
+                  { className: 'agnes-cast-toggle' },
+                  ...earlier.map((entry) =>
+                    h(
+                      'button',
+                      {
+                        key: entry.id,
+                        type: 'button',
+                        className: 'agnes-cast-pill',
+                        'data-active': refs.includes(entry.id) ? 'true' : 'false',
+                        onClick: () => {
+                          const next = refs.includes(entry.id)
+                            ? refs.filter((id) => id !== entry.id)
+                            : [...refs, entry.id]
+                          onPatchShot(shot.id, { refs: next })
+                        },
+                      },
+                      `#${entry.index}`,
+                    ),
+                  ),
+                ),
+              )
+            : null,
+          shot.storyboardUrl || shot.tailUrl
+            ? h('img', { className: 'agnes-inspector-thumb', src: shot.storyboardUrl || shot.tailUrl, alt: '' })
+            : null,
+          shot.error || shot.tailError
+            ? h('div', { className: 'agnes-error' }, shot.error || shot.tailError)
+            : null,
+          h(
+            'div',
+            { className: 'agnes-inspector-actions' },
+            h('button', { type: 'button', className: 'agnes-button agnes-primary', onClick: flush }, t('action.save')),
+            h('button', { type: 'button', className: 'agnes-button agnes-ghost', onClick: () => onGenerate([shot.id]) }, t('graph.generateThis')),
+            h('button', { type: 'button', className: 'agnes-button agnes-ghost', onClick: () => onRunFrom(shot.id) }, t('canvas.runFrom')),
+            h('button', { type: 'button', className: 'agnes-button agnes-ghost', onClick: () => onUploadFirstFrame(shot.id) }, t('canvas.firstFrame')),
+            shot.storyboardUrl
+              ? h('button', { type: 'button', className: 'agnes-button agnes-ghost', onClick: () => onApprove(shot.id) }, t('story.approve'))
+              : null,
+            shot.storyboardUrl
+              ? h('button', { type: 'button', className: 'agnes-button agnes-ghost', onClick: () => onReject(shot.id) }, t('story.reject'))
+              : null,
+            h('button', { type: 'button', className: 'agnes-button agnes-ghost', onClick: () => onDelete(node.id) }, t('action.delete')),
+          ),
+        )
+      }
+
+      if (node.type === 'note') {
+        return h(
+          'aside',
+          { className: 'agnes-inspector' },
+          head,
+          h('div', { className: 'agnes-inspector-field' }, h('label', null, t('graph.fieldNote')), h('textarea', {
+            className: 'agnes-input',
+            style: { minHeight: '160px' },
+            value: String((node.data && node.data.text) || ''),
+            onChange: (event) => onPatchNode(node.id, { text: event.target.value }),
+          })),
+          h('div', { className: 'agnes-inspector-actions' },
+            h('button', { type: 'button', className: 'agnes-button agnes-ghost', onClick: () => onDelete(node.id) }, t('action.delete')),
+          ),
+        )
+      }
+
+      const asset = node.data || {}
+      return h(
+        'aside',
+        { className: 'agnes-inspector' },
+        head,
+        h('div', { className: 'agnes-inspector-meta' }, `${t('graph.fieldAsset')}：${String(asset.name || asset.id || '—')}`),
+        asset.kind ? h('div', { className: 'agnes-inspector-meta' }, `${t('graph.fieldKind')}：${String(asset.kind)}`) : null,
+        asset.bytes ? h('div', { className: 'agnes-inspector-meta' }, `${t('graph.fieldBytes')}：${Math.round(Number(asset.bytes) / 1024)} KB`) : null,
+        asset.duration
+          ? h('div', { className: 'agnes-inspector-meta' }, `${t('graph.fieldDuration')}：${asset.duration}s`)
+          : null,
+        asset.url
+          ? node.type === 'clip'
+            ? h('video', { className: 'agnes-inspector-thumb', src: asset.url, controls: true, preload: 'metadata' })
+            : h('img', { className: 'agnes-inspector-thumb', src: asset.url, alt: String(asset.name || '') })
+          : null,
+        h('div', { className: 'agnes-inspector-actions' },
+          h('button', { type: 'button', className: 'agnes-button agnes-ghost', onClick: () => onDelete(node.id) }, t('action.delete')),
+        ),
+      )
+    }
+
+    function inspectorForm(shot) {
+      return {
+        title: String((shot && shot.title) || ''),
+        prompt: String((shot && shot.prompt) || ''),
+        camera: String((shot && shot.camera) || ''),
+        negativePrompt: String((shot && shot.negativePrompt) || ''),
+        duration: String((shot && shot.duration) || 5),
+        size: String((shot && shot.size) || '720P'),
+        seed: shot && shot.seed !== null && shot.seed !== undefined ? String(shot.seed) : '',
+        continuity: String((shot && shot.context && shot.context.continuity) || ''),
+        scene: String((shot && shot.context && shot.context.scene) || ''),
+        characters: Array.isArray(shot && shot.context && shot.context.characters)
+          ? shot.context.characters.slice()
+          : [],
+      }
+    }
+
+    /** Add-node palette: search, arrow keys, Enter to insert, Esc to close. */
+    function GraphPalette(props) {
+      const { t, style, items, query, index, onQuery, onPick, onMove, onClose } = props
+      const inputRef = useRef(null)
+      useEffect(() => {
+        const element = inputRef.current
+        if (element && typeof element.focus === 'function') element.focus()
+      }, [])
+      return h(
+        'div',
+        {
+          className: 'agnes-palette',
+          style: style,
+          onPointerDown: (event) => event.stopPropagation(),
+          onContextMenu: (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+          },
+        },
+        h('input', {
+          ref: inputRef,
+          className: 'agnes-input',
+          placeholder: t('graph.paletteSearch'),
+          value: query,
+          onChange: (event) => onQuery(event.target.value),
+          onKeyDown: (event) => {
+            if (event.key === 'Escape') {
+              event.preventDefault()
+              onClose()
+            } else if (event.key === 'ArrowDown') {
+              event.preventDefault()
+              onMove(1)
+            } else if (event.key === 'ArrowUp') {
+              event.preventDefault()
+              onMove(-1)
+            } else if (event.key === 'Enter') {
+              event.preventDefault()
+              if (items[index]) onPick(items[index].type)
+            }
+          },
+        }),
+        items.length === 0
+          ? h('div', { className: 'agnes-palette-empty' }, t('graph.paletteEmpty'))
+          : items.map((item, at) =>
+              h(
+                'button',
+                {
+                  key: item.type,
+                  type: 'button',
+                  className: 'agnes-palette-item',
+                  'data-active': at === index ? 'true' : 'false',
+                  onClick: () => onPick(item.type),
+                },
+                h('span', { className: 'agnes-node-icon' }, GRAPH_ICONS[item.type] || '•'),
+                item.label,
+                item.hint ? h('span', null, item.hint) : null,
+              ),
+            ),
+      )
+    }
+
     function CanvasView({ t }) {
       const [projects, setProjects] = useState([])
       const [projectId, setProjectId] = useState('')
       const [detail, setDetail] = useState(null)
-      const [nodes, setNodes] = useState([])
-      const [edges, setEdges] = useState([])
-      const [viewport, setViewport] = useState({ x: 0, y: 0, zoom: 1 })
+      const [schema, setSchema] = useState(CANVAS_SCHEMA_FALLBACK)
+      const [canvas, setCanvas] = useState(() => emptyCanvasFor(''))
+      const [selection, setSelection] = useState([])
+      const [selectedLink, setSelectedLink] = useState(null)
+      const [draft, setDraft] = useState(null)
+      const [marquee, setMarquee] = useState(null)
+      const [menu, setMenu] = useState(null)
+      const [palette, setPalette] = useState(null)
+      const [inspector, setInspector] = useState(null)
+      const [confirmBar, setConfirmBar] = useState(null)
+      const [saving, setSaving] = useState(false)
       const [newName, setNewName] = useState('')
       const [error, setError] = useState('')
-      const [connecting, setConnecting] = useState('')
-      const [dragging, setDragging] = useState(false)
+      const [hint, setHint] = useState('')
+      const [dropActive, setDropActive] = useState(false)
+      const [spaceDown, setSpaceDown] = useState(false)
+      // ComfyUI pans with a left drag on empty space and marquees with Ctrl;
+      // spec §5.3 asks for both gestures on a plain drag, so the toggle lets the
+      // same drag box-select instead (modifiers always box-select either way).
+      const [marqueeMode, setMarqueeMode] = useState(false)
+      const [histVer, setHistVer] = useState(0)
+      const [graphInfo, setGraphInfo] = useState(null)
+      // `GET /projects/:id` does not carry the cast, so the inspector's
+      // character checkboxes need their own read.
+      const [castList, setCastList] = useState([])
+
       const areaRef = useRef(null)
+      const saveTimer = useRef(null)
       const dragRef = useRef(null)
       const panRef = useRef(null)
-      const saveTimer = useRef(null)
+      const marqueeRef = useRef(null)
+      const draftRef = useRef(null)
+      const historyRef = useRef({ past: [], future: [] })
+      const coalesceRef = useRef({ key: '', at: 0 })
+      const live = useRef({})
+      // True while this view holds graph edits the Host has not acknowledged. A
+      // poll/refresh must then leave the local canvas alone: the server copy is
+      // one debounce behind and would resurrect a just-deleted node.
+      const dirtyRef = useRef(false)
+      const keyRef = useRef(null)
+      const wheelRef = useRef(null)
 
       const shots = detail ? detail.shots || [] : []
       const chain = detail && detail.project ? detail.project.chain : null
+      live.current = {
+        canvas,
+        selection,
+        selectedLink,
+        draft,
+        marquee,
+        schema,
+        projectId,
+        shots,
+        detail,
+        spaceDown,
+        marqueeMode,
+        inspector,
+        palette,
+        menu,
+        confirmBar,
+        chain,
+        graphInfo,
+      }
+
+      // Lookups that stay correct after mutations: handlers defined earlier in this
+      // body read them lazily through `live`, so a stale render never gets used.
+      const nodeIn = (nodeId) => (live.current.canvas.nodes || []).find((node) => node.id === nodeId)
+      const shotIn = (nodeId) => ((live.current.detail && live.current.detail.shots) || []).find((shot) => shot.id === nodeId)
+
+      const shotById = new Map()
+      for (const shot of shots) shotById.set(shot.id, shot)
+      const nodeById = new Map()
+      for (const node of canvas.nodes) nodeById.set(node.id, node)
+      const blockedIds = new Set(
+        ((graphInfo && graphInfo.blockers) || [])
+          .map((entry) => (entry && (entry.nodeId || entry.shotId)) || '')
+          .filter(Boolean),
+      )
+      const cachedIds = new Set(
+        ((graphInfo && graphInfo.cached) || []).map((entry) => (entry && entry.shotId) || '').filter(Boolean),
+      )
+
+      /* ------------------------------ bootstrap ----------------------------- */
 
       useEffect(() => {
+        getJson('/canvas/schema')
+          .then((data) => setSchema(resolveSchema(data && data.schema ? data.schema : data)))
+          .catch(() => setSchema(CANVAS_SCHEMA_FALLBACK))
         loadProjects()
           .then((list) => {
             setProjects(list)
@@ -1013,15 +2287,37 @@ window.__ModuleLoader__.load({
       }, [])
 
       useEffect(() => {
-        if (!projectId) return undefined
+        if (!projectId) {
+          setDetail(null)
+          const blank = emptyCanvasFor('')
+          live.current.canvas = blank
+          setCanvas(blank)
+          setSelection([])
+          setSelectedLink(null)
+          setInspector(null)
+          setCastList([])
+          return undefined
+        }
         let alive = true
+        getJson(`/projects/${projectId}/cast`)
+          .then((data) => {
+            if (alive) setCastList(Array.isArray(data && data.cast) ? data.cast : [])
+          })
+          .catch(() => {})
         loadProjectDetail(projectId)
           .then((data) => {
             if (!alive) return
-            setDetail(data)
-            setNodes(mergeNodes(data.canvas.nodes, data.shots))
-            setEdges(data.canvas.edges || [])
-            setViewport(data.canvas.viewport || { x: 0, y: 0, zoom: 1 })
+            setDetail(data || null)
+            setGraphInfo((data && data.graph) || null)
+            const shaped = shapeCanvas(data && data.canvas, projectId, (data && data.shots) || [])
+            live.current.canvas = shaped
+            setCanvas(shaped)
+            setSelection([])
+            setSelectedLink(null)
+            setInspector(null)
+            historyRef.current = { past: [], future: [] }
+            dirtyRef.current = false
+            setHistVer((value) => value + 1)
           })
           .catch((err) => {
             if (alive) setError(String(err))
@@ -1032,16 +2328,24 @@ window.__ModuleLoader__.load({
       }, [projectId])
 
       const pending = Boolean(
-        detail && (chain?.running || shots.some((shot) => shot.status === 'running' || shot.status === 'queued')),
+        detail &&
+          (chain && chain.running
+            ? true
+            : shots.some((shot) => shot.status === 'running' || shot.status === 'queued')),
       )
+      // 2.5s refresh while the chain runs, kept from 1.0 (and never required for
+      // the first paint: a stubbed setInterval must not blank the canvas).
       useEffect(() => {
         if (!projectId || !pending) return undefined
         const timer = setInterval(() => {
           loadProjectDetail(projectId)
             .then((data) => {
-              setDetail(data)
-              setNodes((current) => mergeNodes(current, data.shots))
-              setEdges(data.canvas.edges || [])
+              setDetail(data || null)
+              setGraphInfo((data && data.graph) || null)
+              if (dirtyRef.current || saveTimer.current || dragRef.current || panRef.current || draftRef.current) return
+              const shaped = shapeCanvas(data && data.canvas, projectId, (data && data.shots) || [])
+              live.current.canvas = shaped
+              setCanvas(shaped)
             })
             .catch(() => {})
         }, 2500)
@@ -1049,218 +2353,863 @@ window.__ModuleLoader__.load({
       }, [projectId, pending])
 
       const reload = useCallback(async () => {
-        if (!projectId) return
-        const data = await loadProjectDetail(projectId)
-        setDetail(data)
-        setNodes((current) => mergeNodes(current, data.shots))
-        setEdges(data.canvas.edges || [])
-      }, [projectId])
+        const id = live.current.projectId
+        if (!id) return null
+        const data = await loadProjectDetail(id)
+        setDetail(data || null)
+        setGraphInfo((data && data.graph) || null)
+        if (!dirtyRef.current && !saveTimer.current && !dragRef.current && !panRef.current && !draftRef.current) {
+          const shaped = shapeCanvas(data && data.canvas, id, (data && data.shots) || [])
+          live.current.canvas = shaped
+          setCanvas(shaped)
+        }
+        return data
+      }, [])
+
+      /* ------------------------------- saving ------------------------------- */
+
+      const persist = useCallback((value) => {
+        const id = live.current.projectId
+        if (!id) return
+        setSaving(true)
+        const body = {
+          version: 2,
+          mode: value.mode,
+          viewport: value.viewport,
+          nodes: value.nodes.map(graphCloneNode),
+          links: value.links.map(graphCloneLink),
+        }
+        saveCanvasApi(id, body)
+          .then(() => {
+            setSaving(false)
+            // Only clear the flag when nothing newer has been queued, otherwise a
+            // poll refresh could snap the canvas back to the older server copy.
+            if (!saveTimer.current) dirtyRef.current = false
+          })
+          .catch((err) => {
+            setSaving(false)
+            setError(String(err))
+          })
+      }, [])
 
       const scheduleSave = useCallback(
-        (nextNodes, nextEdges, nextViewport) => {
-          if (!projectId) return
+        (value) => {
+          if (!live.current.projectId) return
+          dirtyRef.current = true
           if (saveTimer.current) clearTimeout(saveTimer.current)
           saveTimer.current = setTimeout(() => {
-            saveCanvasApi(projectId, { nodes: nextNodes, edges: nextEdges, viewport: nextViewport }).catch(() => {})
-          }, 500)
+            saveTimer.current = null
+            persist(value)
+          }, 400)
         },
-        [projectId],
+        [persist],
       )
 
-      const toCanvasPoint = (event) => {
-        const rect = areaRef.current.getBoundingClientRect()
+      /* ------------------------------ history ------------------------------- */
+
+      const pushHistory = useCallback((value, key) => {
+        const previous = value || live.current.canvas
+        if (!previous) return
+        const now = Date.now()
+        const stamp = coalesceRef.current
+        if (key && stamp.key === key && now - stamp.at < 1000) {
+          stamp.at = now
+          return
+        }
+        coalesceRef.current = { key: key || '', at: now }
+        const past = historyRef.current.past
+        past.push({
+          mode: previous.mode,
+          nodes: previous.nodes.map(graphCloneNode),
+          links: previous.links.map(graphCloneLink),
+        })
+        if (past.length > GRAPH_HISTORY_LIMIT) past.shift()
+        historyRef.current.future.length = 0
+        setHistVer((value2) => value2 + 1)
+      }, [])
+
+      const commit = useCallback(
+        (next, options) => {
+          const opts = options || {}
+          if (opts.history !== false) pushHistory(live.current.canvas, opts.coalesce)
+          live.current.canvas = next
+          setCanvas(next)
+          if (opts.save !== false) scheduleSave(next)
+        },
+        [pushHistory, scheduleSave],
+      )
+
+      const restore = useCallback(
+        (snapshot) => {
+          const current = live.current.canvas
+          if (!current) return
+          const next = {
+            ...current,
+            mode: snapshot.mode,
+            nodes: snapshot.nodes.map(graphCloneNode),
+            links: snapshot.links.map(graphCloneLink),
+          }
+          live.current.canvas = next
+          setCanvas(next)
+          scheduleSave(next)
+          setSelection([])
+          setSelectedLink(null)
+        },
+        [scheduleSave],
+      )
+
+      const undo = useCallback(() => {
+        const hist = historyRef.current
+        if (hist.past.length === 0) return
+        const snapshot = hist.past.pop()
+        hist.future.push({
+          mode: live.current.canvas.mode,
+          nodes: live.current.canvas.nodes.map(graphCloneNode),
+          links: live.current.canvas.links.map(graphCloneLink),
+        })
+        restore(snapshot)
+        setHistVer((value) => value + 1)
+      }, [restore])
+
+      const redo = useCallback(() => {
+        const hist = historyRef.current
+        if (hist.future.length === 0) return
+        const snapshot = hist.future.pop()
+        hist.past.push({
+          mode: live.current.canvas.mode,
+          nodes: live.current.canvas.nodes.map(graphCloneNode),
+          links: live.current.canvas.links.map(graphCloneLink),
+        })
+        restore(snapshot)
+        setHistVer((value) => value + 1)
+      }, [restore])
+
+      const canUndo = historyRef.current.past.length > 0
+      const canRedo = historyRef.current.future.length > 0
+      void histVer
+
+      /* ------------------------------ geometry ------------------------------ */
+
+      const rectOf = () => {
+        const area = areaRef.current
+        if (area && typeof area.getBoundingClientRect === 'function') return area.getBoundingClientRect()
+        return { left: 0, top: 0, width: 900, height: 520 }
+      }
+
+      const canvasPoint = (event) => {
+        const rect = rectOf()
+        const viewport = live.current.canvas.viewport
         return {
-          x: (event.clientX - rect.left - viewport.x) / viewport.zoom,
-          y: (event.clientY - rect.top - viewport.y) / viewport.zoom,
+          x: (graphNum(event.clientX) - rect.left - viewport.x) / viewport.zoom,
+          y: (graphNum(event.clientY) - rect.top - viewport.y) / viewport.zoom,
         }
       }
 
-      /** Drop files from Explorer onto the canvas: upload, then add a node. */
-      const onDrop = async (event) => {
-        event.preventDefault()
-        setDragging(false)
-        if (!projectId) return
-        const files = Array.from(event.dataTransfer?.files || [])
-        if (files.length === 0) return
-        const point = toCanvasPoint(event)
-        const next = [...nodes]
-        let y = point.y
-        for (const file of files) {
-          const isVideo = file.type.startsWith('video/')
-          const isImage = file.type.startsWith('image/')
-          if (!isVideo && !isImage) {
-            setError(t('canvas.unsupported'))
-            continue
+      const screenPoint = (event) => {
+        const rect = rectOf()
+        return { x: graphNum(event.clientX) - rect.left, y: graphNum(event.clientY) - rect.top }
+      }
+
+      const capture = (event) => {
+        const area = areaRef.current
+        if (!area || typeof area.setPointerCapture !== 'function') return
+        try {
+          area.setPointerCapture(event.pointerId)
+        } catch {
+          /* pointer capture is a nicety, not a requirement */
+        }
+      }
+
+      const setViewport = (viewport) => {
+        const current = live.current.canvas
+        const next = { ...current, viewport }
+        live.current.canvas = next
+        setCanvas(next)
+        scheduleSave(next)
+      }
+
+      const zoomAt = (screenX, screenY, factor) => {
+        const viewport = live.current.canvas.viewport
+        const zoom = graphClampZoom(viewport.zoom * factor)
+        if (Math.abs(zoom - viewport.zoom) < 0.0001) return
+        const scale = zoom / viewport.zoom
+        setViewport({
+          zoom,
+          x: screenX - (screenX - viewport.x) * scale,
+          y: screenY - (screenY - viewport.y) * scale,
+        })
+      }
+
+      const fitView = useCallback(() => {
+        const current = live.current.canvas
+        const rect = rectOf()
+        if (!current.nodes.length) {
+          setViewport({ x: 0, y: 0, zoom: 1 })
+          return
+        }
+        let minX = Infinity
+        let minY = Infinity
+        let maxX = -Infinity
+        let maxY = -Infinity
+        for (const node of current.nodes) {
+          const size = graphSizeOf(node)
+          minX = Math.min(minX, node.pos[0])
+          minY = Math.min(minY, node.pos[1])
+          maxX = Math.max(maxX, node.pos[0] + size[0])
+          maxY = Math.max(maxY, node.pos[1] + size[1])
+        }
+        const pad = 48
+        const width = Math.max(1, maxX - minX)
+        const height = Math.max(1, maxY - minY)
+        const zoom = graphClampZoom(
+          Math.min((rect.width - pad * 2) / width, (rect.height - pad * 2) / height, 1.2),
+        )
+        setViewport({
+          zoom,
+          x: (rect.width - width * zoom) / 2 - minX * zoom,
+          y: (rect.height - height * zoom) / 2 - minY * zoom,
+        })
+      }, [scheduleSave])
+
+      const focusNode = useCallback((nodeId) => {
+        const current = live.current.canvas
+        const node = current.nodes.find((entry) => entry.id === nodeId)
+        if (!node) return
+        const rect = rectOf()
+        const size = graphSizeOf(node)
+        const zoom = Math.max(0.6, Math.min(1.2, current.viewport.zoom))
+        setSelection([nodeId])
+        setInspector(nodeId)
+        setSelectedLink(null)
+        const next = {
+          ...current,
+          viewport: {
+            zoom,
+            x: rect.width / 2 - (node.pos[0] + size[0] / 2) * zoom,
+            y: rect.height / 2 - (node.pos[1] + size[1] / 2) * zoom,
+          },
+        }
+        live.current.canvas = next
+        setCanvas(next)
+        scheduleSave(next)
+      }, [scheduleSave])
+
+      /* ------------------------------- links -------------------------------- */
+
+      const linkIntoSlot = (value, nodeId, slot) =>
+        value.links.find((link) => link.target_id === nodeId && Number(link.target_slot) === Number(slot))
+
+      /** Nearest input port under the cursor, plus the nearest *incompatible* one. */
+      const hitTestInput = (point, draftValue) => {
+        const current = live.current.canvas
+        const zoom = current.viewport.zoom
+        let best = null
+        let bestInvalid = null
+        for (const node of current.nodes) {
+          if (node.id === draftValue.originId) continue
+          const def = graphNodeDef(live.current.schema, node.type)
+          if (graphCollapsed(node)) continue
+          for (const port of def.inputs || []) {
+            const anchor = graphPortAnchor(node, def, 'in', port.slot)
+            const distance = Math.hypot((anchor[0] - point.x) * zoom, (anchor[1] - point.y) * zoom)
+            if (distance > GRAPH_PORT_SNAP) continue
+            const candidate = { nodeId: node.id, slot: Number(port.slot), distance, type: port.type }
+            if (typesCompatible(draftValue.type, port.type)) {
+              if (!best || distance < best.distance) best = candidate
+            } else if (!bestInvalid || distance < bestInvalid.distance) {
+              bestInvalid = candidate
+            }
           }
+        }
+        return { best, bestInvalid }
+      }
+
+      const updateDraft = (next) => {
+        draftRef.current = next
+        setDraft(next)
+      }
+
+      const startDraft = (event, node, slot, type) => {
+        const point = canvasPoint(event)
+        updateDraft({
+          originId: node.id,
+          originSlot: Number(slot),
+          type: type || '*',
+          x: point.x,
+          y: point.y,
+          targetId: null,
+          targetSlot: null,
+          valid: false,
+          screen: screenPoint(event),
+        })
+        capture(event)
+      }
+
+      const finishLink = (draftValue, target) => {
+        const current = live.current.canvas
+        const links = current.links.filter(
+          (link) => !(link.target_id === target.nodeId && Number(link.target_slot) === Number(target.slot)),
+        )
+        const id = nextLinkId(links)
+        links.push({
+          id,
+          origin_id: draftValue.originId,
+          origin_slot: Number(draftValue.originSlot),
+          target_id: target.nodeId,
+          target_slot: Number(target.slot),
+          type: draftValue.type,
+          disabled: false,
+        })
+        const mode = current.mode === 'linear' ? 'graph' : current.mode
+        commit({ ...current, links, mode })
+        if (mode !== current.mode) setHint(t('graph.modeSwitched'))
+      }
+
+      /* ------------------------------ palette ------------------------------- */
+
+      /**
+       * Palette entries for a drag that ended on empty space. `from` is the
+       * draft link, so the type lives on `from.type`. A node qualifies when it
+       * can take that type on an input (it is then auto-wired to the dragged
+       * output) or when it produces that type itself; the ones that will be
+       * wired up are marked so the difference is not a surprise.
+       */
+      const paletteItems = (paletteValue) => {
+        const from = paletteValue && paletteValue.from
+        const fromType = from ? from.type : null
+        const query = String((paletteValue && paletteValue.query) || '').trim().toLowerCase()
+        const types = Object.keys((live.current.schema && live.current.schema.nodeTypes) || {})
+        const list = types
+          .map((type) => {
+            const def = graphNodeDef(live.current.schema, type)
+            const consumes = fromType
+              ? (def.inputs || []).some((port) => typesCompatible(fromType, port.type))
+              : false
+            const produces = fromType
+              ? (def.outputs || []).some((port) => typesCompatible(fromType, port.type))
+              : false
+            if (fromType && !consumes && !produces) return null
+            return { type, label: graphTypeLabel(t, type, def), hint: consumes ? t('graph.paletteConnect') : '' }
+          })
+          .filter(Boolean)
+        const filtered = query
+          ? list.filter((item) => item.label.toLowerCase().includes(query) || item.type.includes(query))
+          : list
+        return filtered.length === 0 && !query ? list : filtered
+      }
+
+      const openPalette = (screenValue, canvasValue, from) => {
+        const rect = rectOf()
+        const width = 230
+        const height = 260
+        setPalette({
+          from: from || null,
+          query: '',
+          index: 0,
+          sx: Math.max(4, Math.min(screenValue.x, rect.width - width - 4)),
+          sy: Math.max(4, Math.min(screenValue.y, rect.height - height - 4)),
+          cx: canvasValue.x,
+          cy: canvasValue.y,
+        })
+      }
+
+      const addNodeAt = async (type, cx, cy, from) => {
+        const id = live.current.projectId
+        const current = live.current.canvas
+        if (type === 'shot') {
+          if (!id) return
           try {
-            const dataUri = await readFileAsDataUri(file)
-            const data = await postJson(`/projects/${projectId}/imports`, {
-              dataUri,
-              name: file.name,
+            const data = await addShotApi(id, { prompt: '' })
+            const shot = data && data.shot
+            if (!shot) return
+            const next = {
+              ...current,
+              nodes: [
+                ...current.nodes,
+                {
+                  id: shot.id,
+                  type: 'shot',
+                  pos: [Math.round(cx), Math.round(cy)],
+                  size: [GRAPH_SIZE_DEFAULTS.shot[0], GRAPH_SIZE_DEFAULTS.shot[1]],
+                  mode: 0,
+                  flags: { collapsed: false, pinned: false },
+                  data: {},
+                },
+              ],
+            }
+            commit(next)
+            setSelection([shot.id])
+            setInspector(shot.id)
+            await reload()
+          } catch (err) {
+            setError(String(err))
+          }
+          return
+        }
+        const prefix = type === 'image' ? 'img' : type === 'clip' ? 'imp' : type === 'note' ? 'note' : 'rr'
+        const node = {
+          id: `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+          type,
+          pos: [Math.round(cx), Math.round(cy)],
+          size: [GRAPH_SIZE_DEFAULTS[type][0], GRAPH_SIZE_DEFAULTS[type][1]],
+          mode: 0,
+          flags: { collapsed: false, pinned: false },
+          data: type === 'note' ? { text: '' } : {},
+        }
+        const next = { ...current, nodes: [...current.nodes, node] }
+        // Auto-wire the drop when it came from an output port and the new node
+        // has a compatible input (ComfyUI's "drop on empty creates the consumer").
+        if (from) {
+          const def = graphNodeDef(live.current.schema, type)
+          const port = (def.inputs || []).find((entry) => typesCompatible(from.type, entry.type))
+          if (port) {
+            next.links = [
+              ...current.links,
+              {
+                id: nextLinkId(current.links),
+                origin_id: from.originId,
+                origin_slot: Number(from.originSlot),
+                target_id: node.id,
+                target_slot: Number(port.slot),
+                type: from.type,
+                disabled: false,
+              },
+            ]
+            if (next.mode === 'linear') next.mode = 'graph'
+          }
+        }
+        commit(next)
+        setSelection([node.id])
+        setInspector(node.id)
+      }
+
+      /* --------------------------- graph mutations -------------------------- */
+
+      const setNodeMode = (nodeId, mode) => {
+        const current = live.current.canvas
+        const next = {
+          ...current,
+          nodes: current.nodes.map((node) =>
+            node.id === nodeId ? { ...node, mode: node.mode === mode ? 0 : mode } : node,
+          ),
+        }
+        commit(next)
+      }
+
+      const toggleCollapse = (nodeId) => {
+        const current = live.current.canvas
+        const next = {
+          ...current,
+          nodes: current.nodes.map((node) =>
+            node.id === nodeId
+              ? { ...node, flags: { ...(node.flags || {}), collapsed: !graphCollapsed(node) } }
+              : node,
+          ),
+        }
+        commit(next)
+      }
+
+      const togglePin = (nodeId) => {
+        const current = live.current.canvas
+        const next = {
+          ...current,
+          nodes: current.nodes.map((node) =>
+            node.id === nodeId
+              ? { ...node, flags: { ...(node.flags || {}), pinned: !(node.flags && node.flags.pinned) } }
+              : node,
+          ),
+        }
+        commit(next)
+      }
+
+      const patchNodeData = (nodeId, patch) => {
+        const current = live.current.canvas
+        const next = {
+          ...current,
+          nodes: current.nodes.map((node) =>
+            node.id === nodeId ? { ...node, data: { ...(node.data || {}), ...patch } } : node,
+          ),
+        }
+        commit(next, { coalesce: `data:${nodeId}` })
+      }
+
+      const cloneNode = async (nodeId) => {
+        const current = live.current.canvas
+        const node = current.nodes.find((entry) => entry.id === nodeId)
+        if (!node) return
+        if (node.type === 'shot') {
+          const shot = shotIn(node.id)
+          const id = live.current.projectId
+          if (!shot || !id) return
+          try {
+            const data = await addShotApi(id, {
+              prompt: shot.prompt || '',
+              title: shot.title || '',
+              camera: shot.camera || '',
+              negativePrompt: shot.negativePrompt || '',
+              duration: shot.duration || 5,
+              size: shot.size || '720P',
             })
-            next.push({
-              id: data.asset.id,
-              type: 'media',
-              x: point.x,
-              y,
-              data: { ...data.asset, kind: data.asset.kind },
-            })
-            y += NODE_H + 16
+            if (!data || !data.shot) return
+            const next = {
+              ...current,
+              nodes: [
+                ...current.nodes,
+                {
+                  id: data.shot.id,
+                  type: 'shot',
+                  pos: [node.pos[0] + 32, node.pos[1] + 32],
+                  size: graphSizeOf(node),
+                  mode: node.mode,
+                  flags: { ...(node.flags || {}) },
+                  data: {},
+                },
+              ],
+            }
+            commit(next)
+            setSelection([data.shot.id])
+            await reload()
+          } catch (err) {
+            setError(String(err))
+          }
+          return
+        }
+        const prefix = node.type === 'image' ? 'img' : node.type === 'clip' ? 'imp' : node.type === 'note' ? 'note' : 'rr'
+        const copy = graphCloneNode(node)
+        copy.id = `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+        copy.pos = [node.pos[0] + 32, node.pos[1] + 32]
+        commit({ ...current, nodes: [...current.nodes, copy] })
+        setSelection([copy.id])
+        setInspector(copy.id)
+      }
+
+      const detachLink = (link) => {
+        const current = live.current.canvas
+        const next = { ...current, links: current.links.filter((entry) => entry.id !== link.id) }
+        commit(next)
+        return next
+      }
+
+      const applyDelete = async (nodeIds, linkId, shotIds) => {
+        setConfirmBar(null)
+        const current = live.current.canvas
+        const idSet = new Set(nodeIds)
+        const nodes = current.nodes.filter((node) => !idSet.has(node.id))
+        const links = current.links.filter(
+          (link) => !idSet.has(link.origin_id) && !idSet.has(link.target_id) && link.id !== linkId,
+        )
+        commit({ ...current, nodes, links })
+        setSelection([])
+        setSelectedLink(null)
+        setInspector(null)
+        const id = live.current.projectId
+        for (const shotId of shotIds) {
+          if (!id) break
+          try {
+            await deleteShotApi(id, shotId)
           } catch (err) {
             setError(String(err))
           }
         }
-        setNodes(next)
-        scheduleSave(next, edges, viewport)
+        if (shotIds.length) await reload().catch(() => {})
       }
 
-      const removeMediaNode = (nodeId) => {
-        const next = nodes.filter((node) => node.id !== nodeId)
-        setNodes(next)
-        scheduleSave(next, edges, viewport)
-      }
-
-      const onNodeDown = (event, node) => {
-        event.stopPropagation()
-        const point = toCanvasPoint(event)
-        dragRef.current = { id: node.id, dx: point.x - node.x, dy: point.y - node.y, moved: false }
-        try {
-          event.currentTarget.setPointerCapture(event.pointerId)
-        } catch {
-          /* ignore */
+      const requestDelete = () => {
+        const nodeIds = live.current.selection.slice()
+        const linkId = live.current.selectedLink
+        if (nodeIds.length === 0 && linkId === null) return
+        const current = live.current.canvas
+        const shotIds = nodeIds.filter((nodeId) => {
+          const node = current.nodes.find((entry) => entry.id === nodeId)
+          return Boolean(node && node.type === 'shot')
+        })
+        if (nodeIds.length === 0) {
+          applyDelete([], linkId, []).catch(() => {})
+          return
         }
+        const label = shotIds.length
+          ? t('graph.deleteShotsConfirm').replace('{n}', String(shotIds.length))
+          : t('graph.deleteNodesConfirm').replace('{n}', String(nodeIds.length))
+        setConfirmBar({ label, run: () => applyDelete(nodeIds, linkId, shotIds) })
       }
 
-      const onAreaDown = (event) => {
-        if (event.button !== 0) return
+      /* ------------------------------ pointer ------------------------------- */
+
+      const beginPan = (event) => {
+        const viewport = live.current.canvas.viewport
         panRef.current = {
-          startX: event.clientX,
-          startY: event.clientY,
+          startX: graphNum(event.clientX),
+          startY: graphNum(event.clientY),
           originX: viewport.x,
           originY: viewport.y,
+          moved: false,
         }
+        capture(event)
       }
 
-      const onAreaMove = (event) => {
-        // Snapshot the pan origin *before* scheduling the update. The updater
-        // runs later, during React's render pass, and by then onAreaUp may have
-        // already nulled panRef — reading it inside the updater threw
-        // "Cannot read properties of null (reading 'originX')" and took the
-        // whole panel down through the error boundary.
+      const onAreaPointerDown = (event) => {
+        // A left click that landed on a node only reaches this handler after the
+        // node's own handler stopped it, so this is always the empty background.
+        if (event.button === 1) {
+          // Middle drag pans, exactly like ComfyUI.
+          if (typeof event.preventDefault === 'function') event.preventDefault()
+          beginPan(event)
+          return
+        }
+        if (event.button !== 0) return
+        setMenu(null)
+        setPalette(null)
+        if (live.current.spaceDown) {
+          beginPan(event)
+          return
+        }
+        // Shift/Ctrl+drag box-selects; a plain drag pans (spec §5.3 asks for
+        // three pan gestures on empty space, so the marquee takes a modifier or
+        // the toolbar toggle).
+        if (event.ctrlKey || event.metaKey || event.shiftKey || live.current.marqueeMode) {
+          const point = canvasPoint(event)
+          marqueeRef.current = { x1: point.x, y1: point.y, x2: point.x, y2: point.y }
+          setMarquee({ x1: point.x, y1: point.y, x2: point.x, y2: point.y })
+          setSelection([])
+          capture(event)
+          return
+        }
+        beginPan(event)
+      }
+
+      const onAreaPointerMove = (event) => {
         const pan = panRef.current
-        if (pan && !dragRef.current) {
-          const dx = event.clientX - pan.startX
-          const dy = event.clientY - pan.startY
-          setViewport((current) => ({ ...current, x: pan.originX + dx, y: pan.originY + dy }))
+        if (pan) {
+          const dx = graphNum(event.clientX) - pan.startX
+          const dy = graphNum(event.clientY) - pan.startY
+          if (Math.abs(dx) > 2 || Math.abs(dy) > 2) pan.moved = true
+          const current = live.current.canvas
+          const next = { ...current, viewport: { ...current.viewport, x: pan.originX + dx, y: pan.originY + dy } }
+          live.current.canvas = next
+          setCanvas(next)
           return
         }
         const drag = dragRef.current
-        if (!drag) return
-        const point = toCanvasPoint(event)
-        const next = nodes.map((node) =>
-          node.id === drag.id ? { ...node, x: point.x - drag.dx, y: point.y - drag.dy } : node,
-        )
-        drag.moved = true
-        drag.latest = next
-        setNodes(next)
+        if (drag) {
+          const point = canvasPoint(event)
+          const dx = point.x - drag.start.x
+          const dy = point.y - drag.start.y
+          if (!drag.moved && Math.hypot(dx, dy) * live.current.canvas.viewport.zoom < GRAPH_DRAG_THRESHOLD) return
+          if (!drag.moved) {
+            drag.moved = true
+            pushHistory(live.current.canvas, `drag:${drag.ids.join(',')}`)
+          }
+          const snap = event.shiftKey
+          const current = live.current.canvas
+          const next = {
+            ...current,
+            nodes: current.nodes.map((node) => {
+              const origin = drag.origin.get(node.id)
+              if (!origin) return node
+              let x = origin[0] + dx
+              let y = origin[1] + dy
+              if (snap) {
+                x = Math.round(x / GRAPH_GRID) * GRAPH_GRID
+                y = Math.round(y / GRAPH_GRID) * GRAPH_GRID
+              } else {
+                x = Math.round(x)
+                y = Math.round(y)
+              }
+              return { ...node, pos: [x, y] }
+            }),
+          }
+          live.current.canvas = next
+          setCanvas(next)
+          return
+        }
+        const box = marqueeRef.current
+        if (box) {
+          const point = canvasPoint(event)
+          box.x2 = point.x
+          box.y2 = point.y
+          setMarquee({ x1: box.x1, y1: box.y1, x2: box.x2, y2: box.y2 })
+          const minX = Math.min(box.x1, box.x2)
+          const maxX = Math.max(box.x1, box.x2)
+          const minY = Math.min(box.y1, box.y2)
+          const maxY = Math.max(box.y1, box.y2)
+          const hits = []
+          for (const node of live.current.canvas.nodes) {
+            const size = graphSizeOf(node)
+            const overlaps =
+              node.pos[0] < maxX && node.pos[0] + size[0] > minX && node.pos[1] < maxY && node.pos[1] + size[1] > minY
+            if (overlaps) hits.push(node.id)
+          }
+          setSelection(hits)
+          return
+        }
+        const activeDraft = draftRef.current
+        if (activeDraft) {
+          const point = canvasPoint(event)
+          const hit = hitTestInput(point, activeDraft)
+          const target = hit.best || hit.bestInvalid
+          const next = {
+            ...activeDraft,
+            x: point.x,
+            y: point.y,
+            targetId: target ? target.nodeId : null,
+            targetSlot: target ? target.slot : null,
+            valid: Boolean(hit.best),
+            screen: screenPoint(event),
+          }
+          draftRef.current = next
+          setDraft(next)
+        }
       }
 
-      const onAreaUp = () => {
-        if (panRef.current) {
+      const onAreaPointerUp = (event) => {
+        const pan = panRef.current
+        if (pan) {
           panRef.current = null
-          scheduleSave(nodes, edges, viewport)
+          if (pan.moved) scheduleSave(live.current.canvas)
+          else {
+            setSelection([])
+            setSelectedLink(null)
+            setInspector(null)
+          }
+          return
         }
         const drag = dragRef.current
         if (drag) {
           dragRef.current = null
-          if (drag.moved) scheduleSave(drag.latest || nodes, edges, viewport)
-        }
-      }
-
-      // Wheel must not bubble to the page scroller, or zooming the canvas
-      // scrolls the panel away and the graph seems to vanish. React registers
-      // `wheel` as passive, so attach a non-passive native listener instead.
-      useEffect(() => {
-        const area = areaRef.current
-        if (!area) return undefined
-        const handler = (event) => {
-          event.preventDefault()
-          const factor = event.deltaY > 0 ? 0.9 : 1.1
-          setViewport((current) => ({
-            ...current,
-            zoom: Math.min(2.5, Math.max(0.3, current.zoom * factor)),
-          }))
-        }
-        area.addEventListener('wheel', handler, { passive: false })
-        return () => area.removeEventListener('wheel', handler)
-      }, [])
-
-      const connectTo = (targetId) => {
-        if (!connecting || connecting === targetId) {
-          setConnecting('')
+          if (drag.moved) scheduleSave(live.current.canvas)
           return
         }
-        const next = [
-          ...edges.filter((edge) => !(edge.from === connecting && edge.to === targetId)),
-          {
-            id: `edg_${Date.now().toString(36)}`,
-            from: connecting,
-            to: targetId,
-            kind: 'sequence',
-            autoFrame: true,
-          },
-        ]
-        setEdges(next)
-        setConnecting('')
-        scheduleSave(nodes, next, viewport)
-      }
-
-      const addShot = async () => {
-        if (!projectId) return
-        try {
-          const data = await addShotApi(projectId, { prompt: '新镜头' })
-          await reload()
-          if (data.shot) setConnecting('')
-        } catch (err) {
-          setError(String(err))
+        if (marqueeRef.current) {
+          marqueeRef.current = null
+          setMarquee(null)
+          return
+        }
+        const activeDraft = draftRef.current
+        if (activeDraft) {
+          draftRef.current = null
+          setDraft(null)
+          const hit = activeDraft.targetId && activeDraft.valid
+            ? { nodeId: activeDraft.targetId, slot: activeDraft.targetSlot }
+            : null
+          if (hit) {
+            finishLink(activeDraft, hit)
+          } else if (event.shiftKey || !activeDraft.targetId) {
+            // Empty drop (or Shift held): offer the add-node palette there.
+            openPalette(activeDraft.screen || screenPoint(event), { x: activeDraft.x, y: activeDraft.y }, activeDraft)
+          }
         }
       }
 
-      const removeProject = async (id) => {
+      const onNodePointerDown = (event, node) => {
+        if (event.button !== 0) return
+        event.stopPropagation()
+        setMenu(null)
+        if (live.current.spaceDown) {
+          beginPan(event)
+          return
+        }
+        const additive = event.shiftKey || event.ctrlKey || event.metaKey
+        const current = live.current.selection
+        let nextSelection
+        if (additive) {
+          nextSelection = current.includes(node.id) ? current.filter((id) => id !== node.id) : [...current, node.id]
+        } else if (current.includes(node.id)) {
+          nextSelection = current
+        } else {
+          nextSelection = [node.id]
+        }
+        setSelection(nextSelection)
+        setSelectedLink(null)
+        const ids = nextSelection.includes(node.id) ? nextSelection : [node.id]
+        const point = canvasPoint(event)
+        const origin = new Map()
+        for (const entry of live.current.canvas.nodes) {
+          if (ids.includes(entry.id)) origin.set(entry.id, [entry.pos[0], entry.pos[1]])
+        }
+        dragRef.current = { ids, start: point, origin, moved: false }
+        capture(event)
+      }
+
+      const onPortPointerDown = (event, node, side, slot) => {
+        if (event.button !== 0) return
+        event.stopPropagation()
+        setMenu(null)
+        const def = graphNodeDef(live.current.schema, node.type)
+        if (side === 'out') {
+          const port = (def.outputs || []).find((entry) => Number(entry.slot) === Number(slot))
+          startDraft(event, node, slot, port ? port.type : '*')
+          return
+        }
+        // Pressing a connected input peels the link off and resumes the drag
+        // from its upstream output (ComfyUI's "drag an input to rewire").
+        const attached = linkIntoSlot(live.current.canvas, node.id, slot)
+        if (!attached) return
+        const producer = nodeIn(attached.origin_id)
+        const producerDef = producer ? graphNodeDef(live.current.schema, producer.type) : null
+        const producerPort =
+          producerDef && (producerDef.outputs || []).find((entry) => Number(entry.slot) === Number(attached.origin_slot))
+        detachLink(attached)
+        if (!producer) return
+        startDraft(event, producer, attached.origin_slot, producerPort ? producerPort.type : attached.type)
+      }
+
+      const onNodeOpen = (nodeId) => {
+        setSelection([nodeId])
+        setSelectedLink(null)
+        setInspector(nodeId)
+      }
+
+      const openMenu = (event, kind, id) => {
+        if (event && typeof event.preventDefault === 'function') event.preventDefault()
+        if (event && typeof event.stopPropagation === 'function') event.stopPropagation()
+        const x = graphNum(event && event.clientX) || 0
+        const y = graphNum(event && event.clientY) || 0
+        if (kind === 'node' && id) {
+          setSelection((current) => (current.includes(id) ? current : [id]))
+          setSelectedLink(null)
+        }
+        if (kind === 'link' && id) {
+          setSelectedLink(id)
+          setSelection([])
+        }
+        setPalette(null)
+        setMenu({ kind, id, x, y })
+      }
+
+      /* ------------------------------- run --------------------------------- */
+
+      const runGraph = async (nodeIds) => {
+        const id = live.current.projectId
+        if (!id) return
+        const current = live.current.canvas
+        const body = {}
+        if (Array.isArray(nodeIds) && nodeIds.length) body.nodeIds = nodeIds
+        else if (current.mode === 'linear') body.shotIds = shots.map((shot) => shot.id)
+        else {
+          const executable = current.nodes
+            .filter((node) => node.type === 'shot' && node.mode !== 2)
+            .map((node) => node.id)
+          if (executable.length) body.nodeIds = executable
+        }
+        if (!body.nodeIds && !body.shotIds && shots.length === 0) return
+        try {
+          await runChainApi(id, body)
+          setError('')
+          setHint('')
+          await reload()
+        } catch (err) {
+          setError(String(err))
+          if (err && Array.isArray(err.blockers)) {
+            setGraphInfo((value) => ({ ...(value || {}), blockers: err.blockers }))
+          }
+        }
+      }
+
+      const runFrom = async (shotId) => {
+        const id = live.current.projectId
         if (!id) return
         try {
-          await deleteProjectApi(id)
-          const list = await loadProjects()
-          setProjects(list)
-          if (id === projectId) {
-            const next = list[0] ? list[0].id : ''
-            setProjectId(next)
-            // Clear immediately: leaving stale nodes behind shows a project
-            // that no longer exists.
-            setDetail(null)
-            setNodes([])
-            setEdges([])
-          }
-        } catch (err) {
-          setError(String(err))
-        }
-      }
-
-      const removeShot = async (shotId) => {
-        if (!projectId) return
-        try {
-          await deleteShotApi(projectId, shotId)
-          setEdges((current) => current.filter((edge) => edge.from !== shotId && edge.to !== shotId))
-          await reload()
-        } catch (err) {
-          setError(String(err))
-        }
-      }
-
-      const runAll = async () => {
-        if (!projectId) return
-        try {
-          await runChainApi(projectId, { shotIds: shots.map((shot) => shot.id) })
+          await runChainApi(id, { from: shotId })
           setError('')
           await reload()
         } catch (err) {
@@ -1268,10 +3217,11 @@ window.__ModuleLoader__.load({
         }
       }
 
-      const cancelChain = async () => {
-        if (!projectId) return
+      const cancelChainNow = async () => {
+        const id = live.current.projectId
+        if (!id) return
         try {
-          await cancelChainApi(projectId)
+          await cancelChainApi(id)
           setError('')
           await reload()
         } catch (err) {
@@ -1289,20 +3239,77 @@ window.__ModuleLoader__.load({
         }
       }
 
-      const runFrom = async (shotId) => {
-        if (!projectId) return
+      const patchShot = useCallback(
+        async (shotId, patch) => {
+          const id = live.current.projectId
+          if (!id) return
+          try {
+            await patchShotApi(id, shotId, patch)
+            await reload()
+            setError('')
+          } catch (err) {
+            setError(String(err))
+          }
+        },
+        [reload],
+      )
+
+      const approveShot = async (shotId) => {
+        const id = live.current.projectId
+        if (!id) return
         try {
-          await runChainApi(projectId, { from: shotId })
-          setError('')
+          await postJson(`/projects/${id}/shots/${shotId}/approve`, {})
           await reload()
         } catch (err) {
           setError(String(err))
         }
       }
 
+      const rejectShot = async (shotId) => {
+        const id = live.current.projectId
+        if (!id) return
+        try {
+          await postJson(`/projects/${id}/shots/${shotId}/reject`, {})
+          await reload()
+        } catch (err) {
+          setError(String(err))
+        }
+      }
+
+      const pickFirstFrame = (shotId) => {
+        const id = live.current.projectId
+        if (!id || typeof document === 'undefined') return
+        const input = document.createElement('input')
+        input.type = 'file'
+        input.accept = 'image/*'
+        input.onchange = () => {
+          const file = input.files && input.files[0]
+          if (!file) return
+          readFileAsDataUri(file)
+            .then((dataUri) => postJson(`/projects/${id}/shots/${shotId}/first-frame`, { dataUri: String(dataUri) }))
+            .then(() => reload())
+            .catch((err) => setError(String(err)))
+        }
+        input.click()
+      }
+
+      const addShot = async () => {
+        const current = live.current.canvas
+        let x = 80
+        let y = 80
+        if (current.nodes.length) {
+          const last = current.nodes.reduce((best, node) =>
+            node.pos[0] + node.pos[1] > best.pos[0] + best.pos[1] ? node : best,
+          )
+          x = last.pos[0] + 32
+          y = last.pos[1] + 32
+        }
+        await addNodeAt('shot', x, y, null)
+      }
+
       const createProject = async (name) => {
         try {
-          const data = await postJson('/projects', { name: name || '未命名项目' })
+          const data = await postJson('/projects', { name: name || t('canvas.newProjectName') })
           const list = await loadProjects()
           setProjects(list)
           setProjectId(data.project.id)
@@ -1312,27 +3319,492 @@ window.__ModuleLoader__.load({
         }
       }
 
-      const pickFirstFrame = (shotId) => {
-        const input = document.createElement('input')
-        input.type = 'file'
-        input.accept = 'image/*'
-        input.onchange = () => {
-          const file = input.files && input.files[0]
-          if (!file) return
-          const reader = new FileReader()
-          reader.onload = () => {
-            postJson(`/projects/${projectId}/shots/${shotId}/first-frame`, {
-              dataUri: String(reader.result),
-            })
-              .then(() => reload())
-              .catch((err) => setError(String(err)))
+      const removeProject = async (id) => {
+        if (!id) return
+        try {
+          await deleteProjectApi(id)
+          const list = await loadProjects()
+          setProjects(list)
+          if (id === live.current.projectId) {
+            const next = list[0] ? list[0].id : ''
+            setProjectId(next)
+            if (!next) {
+              setDetail(null)
+              const blank = emptyCanvasFor('')
+              live.current.canvas = blank
+              setCanvas(blank)
+              setSelection([])
+              setSelectedLink(null)
+              setInspector(null)
+            }
           }
-          reader.readAsDataURL(file)
+        } catch (err) {
+          setError(String(err))
         }
-        input.click()
       }
 
-      const nodeById = new Map(nodes.map((node) => [node.id, node]))
+      /* ------------------------------- drop --------------------------------- */
+
+      const onDrop = async (event) => {
+        event.preventDefault()
+        setDropActive(false)
+        const id = live.current.projectId
+        if (!id) return
+        const files = Array.from((event.dataTransfer && event.dataTransfer.files) || [])
+        if (files.length === 0) return
+        const point = canvasPoint(event)
+        let offset = 0
+        for (const file of files) {
+          const isVideo = String(file.type || '').startsWith('video/')
+          const isImage = String(file.type || '').startsWith('image/')
+          if (!isVideo && !isImage) {
+            setError(t('canvas.unsupported'))
+            continue
+          }
+          try {
+            const dataUri = await readFileAsDataUri(file)
+            const data = await postJson(`/projects/${id}/imports`, { dataUri, name: file.name })
+            if (!data || !data.asset) continue
+            const current = live.current.canvas
+            const node = {
+              id: data.asset.id,
+              type: data.asset.kind === 'video' ? 'clip' : 'image',
+              pos: [Math.round(point.x), Math.round(point.y + offset)],
+              size: [GRAPH_SIZE_DEFAULTS.image[0], GRAPH_SIZE_DEFAULTS.image[1]],
+              mode: 0,
+              flags: { collapsed: false, pinned: false },
+              data: { ...data.asset },
+            }
+            offset += GRAPH_SIZE_DEFAULTS.image[1] + 16
+            commit({ ...current, nodes: [...current.nodes, node] })
+          } catch (err) {
+            setError(String(err))
+          }
+        }
+      }
+
+      /* ------------------------------ keyboard ------------------------------ */
+
+      const insideEditor = (target) => {
+        if (!target || typeof target !== 'object') return false
+        const tag = String(target.tagName || '').toLowerCase()
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return true
+        return target.isContentEditable === true
+      }
+
+      keyRef.current = (event) => {
+        if (!event) return
+        if (insideEditor(event.target)) return
+        const key = String(event.key || '')
+        const meta = event.ctrlKey || event.metaKey
+        if (meta && (key === 'a' || key === 'A')) {
+          event.preventDefault()
+          setSelection(live.current.canvas.nodes.map((node) => node.id))
+          setSelectedLink(null)
+          return
+        }
+        if (meta && (key === 'z' || key === 'Z')) {
+          event.preventDefault()
+          if (event.shiftKey) redo()
+          else undo()
+          return
+        }
+        if (meta && (key === 'y' || key === 'Y')) {
+          event.preventDefault()
+          redo()
+          return
+        }
+        if (key === 'Delete' || key === 'Backspace') {
+          event.preventDefault()
+          requestDelete()
+          return
+        }
+        if (key === 'Escape') {
+          setSelection([])
+          setSelectedLink(null)
+          setInspector(null)
+          setMenu(null)
+          setPalette(null)
+          setConfirmBar(null)
+          if (draftRef.current) {
+            draftRef.current = null
+            setDraft(null)
+          }
+          marqueeRef.current = null
+          setMarquee(null)
+          return
+        }
+        if (key === '.' || key === 'Period') {
+          event.preventDefault()
+          fitView()
+          return
+        }
+        if (key === ' ') {
+          event.preventDefault()
+          setSpaceDown(true)
+        }
+      }
+
+      useEffect(() => {
+        if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return undefined
+        const down = (event) => {
+          if (keyRef.current) keyRef.current(event)
+        }
+        const up = (event) => {
+          if (event && (event.key === ' ' || event.code === 'Space')) setSpaceDown(false)
+        }
+        const blur = () => setSpaceDown(false)
+        window.addEventListener('keydown', down)
+        window.addEventListener('keyup', up)
+        window.addEventListener('blur', blur)
+        return () => {
+          window.removeEventListener('keydown', down)
+          window.removeEventListener('keyup', up)
+          window.removeEventListener('blur', blur)
+        }
+      }, [])
+
+      // Wheel must be non-passive and must not bubble: React registers `wheel`
+      // passively, which is why 1.0 had to attach a native listener.
+      wheelRef.current = (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        const point = screenPoint(event)
+        const factor = graphNum(event.deltaY) > 0 ? 0.9 : 1.1
+        zoomAt(point.x, point.y, factor)
+      }
+
+      useEffect(() => {
+        const area = areaRef.current
+        if (!area || typeof area.addEventListener !== 'function') return undefined
+        const handler = (event) => {
+          if (wheelRef.current) wheelRef.current(event)
+        }
+        area.addEventListener('wheel', handler, { passive: false })
+        return () => area.removeEventListener('wheel', handler)
+      }, [])
+
+      /* ------------------------------- render ------------------------------- */
+
+      const bounds = graphBounds(canvas.nodes)
+      const viewport = canvas.viewport
+      const single = selection.length === 1 ? nodeById.get(selection[0]) : null
+      const inspectorNode = inspector ? nodeById.get(inspector) : single
+      const items = palette ? paletteItems(palette) : []
+      const activeIndex = palette ? Math.min(Math.max(0, palette.index), Math.max(0, items.length - 1)) : 0
+
+      const linkElements = []
+      for (const link of canvas.links) {
+        const origin = nodeById.get(link.origin_id)
+        const target = nodeById.get(link.target_id)
+        if (!origin || !target) continue
+        const originDef = graphNodeDef(schema, origin.type)
+        const targetDef = graphNodeDef(schema, target.type)
+        const from = graphPortAnchor(origin, originDef, 'out', link.origin_slot)
+        const to = graphPortAnchor(target, targetDef, 'in', link.target_slot)
+        const selected = selectedLink === link.id
+        const color = graphSlotColor(schema, link.type)
+        const path = graphLinkPath(from[0], from[1], to[0], to[1])
+        linkElements.push(
+          h(
+            'g',
+            { key: `link-${link.id}` },
+            selected
+              ? h('path', { className: 'agnes-link', d: path, stroke: color, style: { filter: `drop-shadow(0 0 4px ${color})` }, 'data-selected': 'true', 'data-disabled': link.disabled ? 'true' : 'false' })
+              : h('path', { className: 'agnes-link', d: path, stroke: color, 'data-disabled': link.disabled ? 'true' : 'false' }),
+            h('path', {
+              className: 'agnes-link-hit',
+              d: path,
+              onPointerDown: (event) => {
+                event.stopPropagation()
+                setSelectedLink(link.id)
+                setSelection([])
+                setMenu(null)
+              },
+              onContextMenu: (event) => openMenu(event, 'link', link.id),
+            }),
+          ),
+        )
+      }
+
+      let draftPath = null
+      if (draft) {
+        const origin = nodeById.get(draft.originId)
+        const originDef = origin ? graphNodeDef(schema, origin.type) : null
+        const from = origin
+          ? graphPortAnchor(origin, originDef, 'out', draft.originSlot)
+          : [draft.x, draft.y]
+        let to = [draft.x, draft.y]
+        if (draft.targetId) {
+          const target = nodeById.get(draft.targetId)
+          const targetDef = target ? graphNodeDef(schema, target.type) : null
+          if (target) to = graphPortAnchor(target, targetDef, 'in', draft.targetSlot)
+        }
+        draftPath = h('path', {
+          className: 'agnes-link-draft',
+          d: graphLinkPath(from[0], from[1], to[0], to[1]),
+          stroke: draft.targetId && !draft.valid ? '#ef4444' : graphSlotColor(schema, draft.type),
+        })
+      }
+
+      const nodeElements = canvas.nodes.map((node) =>
+        h(GraphNode, {
+          key: node.id,
+          t,
+          schema,
+          node,
+          shot: shotById.get(node.id),
+          selected: selection.includes(node.id),
+          cached: cachedIds.has(node.id) || Boolean(shotById.get(node.id) && shotById.get(node.id).cached),
+          blocked: blockedIds.has(node.id),
+          draft,
+          filledInputs: canvas.links
+            .filter((link) => link.target_id === node.id)
+            .map((link) => Number(link.target_slot)),
+          onPointerDown: onNodePointerDown,
+          onOpen: onNodeOpen,
+          onMenu: openMenu,
+          onPortDown: onPortPointerDown,
+          onToggleCollapse: toggleCollapse,
+        }),
+      )
+
+      const blockers = (graphInfo && graphInfo.blockers) || []
+      const cycle = (graphInfo && graphInfo.cycle) || []
+      const toolbar = h(
+        'div',
+        { className: 'agnes-graph-toolbar' },
+        h(
+          'div',
+          { className: 'agnes-mode-group' },
+          h(
+            'button',
+            {
+              type: 'button',
+              'data-active': canvas.mode === 'graph' ? 'true' : 'false',
+              title: t('graph.modeGraphHint'),
+              onClick: () => {
+                if (canvas.mode === 'graph') return
+                commit({ ...live.current.canvas, mode: 'graph' })
+                setHint(t('graph.modeSwitched'))
+              },
+            },
+            t('graph.modeGraph'),
+          ),
+          h(
+            'button',
+            {
+              type: 'button',
+              'data-active': canvas.mode === 'linear' ? 'true' : 'false',
+              title: t('graph.modeLinearHint'),
+              onClick: () => {
+                if (canvas.mode === 'linear') return
+                commit({ ...live.current.canvas, mode: 'linear' })
+                setHint('')
+              },
+            },
+            t('graph.modeLinear'),
+          ),
+        ),
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'agnes-button agnes-primary',
+            disabled: !projectId || Boolean(chain && chain.running) || shots.length === 0 || blockers.length > 0,
+            onClick: () => runGraph(selection.filter((nodeId) => {
+              const node = nodeIn(nodeId)
+              return Boolean(node && node.type === 'shot')
+            })),
+          },
+          chain && chain.running ? t('action.generating') : t('graph.generate'),
+        ),
+        chain && chain.running
+          ? h('button', { type: 'button', className: 'agnes-button agnes-ghost', onClick: cancelChainNow }, t('action.cancelChain'))
+          : null,
+        h('button', { type: 'button', className: 'agnes-button agnes-ghost', onClick: fitView }, t('graph.fit')),
+        h('button', { type: 'button', className: 'agnes-button agnes-ghost', disabled: !canUndo, onClick: undo }, t('graph.undo')),
+        h('button', { type: 'button', className: 'agnes-button agnes-ghost', disabled: !canRedo, onClick: redo }, t('graph.redo')),
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'agnes-button agnes-ghost',
+            onClick: () => {
+              const rect = rectOf()
+              openPalette({ x: rect.width / 2 - 115, y: 60 }, { x: (rect.width / 2 - viewport.x) / viewport.zoom, y: (120 - viewport.y) / viewport.zoom }, null)
+            },
+          },
+          t('graph.addNode'),
+        ),
+        h('button', { type: 'button', className: 'agnes-button agnes-ghost', onClick: addShot }, t('canvas.addShot')),
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'agnes-button agnes-ghost',
+            'data-active': marqueeMode ? 'true' : 'false',
+            title: t('graph.marqueeHint'),
+            onClick: () => setMarqueeMode((value) => !value),
+          },
+          t('graph.marquee'),
+        ),
+        detail && detail.ffmpeg === false
+          ? h('span', { className: 'agnes-chip', style: { color: '#f59e0b' } }, t('canvas.ffmpegMissing'))
+          : null,
+        blockers.length
+          ? h('span', { className: 'agnes-chip', style: { color: '#b45309' } }, `${t('graph.blockers')} ${blockers.length}`)
+          : null,
+        saving ? h('span', { className: 'agnes-chip' }, t('graph.saving')) : null,
+      )
+
+      const blockerPanel = blockers.length
+        ? h(
+            'div',
+            { className: 'agnes-blockers' },
+            h(
+              'div',
+              { className: 'agnes-blockers-head' },
+              cycle.length ? `${t('graph.blockersTitle')} · ${t('graph.cycle')}` : t('graph.blockersTitle'),
+            ),
+            ...blockers.map((entry, index) =>
+              h(
+                'div',
+                { key: `blocker-${index}`, className: 'agnes-blocker-row' },
+                h('span', null, String((entry && entry.reason) || '')),
+                entry && (entry.nodeId || entry.shotId)
+                  ? h(
+                      'button',
+                      {
+                        type: 'button',
+                        className: 'agnes-mini',
+                        onClick: () => focusNode(entry.nodeId || entry.shotId),
+                      },
+                      t('graph.jumpToNode'),
+                    )
+                  : null,
+              ),
+            ),
+          )
+        : null
+
+      const menuElement = menu
+        ? h(
+            'div',
+            {
+              className: 'agnes-ctx-backdrop',
+              onClick: () => setMenu(null),
+              onContextMenu: (event) => {
+                event.preventDefault()
+                setMenu(null)
+              },
+            },
+            h(
+              'div',
+              {
+                className: 'agnes-ctx',
+                style: {
+                  left: Math.max(4, Math.min(menu.x, (typeof window !== 'undefined' ? window.innerWidth || 900 : 900) - 210)),
+                  top: Math.max(4, Math.min(menu.y, (typeof window !== 'undefined' ? window.innerHeight || 700 : 700) - 60)),
+                },
+                onClick: (event) => event.stopPropagation(),
+              },
+              ...menuItems(menu),
+            ),
+          )
+        : null
+
+      function menuItem(key, label, action, danger) {
+        return h(
+          'button',
+          {
+            key,
+            type: 'button',
+            className: danger ? 'agnes-ctx-item agnes-ctx-danger' : 'agnes-ctx-item',
+            onClick: () => {
+              setMenu(null)
+              action()
+            },
+          },
+          label,
+        )
+      }
+
+      function menuItems(menuValue) {
+        if (menuValue.kind === 'link') {
+          const link = canvas.links.find((entry) => entry.id === menuValue.id)
+          if (!link) return [menuItem('gone', t('action.cancel'), () => {})]
+          return [
+            h('div', { key: 'title', className: 'agnes-ctx-title' }, t('graph.linkMenu')),
+            menuItem('del', t('graph.deleteLink'), () => applyDelete([], link.id, []), true),
+            link.disabled
+              ? menuItem('enable', t('graph.enableLink'), () => {
+                  const current = live.current.canvas
+                  commit({ ...current, links: current.links.map((entry) => (entry.id === link.id ? { ...entry, disabled: false } : entry)) })
+                })
+              : menuItem('disable', t('graph.disableLink'), () => {
+                  const current = live.current.canvas
+                  commit({ ...current, links: current.links.map((entry) => (entry.id === link.id ? { ...entry, disabled: true } : entry)) })
+                }),
+          ]
+        }
+        if (menuValue.kind === 'canvas') {
+          return [
+            h('div', { key: 'title', className: 'agnes-ctx-title' }, t('graph.canvasMenu')),
+            menuItem('add', t('graph.addNode'), () => {
+              // The menu is positioned in screen space; convert to canvas space
+              // so the new node lands under the click.
+              const box = rectOf()
+              openPalette(
+                { x: graphNum(menuValue.x) - box.left, y: graphNum(menuValue.y) - box.top },
+                { x: (graphNum(menuValue.x) - box.left - viewport.x) / viewport.zoom, y: (graphNum(menuValue.y) - box.top - viewport.y) / viewport.zoom },
+                null,
+              )
+            }),
+            menuItem('fit', t('graph.fit'), fitView),
+            menuItem('all', t('graph.selectAll'), () => setSelection(live.current.canvas.nodes.map((node) => node.id))),
+            menuItem('none', t('graph.clearSelection'), () => {
+              setSelection([])
+              setSelectedLink(null)
+            }),
+          ]
+        }
+        const node = nodeIn(menuValue.id)
+        if (!node) return [menuItem('gone', t('action.cancel'), () => {})]
+        const shot = shotIn(node.id)
+        return [
+          h('div', { key: 'title', className: 'agnes-ctx-title' }, node.type === 'shot' && shot ? `#${shot.index}` : graphTypeLabel(t, node.type, graphNodeDef(schema, node.type))),
+          menuItem('edit', t('graph.edit'), () => setInspector(node.id)),
+          node.type === 'shot'
+            ? menuItem('gen', t('graph.generateThis'), () => runGraph([node.id]))
+            : null,
+          node.type === 'shot'
+            ? menuItem('from', t('canvas.runFrom'), () => runFrom(node.id))
+            : null,
+          node.type === 'shot'
+            ? menuItem('frame', t('canvas.firstFrame'), () => pickFirstFrame(node.id))
+            : null,
+          node.type === 'shot'
+            ? menuItem(node.mode === 2 ? 'unmute' : 'mute', node.mode === 2 ? t('graph.unmute') : t('graph.mute'), () => setNodeMode(node.id, 2))
+            : null,
+          node.type === 'shot'
+            ? menuItem(node.mode === 4 ? 'unbypass' : 'bypass', node.mode === 4 ? t('graph.unbypass') : t('graph.bypass'), () => setNodeMode(node.id, 4))
+            : null,
+          menuItem('clone', t('graph.clone'), () => cloneNode(node.id)),
+          menuItem(node.flags && node.flags.pinned ? 'unpin' : 'pin', node.flags && node.flags.pinned ? t('graph.unpin') : t('graph.pin'), () => togglePin(node.id)),
+          menuItem('del', t('action.delete'), () => {
+            const shotIds = node.type === 'shot' ? [node.id] : []
+            if (shotIds.length) {
+              setConfirmBar({
+                label: t('graph.deleteShotsConfirm').replace('{n}', '1'),
+                run: () => applyDelete([node.id], null, shotIds),
+              })
+            } else {
+              applyDelete([node.id], null, []).catch(() => {})
+            }
+          }, true),
+        ].filter(Boolean)
+      }
 
       return h(
         'div',
@@ -1346,262 +3818,166 @@ window.__ModuleLoader__.load({
           onDelete: removeProject,
           newName,
           setNewName,
-          extra: [
-            h(
-              'button',
-              { key: 'add', type: 'button', className: 'agnes-button agnes-ghost', onClick: addShot },
-              t('canvas.addShot'),
-            ),
-            h(
-              'button',
-              {
-                key: 'run',
-                type: 'button',
-                className: 'agnes-button agnes-primary',
-                disabled: !shots.length || Boolean(chain?.running),
-                onClick: runAll,
-              },
-              chain?.running ? t('action.generating') : t('canvas.runAll'),
-            ),
-            chain?.running
-              ? h(
-                  'button',
-                  {
-                    key: 'cancelChain',
-                    type: 'button',
-                    className: 'agnes-button agnes-ghost',
-                    onClick: cancelChain,
-                  },
-                  t('action.cancelChain'),
-                )
-              : null,
-            detail && detail.ffmpeg === false
-              ? h('span', { key: 'ffmpeg', className: 'agnes-chip', style: { color: '#f59e0b' } }, t('canvas.ffmpegMissing'))
-              : null,
-          ],
         }),
-        h('div', { className: 'agnes-view-hint' }, t('canvas.hint')),
+        toolbar,
         error ? h('div', { className: 'agnes-error' }, error) : null,
         chain && chain.error ? h('div', { className: 'agnes-error' }, chain.error) : null,
-        h(
-          'div',
-          {
-            className: 'agnes-canvas',
-            ref: areaRef,
-            onPointerDown: onAreaDown,
-            onPointerMove: onAreaMove,
-            onPointerUp: onAreaUp,
-            onPointerLeave: onAreaUp,
-            'data-drag': dragging ? 'true' : 'false',
-            onDragOver: (event) => {
-              if (!event.dataTransfer?.types?.includes('Files')) return
-              event.preventDefault()
-              event.dataTransfer.dropEffect = 'copy'
-              if (!dragging) setDragging(true)
-            },
-            onDragLeave: (event) => {
-              if (event.currentTarget.contains(event.relatedTarget)) return
-              setDragging(false)
-            },
-            onDrop: onDrop,
-          },
-          shots.length === 0
-            ? h('div', { className: 'agnes-canvas-empty' }, t('canvas.empty'))
-            : h(
-                'div',
+        confirmBar
+          ? h(
+              'div',
+              { className: 'agnes-confirmbar' },
+              h('span', null, confirmBar.label),
+              h(
+                'button',
                 {
-                  className: 'agnes-canvas-inner',
-                  style: {
-                    transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+                  type: 'button',
+                  className: 'agnes-button agnes-danger',
+                  onClick: () => {
+                    const run = confirmBar.run
+                    setConfirmBar(null)
+                    if (run) run()
                   },
                 },
-                h(
-                  'svg',
-                  { className: 'agnes-edges', width: 6000, height: 4000 },
-                  ...edges.map((edge) => {
-                    const from = nodeById.get(edge.from)
-                    const to = nodeById.get(edge.to)
-                    if (!from || !to) return null
-                    const x1 = from.x + NODE_W
-                    const y1 = from.y + 60
-                    const x2 = to.x
-                    const y2 = to.y + 60
-                    const mid = (x1 + x2) / 2
-                    return h(
-                      'g',
-                      { key: edge.id },
-                      h('path', {
-                        d: `M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`,
-                        fill: 'none',
-                        stroke: edge.autoFrame ? '#2563eb' : 'rgba(127,127,127,.6)',
-                        strokeWidth: 2,
-                        strokeDasharray: edge.autoFrame ? 'none' : '6 4',
-                      }),
-                      h('circle', { cx: x2, cy: y2, r: 3, fill: edge.autoFrame ? '#2563eb' : '#888' }),
-                    )
-                  }),
-                ),
-                ...nodes.map((node) => {
-                  const shot = shots.find((entry) => entry.id === node.id)
-                  if (!shot && node.type === 'media' && node.data && node.data.url) {
-                    const media = node.data
-                    return h(
-                      'div',
-                      {
-                        key: node.id,
-                        className: 'agnes-node agnes-node-media',
-                        'data-status': 'imported',
-                        style: { left: node.x, top: node.y, width: NODE_W },
-                      },
-                      h(
-                        'div',
-                        { className: 'agnes-node-head', onPointerDown: (event) => onNodeDown(event, node) },
-                        h('b', null, media.kind === 'video' ? '🎬' : '🖼'),
-                        h(
-                          'span',
-                          { className: 'agnes-node-status' },
-                          media.duration ? `${media.duration}s` : t('canvas.imported'),
-                        ),
-                      ),
-                      media.kind === 'video'
-                        ? h('video', {
-                            className: 'agnes-node-media',
-                            src: media.url,
-                            controls: true,
-                            preload: 'metadata',
-                          })
-                        : h('img', { className: 'agnes-node-media', src: media.url, alt: media.name || '' }),
-                      h('div', { className: 'agnes-node-prompt', title: media.name }, media.name || ''),
-                      h(
-                        'div',
-                        { className: 'agnes-node-actions' },
-                        h(
-                          'button',
-                          {
-                            type: 'button',
-                            className: 'agnes-mini',
-                            onClick: (event) => {
-                              event.stopPropagation()
-                              removeMediaNode(node.id)
-                            },
-                          },
-                          t('action.delete'),
-                        ),
-                      ),
-                    )
-                  }
-                  if (!shot) return null
-                  return h(
-                    'div',
-                    {
-                      key: node.id,
-                      className: 'agnes-node',
-                      'data-status': shot.status || 'draft',
-                      'data-selected': connecting === node.id ? 'true' : 'false',
-                      style: { left: node.x, top: node.y, width: NODE_W },
-                      onClick: () => {
-                        if (connecting && connecting !== shot.id) connectTo(shot.id)
-                      },
-                    },
-                    h(
-                      'div',
-                      {
-                        className: 'agnes-node-head',
-                        onPointerDown: (event) => onNodeDown(event, node),
-                      },
-                      h('b', null, `#${shot.index}`),
-                      h('span', { className: 'agnes-node-status' }, t(`status.${shot.status || 'draft'}`)),
-                    ),
-                    h('div', { className: 'agnes-node-prompt' }, shot.prompt || '—'),
-                    shot.assetUrl
-                      ? h('video', {
-                          className: 'agnes-node-media',
-                          src: shot.assetUrl,
-                          muted: true,
-                          preload: 'metadata',
-                        })
-                      : null,
-                    shot.error || shot.tailError
-                      ? h(
-                          'div',
-                          { className: 'agnes-node-error', title: shot.error || shot.tailError },
-                          shot.error || shot.tailError,
-                        )
-                      : null,
-                    h(
-                      'div',
-                      { className: 'agnes-node-actions' },
-                      h(
-                        'button',
-                        {
-                          type: 'button',
-                          className: 'agnes-mini',
-                          'data-active': connecting === shot.id ? 'true' : 'false',
-                          onClick: (event) => {
-                            event.stopPropagation()
-                            setConnecting(connecting === shot.id ? '' : shot.id)
-                          },
-                        },
-                        t('canvas.connect'),
-                      ),
-                      h(
-                        'button',
-                        { type: 'button', className: 'agnes-mini', onClick: () => runFrom(shot.id) },
-                        t('canvas.runFrom'),
-                      ),
-                      shot.status === 'running' && shot.taskId
-                        ? h(
-                            'button',
-                            {
-                              type: 'button',
-                              className: 'agnes-mini',
-                              onClick: (event) => {
-                                event.stopPropagation()
-                                cancelShotTask(shot).catch(() => {})
-                              },
-                            },
-                            t('action.cancelTask'),
-                          )
-                        : null,
-                      h(
-                        'button',
-                        { type: 'button', className: 'agnes-mini', onClick: () => pickFirstFrame(shot.id) },
-                        t('canvas.firstFrame'),
-                      ),
-                      h(
-                        'button',
-                        { type: 'button', className: 'agnes-mini', onClick: () => removeShot(shot.id) },
-                        '×',
-                      ),
-                    ),
-                    h('button', {
-                      type: 'button',
-                      className: 'agnes-port agnes-port-in',
-                      title: t('canvas.connect'),
-                      onClick: (event) => {
-                        event.stopPropagation()
-                        connectTo(node.id)
-                      },
-                    }),
-                    h('button', {
-                      type: 'button',
-                      className: 'agnes-port agnes-port-out',
-                      title: t('canvas.connect'),
-                      onClick: (event) => {
-                        event.stopPropagation()
-                        setConnecting(connecting === node.id ? '' : node.id)
-                      },
-                    }),
-                  )
-                }),
+                t('action.confirmDelete'),
               ),
+              h('button', { type: 'button', className: 'agnes-button agnes-ghost', onClick: () => setConfirmBar(null) }, t('action.cancel')),
+            )
+          : null,
+        blockerPanel,
+        h(
+          'div',
+          { className: 'agnes-graph-main' },
+          h(
+            'div',
+            {
+              className: 'agnes-graph',
+              ref: areaRef,
+              tabIndex: 0,
+              'data-drag': dropActive ? 'true' : 'false',
+              'data-panning': panRef.current ? 'true' : 'false',
+              'data-space': spaceDown ? 'true' : 'false',
+              'data-linking': draft ? 'true' : 'false',
+              onPointerDown: onAreaPointerDown,
+              onPointerMove: onAreaPointerMove,
+              onPointerUp: onAreaPointerUp,
+              onPointerLeave: onAreaPointerUp,
+              onDoubleClick: (event) => {
+                // Only an empty-space double click opens the palette; a double
+                // click on a node is handled by the node itself (its handler
+                // stops at the inspector). Nodes are children of `.agnes-graph`,
+                // so compare against the class instead of relying on the
+                // bubbling target, which the first click may already have moved.
+                const target = event && event.target
+                if (target && typeof target.closest === 'function' && target.closest('.agnes-node')) return
+                openPalette(screenPoint(event), canvasPoint(event), null)
+              },
+              onContextMenu: (event) => openMenu(event, 'canvas', null),
+              onDragOver: (event) => {
+                if (!event.dataTransfer || !event.dataTransfer.types || !Array.from(event.dataTransfer.types).includes('Files')) return
+                event.preventDefault()
+                event.dataTransfer.dropEffect = 'copy'
+                if (!dropActive) setDropActive(true)
+              },
+              onDragLeave: (event) => {
+                if (event.currentTarget && event.currentTarget.contains && event.currentTarget.contains(event.relatedTarget)) return
+                setDropActive(false)
+              },
+              onDrop,
+            },
+            h(
+              'div',
+              {
+                className: 'agnes-graph-inner',
+                style: { transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})` },
+              },
+              h(
+                'svg',
+                { className: 'agnes-edges', width: Math.max(1200, bounds.w), height: Math.max(900, bounds.h) },
+                ...linkElements,
+                draftPath,
+              ),
+              ...nodeElements,
+              marquee
+                ? h('div', {
+                    className: 'agnes-marquee',
+                    style: {
+                      left: Math.min(marquee.x1, marquee.x2),
+                      top: Math.min(marquee.y1, marquee.y2),
+                      width: Math.abs(marquee.x2 - marquee.x1),
+                      height: Math.abs(marquee.y2 - marquee.y1),
+                    },
+                  })
+                : null,
+            ),
+            canvas.nodes.length === 0
+              ? h('div', { className: 'agnes-graph-empty' }, t('canvas.empty'))
+              : null,
+            h('div', { className: 'agnes-graph-zoom' }, `${Math.round(viewport.zoom * 100)}%`),
+            palette
+              ? h(GraphPalette, {
+                  t,
+                  style: { left: palette.sx, top: palette.sy },
+                  items,
+                  query: palette.query,
+                  index: activeIndex,
+                  onQuery: (value) => setPalette((current) => (current ? { ...current, query: value, index: 0 } : current)),
+                  onMove: (step) =>
+                    setPalette((current) => {
+                      if (!current) return current
+                      const count = items.length
+                      if (count === 0) return current
+                      const next = (Math.min(Math.max(0, current.index), count - 1) + step + count) % count
+                      return { ...current, index: next }
+                    }),
+                  onPick: (type) => {
+                    const value = palette
+                    setPalette(null)
+                    addNodeAt(type, value.cx, value.cy, value.from).catch((err) => setError(String(err)))
+                  },
+                  onClose: () => setPalette(null),
+                })
+              : null,
+          ),
+          inspectorNode
+            ? h(GraphInspector, {
+                t,
+                schema,
+                node: inspectorNode,
+                shot: shotById.get(inspectorNode.id),
+                castList,
+                shotList: shots,
+                firstFrameSource: describeFirstFrame(t, inspectorNode, shotById.get(inspectorNode.id), canvas.links),
+                onClose: () => setInspector(null),
+                onPatchShot: patchShot,
+                onPatchNode: patchNodeData,
+                onGenerate: (ids) => runGraph(ids),
+                onRunFrom: runFrom,
+                onUploadFirstFrame: pickFirstFrame,
+                onApprove: approveShot,
+                onReject: rejectShot,
+                onDelete: (nodeId) => {
+                  const node = nodeIn(nodeId)
+                  const shotIds = node && node.type === 'shot' ? [nodeId] : []
+                  if (shotIds.length) {
+                    setConfirmBar({
+                      label: t('graph.deleteShotsConfirm').replace('{n}', '1'),
+                      run: () => applyDelete([nodeId], null, shotIds),
+                    })
+                  } else {
+                    applyDelete([nodeId], null, []).catch(() => {})
+                  }
+                },
+              })
+            : null,
         ),
         h(
           'div',
           { className: 'agnes-view-hint' },
-          connecting ? t('canvas.connecting') : '',
+          draft ? t('graph.hintConnect') : hint || t('canvas.hint'),
           chain && chain.running ? ` · ${t('action.generating')}` : '',
+          selection.length > 1 ? ` · ${t('graph.selected')} ${selection.length}` : '',
         ),
+        menuElement,
       )
     }
 

@@ -1,5 +1,64 @@
 # Changelog
 
+## 1.1.0
+
+The canvas was the one page that did not do what it looked like it did. Through
+1.0 it stored node positions and a decorative `edges` array, but the executor
+never read a single edge: every run was `shot.index` order, every shot borrowed
+the previous shot's tail frame, and the README had to admit "canvas edges are
+annotations". This release makes the canvas an actual execution graph, with
+semantics aligned to ComfyUI, and adds the thing that makes a graph worth
+having — a content signature per shot, so a re-run only redoes what changed.
+
+- **Wires now drive the run.** A new `graph` canvas mode takes both the run
+  order (topological) and each shot's first frame from the wires. A shot's
+  `tail`/`still` output can feed another shot's `first_frame`, or an imported
+  image/clip can. Branching works: one tail frame may feed several downstream
+  shots. The previous behaviour is preserved as `linear` mode, which is what
+  every existing project opens in, so nothing silently changes underfoot —
+  drawing the first wire is what switches the project to graph mode.
+- **Typed ports, and links that refuse to lie.** Shots expose
+  `video` (VIDEO) / `tail` (IMAGE) / `still` (IMAGE) outputs and
+  `first_frame` / `reference` / `prev` inputs; images expose `image`, clips
+  expose `video` + `frame`, plus `note` and `reroute` node types. A link between
+  incompatible types is rejected in the editor and reported as a blocker by the
+  host, instead of being stored and then quietly ignored.
+- **Content signatures make re-runs cheap.** Each shot hashes its prompt,
+  duration, size, seed, camera, negative prompt, continuity text, cast, refs,
+  project style/negative/seed policy, how its first frame arrives, and its
+  producer's signature. Unchanged shots that already have a clip are skipped and
+  marked *cached*; editing one shot re-runs it and its descendants, and nothing
+  else. `force` overrides.
+- **Mute and bypass.** Muting a shot removes it from the run and makes anything
+  that needs its picture report a blocker by name. Bypassing a shot keeps the
+  data flowing *through* it — the downstream resolves to the bypassed node's
+  first available image input, so a node can be taken out of the chain without
+  rewiring it.
+- **Real canvas interaction.** Drag a wire from an output dot to an input dot
+  with a live ghost, 24px snap and compatible-slot highlighting; drop on empty
+  canvas for an add-node palette filtered to producers of that type; drag off a
+  connected input to rewire. Marquee multi-select, shift-click, `Ctrl+A`,
+  whole-selection dragging with 10px snap, undo/redo over every graph mutation,
+  right-click menus for nodes/wires/canvas, `Delete` to remove, `.` to fit.
+- **A node inspector**, so editing a shot's prompt, camera, duration, seed, cast
+  and reference shots no longer means leaving the canvas for Drama mode.
+- **Two 1.0 canvas bugs fixed.** Zoom was never persisted (only pan was), so a
+  reload always snapped back to 100% — the viewport is now saved with the graph.
+  Zoom is also anchored on the cursor rather than the canvas origin, which is
+  what makes wheel-zoom feel like it goes where you point.
+- Long projects migrate in place: `canvas.json` goes to v2 on first read, old
+  `edges` become `tail → first_frame` links, `media` nodes become `clip`/`image`,
+  and the project stays in linear mode.
+
+New host routes: `GET /canvas/schema`, `GET /projects/:id/graph`,
+`POST /projects/:id/graph/validate`. `GET /projects/:id` now also returns the
+graph summary and per-shot `progress` / `stage` / `signature` / `cached`;
+`POST /projects/:id/chain` accepts `nodeIds` to run one branch.
+
+Graph semantics live in `lib/graph.js` as pure functions with 22 tests in
+`test/graph.test.mjs`; the contract is written down in
+`docs/canvas-graph-spec.md`.
+
 ## 1.0.5
 
 - **Fixed the hard scene-change in the middle of a chunked (15s+) video.** The

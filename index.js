@@ -31,8 +31,22 @@ import { createFrames } from './lib/frames.js'
 import { createProjects } from './lib/projects.js'
 import { createAssemble } from './lib/assemble.js'
 import { bindCharactersToShots, parseScript } from './lib/script.js'
+import {
+  CANVAS_MODES,
+  GRAPH_VERSION,
+  NODE_MODES,
+  NODE_TYPES,
+  SLOT_TYPES,
+  buildOrder,
+  describeGraph,
+  // Aliased: this module already has a 1.0 `resolveFirstFrame` that turns the
+  // composer's uploaded image into a scratch file. Same name, different job.
+  resolveFirstFrame as resolveShotFirstFrame,
+  shotSignature,
+  validateGraph,
+} from './lib/graph.js'
 
-const VERSION = '1.0.5'
+const VERSION = '1.1.0'
 
 const DEFAULTS = {
   baseURL: 'https://api.agnes-ai.cn/v1',
@@ -1244,6 +1258,26 @@ function publicShot(shot) {
   return { ...rest, hasStoryboard: Boolean(storyboardFile) }
 }
 
+/* ------------------------------ graph helpers ------------------------------ */
+
+/**
+ * `<id>:<bytes>:<mtimeMs>` — the spec's fingerprint for a media node.
+ *
+ * Content hashing a 200MB import on every graph read would be absurd, so the
+ * cheap stat tuple is used instead: it changes whenever the file does, which is
+ * all the signature needs to be correct.
+ */
+async function assetFingerprint(absolutePath, nodeId) {
+  try {
+    const info = await stat(absolutePath)
+    return `${nodeId}:${info.size}:${Math.round(info.mtimeMs)}`
+  } catch {
+    // A missing asset is still a distinct state, and must not collide with
+    // "no asset at all" — otherwise a deleted import would keep a cache hit.
+    return `${nodeId}:missing`
+  }
+}
+
 function createHandler(ctx, settings, store, tasks, services) {
   const {
     projects,
@@ -1254,6 +1288,7 @@ function createHandler(ctx, settings, store, tasks, services) {
     assemble,
     parseScript,
     submitImage,
+    graphSummary,
   } = services
 
   return async (req, res) => {
@@ -1265,6 +1300,19 @@ function createHandler(ctx, settings, store, tasks, services) {
 
       if (method === 'GET' && rest === '/version') {
         sendJson(res, 200, { ok: true, version: VERSION })
+        return
+      }
+      // The client renders ports straight from this registry. Serving it rather
+      // than duplicating the table is what keeps colours and slot numbers from
+      // drifting apart between the two halves.
+      if (method === 'GET' && rest === '/canvas/schema') {
+        sendJson(res, 200, {
+          ok: true,
+          version: GRAPH_VERSION,
+          slotTypes: SLOT_TYPES,
+          nodeTypes: NODE_TYPES,
+          modes: NODE_MODES,
+        })
         return
       }
       if (method === 'GET' && rest === '/status') {
@@ -1334,11 +1382,25 @@ function createHandler(ctx, settings, store, tasks, services) {
         if (method === 'GET') {
           const project = projects.getProject(projectId)
           if (!project) throw new HttpError(404, '项目不存在')
+          const graph = await graphSummary(projectId)
+          const cachedIds = new Set(graph.cached.map((entry) => entry.shotId))
           sendJson(res, 200, {
             ok: true,
             project,
-            shots: projects.listShots(projectId).map(publicShot),
+            shots: projects.listShots(projectId).map((shot) => {
+              // Live progress lives on the task, not on the shot: the shot only
+              // remembers which task produced it, so the queue is the source.
+              const task = shot.taskId ? store.find(shot.taskId) : undefined
+              return {
+                ...publicShot(shot),
+                progress: Number(task?.progress || 0),
+                stage: task?.stage || '',
+                signature: shot.signature || null,
+                cached: cachedIds.has(shot.id),
+              }
+            }),
             canvas: projects.getCanvas(projectId),
+            graph,
             ffmpeg: await frames.available(),
           })
           return
@@ -1367,11 +1429,35 @@ function createHandler(ctx, settings, store, tasks, services) {
         }
         if (method === 'PUT' || method === 'POST') {
           const body = await readJson(req, 8 * 1024 * 1024)
+          // `mode` is the explicit linear/graph switch; saveCanvas normalises it
+          // along with everything else, so it must ride through the body.
           const canvas = await projects.saveCanvas(projectId, body)
           if (!canvas) throw new HttpError(404, '项目不存在')
           sendJson(res, 200, { ok: true, canvas })
           return
         }
+      }
+
+      // Execution plan for the current canvas. `GET` and `validate` answer the
+      // same payload on purpose: the panel renders the plan panel from one and
+      // asks "why can't this run" from the other, and they must never disagree.
+      match = rest.match(/^\/projects\/([^/]+)\/graph$/)
+      if (match && method === 'GET') {
+        const projectId = decodeURIComponent(match[1])
+        if (!projects.getProject(projectId)) throw new HttpError(404, '项目不存在')
+        sendJson(res, 200, { ok: true, ...(await graphSummary(projectId)) })
+        return
+      }
+
+      match = rest.match(/^\/projects\/([^/]+)\/graph\/validate$/)
+      if (match && method === 'POST') {
+        const projectId = decodeURIComponent(match[1])
+        if (!projects.getProject(projectId)) throw new HttpError(404, '项目不存在')
+        const body = await readJson(req)
+        // Validating a proposed selection must not persist anything: the client
+        // may be asking about a subgraph the user has not committed to.
+        sendJson(res, 200, { ok: true, ...(await graphSummary(projectId, body)) })
+        return
       }
 
       match = rest.match(/^\/projects\/([^/]+)\/chain\/cancel$/)
@@ -2024,13 +2110,19 @@ export function apply(ctx, config = {}) {
     if (!item || !item.projectId || !item.shotId) return
     const project = projects.getProject(item.projectId)
     if (!project) return
-    await projects.updateShot(item.projectId, item.shotId, {
+    // Promote the signature computed at submit time only now that a result
+    // exists. Writing it before the render would let a crash mid-render leave a
+    // shot that claims to be cached from inputs it never actually produced.
+    const submitted = projects.getShot(item.projectId, item.shotId)
+    const patch = {
       status: 'ready',
       taskId: item.id,
       assetFile: item.file,
       assetUrl: `${ROUTE_PREFIX}/media/${item.id}`,
       error: '',
-    })
+    }
+    if (submitted && submitted.runSignature) patch.signature = submitted.runSignature
+    await projects.updateShot(item.projectId, item.shotId, patch)
     const tailRelative = `frames/${item.shotId}-tail.jpg`
     const tailPath = projects.assetPath(item.projectId, tailRelative)
     const result = await frames.extractTail(store.mediaPath(item.file), tailPath)
@@ -2308,8 +2400,12 @@ export function apply(ctx, config = {}) {
     return { needsLock: named.length > 0, characters: named }
   }
 
-  function preflight(projectId, sequence) {
+  function preflight(projectId, sequence, options = {}) {
     const project = projects.getProject(projectId)
+    // In graph mode a wired first frame is a legitimate starting image even when
+    // the producer has not rendered yet: the run schedules it earlier. Without
+    // this the identity gate would block every hand-built graph.
+    const wired = typeof options.wired === 'function' ? options.wired : () => false
     const blockers = []
     sequence.forEach((shot, index) => {
       if (!shot) return
@@ -2334,6 +2430,7 @@ export function apply(ctx, config = {}) {
         return
       }
       if (hasReference || hasApproved || hasTail) return
+      if (wired(shot)) return
       // A canvas reference to an earlier shot also counts as a starting image.
       if (Array.isArray(shot.refs) && shot.refs.length > 0) return
 
@@ -2348,37 +2445,398 @@ export function apply(ctx, config = {}) {
     return blockers
   }
 
+  /* ------------------------------ graph cache ------------------------------ */
+
+  /**
+   * Every input the cache decision needs, read once per pass.
+   *
+   * A run keeps re-reading because shots settle while it runs; a read-only route
+   * reads once so its per-shot answers cannot disagree with each other.
+   */
+  function graphContext(projectId) {
+    return {
+      canvas: projects.getCanvas(projectId),
+      shots: projects.listShots(projectId),
+      project: projects.getProject(projectId) || {},
+    }
+  }
+
+  /**
+   * Which image input a shot's first frame came from, when it is a wire.
+   *
+   * `resolveFirstFrame` reports the producer but not which of the two image
+   * inputs won it, and the signature has to tell `first_frame` from `prev`:
+   * rewiring between them changes what the renderer receives even when the
+   * producer is the same node.
+   */
+  function wireIsPrev(canvas, shotId) {
+    const wires = (canvas.links || []).filter(
+      (link) => link && link.disabled !== true && link.target_id === shotId,
+    )
+    // Mirrors the engine's own preference: first_frame (0) wins over prev (2).
+    return (
+      !wires.some((link) => Number(link.target_slot) === 0) &&
+      wires.some((link) => Number(link.target_slot) === 2)
+    )
+  }
+
+  /**
+   * The shot whose rendered frame feeds this shot, in the mode that is running.
+   *
+   * Linear keeps 1.0's rule — the previous shot in *execution* order — so the
+   * signature covers exactly the frame the run will actually inherit. Graph asks
+   * the wires.
+   */
+  function upstreamShotOf(context, shot, options = {}) {
+    if (options.mode === 'linear') {
+      const order = Array.isArray(options.order) ? options.order : context.shots
+      const idOf = (entry) => (entry && (entry.id || entry.shotId)) || undefined
+      const at = order.findIndex((entry) => idOf(entry) === shot.id)
+      if (at <= 0) return undefined
+      const previousId = idOf(order[at - 1])
+      return context.shots.find((entry) => entry.id === previousId)
+    }
+    const resolved = resolveShotFirstFrame(context.canvas, context.shots, shot.id)
+    const value = resolved.value || {}
+    if (resolved.kind !== 'link' || (value.kind !== 'shot-tail' && value.kind !== 'shot-still')) {
+      return undefined
+    }
+    return context.shots.find((entry) => entry.id === value.shotId)
+  }
+
+  /**
+   * Where a shot's framing comes from, with no content hashing.
+   *
+   * `mode` is the spec §3.3 `firstFrameMode` prefix: `manual:<file>`,
+   * `link:<producerId>`, `prev:<producerId>` or `text`.
+   */
+  function descriptorOf(context, shot, options = {}) {
+    const resolved = resolveShotFirstFrame(context.canvas, context.shots, shot.id)
+    const value = resolved.value || {}
+    if (resolved.kind === 'manual') {
+      // The file name, not only the kind: re-uploading a different still must
+      // miss the cache even though both are `manual`.
+      return { mode: `manual:${path.basename(String(resolved.file || ''))}` }
+    }
+    if (options.mode === 'linear') {
+      // 1.0 has no wires to consult: the previous shot's tail, or nothing.
+      const previous = upstreamShotOf(context, shot, options)
+      return previous ? { mode: `prev:${previous.id}`, producerId: previous.id } : { mode: 'text' }
+    }
+    if (resolved.kind === 'link') {
+      const prefix = wireIsPrev(context.canvas, shot.id) ? 'prev' : 'link'
+      const producerId = resolved.producerId || value.shotId || value.nodeId || ''
+      return { mode: `${prefix}:${producerId}`, producerId, asset: value.file }
+    }
+    return { mode: 'text' }
+  }
+
+  /**
+   * What this shot *is*, independent of any render state.
+   *
+   * Hashing only the shot's own fields plus where its framing comes from keeps
+   * this stable: editing shot 2 changes `selfHash(shot2)` and nothing else.
+   */
+  function selfHashOf(project, shot, mode) {
+    return shotSignature(project, shot, { sourceSig: '', firstFrameMode: mode })
+  }
+
+  /**
+   * Content signature of a shot as this run will judge it (spec §3.3).
+   *
+   * `sourceSig` folds the producer's *full* signature recursively — ComfyUI's
+   * cache-key semantics, where a node re-executes when its own inputs **or any
+   * ancestor** changed. The alternative (hashing only the producer's own
+   * fields) looks cheaper but is wrong for continuity: edit shot 1 and shot 2
+   * re-renders with a *different tail frame*, so shot 3's real first frame
+   * changed even though shot 2's prompt did not. A one-hop hash would keep
+   * shot 3 cached and silently stitch the episode across two different frames
+   * — exactly the kind of silent degradation this plugin refuses elsewhere.
+   *
+   * Editing the head of a chain therefore re-runs the whole downstream branch.
+   * That is the honest cost: every downstream first frame genuinely changes.
+   * Editing the *tail* still re-runs only the tail, which is the case that
+   * matters most in practice (fixing the last shot of an episode).
+   *
+   * The hash never reads `shot.signature` or any other render state, so the same
+   * project always produces the same signatures: the panel's `cached` prediction
+   * and the executor's skip decision cannot drift apart.
+   */
+  async function shotSignatureOf(projectId, context, shot, options = {}, state) {
+    const memo = (state && state.memo) || new Map()
+    if (memo.has(shot.id)) return memo.get(shot.id)
+    const visiting = (state && state.visiting) || new Set()
+    if (visiting.has(shot.id)) {
+      // Cyclic wiring: signature computation must still terminate. Fall back to
+      // the self-only hash; `validateGraph` reports the cycle as a blocker and
+      // the run never starts, so this value only ever feeds read-only summaries.
+      return selfHashOf(context.project || {}, shot, descriptorOf(context, shot, options).mode)
+    }
+    visiting.add(shot.id)
+    try {
+      const project = context.project || {}
+      const descriptor = descriptorOf(context, shot, options)
+      const upstream = descriptor.producerId
+        ? context.shots.find((entry) => entry.id === descriptor.producerId)
+        : undefined
+
+      let sourceSig = ''
+      let firstFrameMode = descriptor.mode
+      if (upstream) {
+        sourceSig = await shotSignatureOf(projectId, context, upstream, options, { memo, visiting })
+        firstFrameMode = `${descriptor.mode}:${sourceSig}`
+      } else if (descriptor.asset) {
+        // A media node has no signature of its own, so its file stands in for one.
+        sourceSig = await assetFingerprint(
+          projects.assetPath(projectId, descriptor.asset),
+          descriptor.producerId || descriptor.asset,
+        )
+        firstFrameMode = `${descriptor.mode}:${sourceSig}`
+      }
+
+      const signature = shotSignature(project, shot, { sourceSig, firstFrameMode })
+      memo.set(shot.id, signature)
+      return signature
+    } finally {
+      visiting.delete(shot.id)
+    }
+  }
+
+  /**
+   * Whether this shot can be skipped, and why.
+   *
+   * A ready shot with no stored signature is a pre-1.1 result: 1.0 always skipped
+   * those, and re-rendering an entire legacy project just to learn a hash would
+   * burn real quota. So the signature is *backfilled* instead — 1.0 behaviour is
+   * preserved once, and every later run gets precise invalidation.
+   */
+  function cacheVerdict(shot, signature, force) {
+    if (force) return undefined
+    if (shot.status !== 'ready' || !shot.assetFile) return undefined
+    if (!shot.signature) return { shotId: shot.id, reason: '1.0 旧结果，签名已回填', backfill: true }
+    if (shot.signature === signature) return { shotId: shot.id, reason: '输入未变' }
+    return undefined
+  }
+
+  /**
+   * Tail frame of an imported clip, extracted once per source file.
+   *
+   * Reused as long as it is at least as new as the clip: re-running ffmpeg on a
+   * 200MB import every run would make the graph feel broken.
+   */
+  async function clipTailFrame(projectId, file) {
+    const source = String(file || '')
+    if (!source) return { error: '素材没有文件' }
+    const assetId = path.basename(source, path.extname(source))
+    const relative = `frames/import-${assetId}.jpg`
+    const target = projects.assetPath(projectId, relative)
+    const origin = projects.assetPath(projectId, source)
+    try {
+      const [cachedInfo, sourceInfo] = await Promise.all([stat(target), stat(origin)])
+      if (cachedInfo.size > 0 && cachedInfo.mtimeMs >= sourceInfo.mtimeMs) {
+        return { file: target, relative }
+      }
+    } catch {
+      /* not cached yet, or the clip is gone: extract and let it fail loudly */
+    }
+    const extracted = await frames.extractTail(origin, target)
+    if (!extracted.ok) return { error: extracted.error }
+    return { file: target, relative }
+  }
+
+  /**
+   * The image file a shot starts from in graph mode (spec §3.2), or none.
+   *
+   * Every branch that needs a file is resolved here, so the executor never has
+   * to know what a "producer" is. `reason` is filled when a wire exists but has
+   * nothing usable behind it — the caller records it as the shot's error instead
+   * of silently running text-only.
+   */
+  async function startFrameOf(projectId, context, shot) {
+    const resolved = resolveShotFirstFrame(context.canvas, context.shots, shot.id)
+    if (resolved.kind === 'manual') {
+      return {
+        file: projects.assetPath(projectId, resolved.file),
+        mode: 'manual',
+      }
+    }
+    if (resolved.kind !== 'link') {
+      return { file: undefined, mode: 'none', reason: resolved.reason || '' }
+    }
+    const value = resolved.value || {}
+    const producer = context.shots.find((entry) => entry.id === value.shotId)
+    if (value.kind === 'shot-tail' || value.kind === 'shot-still') {
+      const relative =
+        value.kind === 'shot-tail'
+          ? producer && producer.tailFile
+          : producer &&
+            (producer.storyboardFile ||
+              (producer.firstFrame && producer.firstFrame.source === 'manual'
+                ? producer.firstFrame.file
+                : ''))
+      if (!relative) {
+        const label = producer ? `第 ${producer.index} 镜` : '上游镜头'
+        const what = value.kind === 'shot-tail' ? '尾帧' : '静帧'
+        return { file: undefined, mode: 'none', reason: `${label}还没有${what}` }
+      }
+      return { file: projects.assetPath(projectId, relative), mode: 'link' }
+    }
+    if (value.kind === 'asset') {
+      if (!value.file) return { file: undefined, mode: 'none', reason: '素材节点没有文件' }
+      return { file: projects.assetPath(projectId, value.file), mode: 'link' }
+    }
+    if (value.kind === 'clip-frame') {
+      const extracted = await clipTailFrame(projectId, value.file)
+      if (!extracted.file) {
+        return { file: undefined, mode: 'none', reason: `视频素材抽帧失败：${extracted.error}` }
+      }
+      // Remembered on the shot so a later run (and the UI) can point at it
+      // without re-probing ffmpeg.
+      return { file: extracted.file, relative: extracted.relative, mode: 'link' }
+    }
+    return { file: undefined, mode: 'none', reason: '连线的上游还没有可用的画面' }
+  }
+
+  /**
+   * Payload shared by `GET /projects/:id`, `GET .../graph` and validate.
+   *
+   * `describeGraph` answers the ordering/blocker questions, but its `cached`
+   * list only knows the raw `resolved.kind` and no upstream context — with two
+   * different manual uploads it reports a false hit. The list is replaced with
+   * the same verdict the chain uses, so the UI never says "cached" and then
+   * re-renders anyway.
+   */
+  async function graphSummary(projectId, options = {}) {
+    const context = graphContext(projectId)
+    const described = describeGraph(context.canvas, context.shots, {
+      project: context.project,
+      projectId,
+      ...(Array.isArray(options.nodeIds) && options.nodeIds.length > 0
+        ? { nodeIds: options.nodeIds }
+        : {}),
+    })
+    // Signatures must be computed with the same mode/order the run would use, or
+    // the panel would predict a different set of skips than the chain actually
+    // makes. One shared memo across the batch: the recursive fold re-visits
+    // ancestors for every shot, and a chain is a path graph in practice.
+    const planOptions = { mode: described.mode, order: described.order }
+    const sigState = { memo: new Map(), visiting: new Set() }
+    const cached = []
+    for (const entry of described.order) {
+      const shot = context.shots.find((candidate) => candidate.id === entry.shotId)
+      if (!shot) continue
+      const signature = await shotSignatureOf(projectId, context, shot, planOptions, sigState)
+      const verdict = cacheVerdict(shot, signature, false)
+      if (verdict) cached.push({ shotId: verdict.shotId, reason: verdict.reason })
+    }
+    return {
+      mode: described.mode,
+      order: described.order,
+      cycle: described.cycle,
+      skipped: described.skipped,
+      blockers: described.blockers,
+      cached,
+    }
+  }
+
   async function startChain(projectId, body = {}) {
     if (chainLocks.has(projectId)) throw new HttpError(409, '该项目已有链路在执行')
     const project = projects.getProject(projectId)
     if (!project) throw new HttpError(404, '项目不存在')
 
     const allShots = projects.listShots(projectId)
-    let sequence = allShots
-    if (Array.isArray(body.shotIds) && body.shotIds.length > 0) {
+    if (allShots.length === 0) throw new HttpError(400, '没有可执行的镜头')
+    const canvas = projects.getCanvas(projectId)
+    // Mode is the explicit switch from spec §3.1: a linear canvas keeps 1.0
+    // semantics even when it still carries wires from an earlier graph edit.
+    const requestedMode = CANVAS_MODES.includes(body.mode) ? body.mode : canvas.mode
+    const mode = requestedMode === 'graph' ? 'graph' : 'linear'
+    const nodeIds = Array.isArray(body.nodeIds) ? body.nodeIds.map(String).filter(Boolean) : []
+
+    // Execution order. Linear mode is 1.0 verbatim: `shot.index`, with the
+    // optional `shotIds`/`from` narrowing the panel already sends.
+    let sequence
+    if (mode === 'graph') {
+      const built = buildOrder(canvas, allShots, nodeIds.length > 0 ? { nodeIds } : {})
       const byId = new Map(allShots.map((shot) => [shot.id, shot]))
-      sequence = body.shotIds.map((id) => byId.get(String(id))).filter(Boolean)
-    } else if (body.from) {
-      const index = allShots.findIndex((shot) => shot.id === String(body.from))
-      if (index >= 0) sequence = allShots.slice(index)
+      sequence = built.order.map((entry) => byId.get(entry.shotId)).filter(Boolean)
+      if (built.cycle.length > 0) {
+        const error = new HttpError(422, '连线上存在环，已阻止启动')
+        error.blockers = validateGraph(canvas, allShots, { nodeIds }).map((entry) => ({
+          ...entry,
+          index: entry.index ?? (byId.get(entry.shotId) || {}).index,
+          characters: [],
+        }))
+        throw error
+      }
+    } else {
+      sequence = allShots
+      if (Array.isArray(body.shotIds) && body.shotIds.length > 0) {
+        const byId = new Map(allShots.map((shot) => [shot.id, shot]))
+        sequence = body.shotIds.map((id) => byId.get(String(id))).filter(Boolean)
+      } else if (body.from) {
+        const index = allShots.findIndex((shot) => shot.id === String(body.from))
+        if (index >= 0) sequence = allShots.slice(index)
+      }
     }
     if (sequence.length === 0) throw new HttpError(400, '没有可执行的镜头')
 
+    const force = body.force === true
+
     if (body.skipPreflight !== true) {
-      const blockers = preflight(projectId, sequence)
+      // Both gates must pass and both are reported together: fixing the identity
+      // block only to hit a graph block next would waste the user's time.
+      const lockBlockers = preflight(projectId, sequence, {
+        wired: (shot) => resolveShotFirstFrame(canvas, allShots, shot.id).kind === 'link',
+      }).map((entry) => ({ ...entry, nodeId: entry.shotId }))
+      const graphBlockers = mode === 'graph'
+        ? validateGraph(canvas, allShots, nodeIds.length > 0 ? { nodeIds } : {}).map((entry) => {
+            const shot = entry.shotId
+              ? allShots.find((candidate) => candidate.id === entry.shotId)
+              : allShots.find((candidate) => candidate.id === entry.nodeId)
+            return {
+              ...entry,
+              index: entry.index ?? (shot ? shot.index : 0),
+              characters: [],
+            }
+          })
+        : []
+      const blockers = [...lockBlockers, ...graphBlockers]
       if (blockers.length > 0) {
-        const error = new HttpError(
-          422,
-          `有 ${blockers.length} 个镜头无法锁定人物，已阻止启动：${blockers[0].reason}`,
-        )
+        const reason =
+          lockBlockers.length > 0
+            ? `有 ${lockBlockers.length} 个镜头无法锁定人物`
+            : graphBlockers.length > 0
+              ? '连线图无法执行'
+              : ''
+        const error = new HttpError(422, `${reason}，已阻止启动：${blockers[0].reason}`)
         error.blockers = blockers
         throw error
       }
     }
 
+    // Cache decisions are made up front, against the signatures this run will
+    // judge by, so the response can name what it will skip before anything
+    // starts. The loop re-checks per shot because upstream renders settle in
+    // between and change what a downstream shot's first frame refers to.
+    const cached = []
+    const initialContext = { canvas, shots: allShots, project }
+    const planOptions = { mode, order: sequence }
+    const sigState = { memo: new Map(), visiting: new Set() }
+    for (const shot of sequence) {
+      const signature = await shotSignatureOf(projectId, initialContext, shot, planOptions, sigState)
+      const verdict = cacheVerdict(shot, signature, force)
+      if (!verdict) continue
+      cached.push({ shotId: shot.id, reason: verdict.reason })
+      if (verdict.backfill) {
+        // Pre-1.1 result: keep the skip, but record the hash so the *next* run
+        // can invalidate it precisely instead of skipping forever.
+        await projects.updateShot(projectId, shot.id, { signature })
+      }
+    }
+
     chainLocks.add(projectId)
     chainCancelled.delete(projectId)
-    const force = body.force === true
 
     await projects.updateProject(projectId, {
       chain: { running: true, currentShotId: null, startedAt: Date.now(), finishedAt: null, error: '' },
@@ -2391,37 +2849,82 @@ export function apply(ctx, config = {}) {
           if (chainCancelled.has(projectId)) throw new HttpError(409, '链路已取消')
           const current = projects.getShot(projectId, sequence[index].id)
           if (!current) continue
-          if (!force && current.status === 'ready' && current.assetFile) continue
+          if (!force && current.status === 'ready' && current.assetFile) {
+            // The pre-run verdict may be stale (the shot could have been
+            // re-rendered by something else since). Re-judge against the live
+            // graph before spending a submit.
+            const liveContext = {
+              canvas: projects.getCanvas(projectId),
+              shots: projects.listShots(projectId),
+              project: projects.getProject(projectId) || {},
+            }
+            const live = await shotSignatureOf(projectId, liveContext, current, planOptions)
+            if (cacheVerdict(current, live, false)) continue
+          }
 
           await projects.updateProject(projectId, {
             chain: { running: true, currentShotId: current.id },
           })
           await projects.updateShot(projectId, current.id, { status: 'running', error: '' })
 
-          const previous = index > 0 ? projects.getShot(projectId, sequence[index - 1].id) : undefined
           const liveProject = projects.getProject(projectId)
-          const referenceUrls = referenceUrlsFor(liveProject, current)
+          const liveCanvas = projects.getCanvas(projectId)
+          const liveShots = projects.listShots(projectId)
+          // Linear mode keeps the 1.0 rule: the previous shot in *sequence*
+          // order. Graph mode asks the wires. Both answer "which file starts
+          // this shot", so the rest of the loop is shared.
+          const previous = index > 0 ? projects.getShot(projectId, sequence[index - 1].id) : undefined
+          const context = { canvas: liveCanvas, shots: liveShots, project: liveProject }
+          const runSignature = await shotSignatureOf(projectId, context, current, planOptions)
 
           let firstFrameFile
-          if (current.firstFrame && current.firstFrame.source === 'manual' && current.firstFrame.file) {
-            firstFrameFile = projects.assetPath(projectId, current.firstFrame.file)
-          } else if (previous && previous.tailFile) {
-            firstFrameFile = projects.assetPath(projectId, previous.tailFile)
-          }
-          // Canvas reference: borrow an earlier shot's frame when this one has
-          // none of its own (explicit first frame always wins).
-          if (!firstFrameFile) {
-            firstFrameFile = await borrowedFrameFor(projectId, current, allShots)
+          let resolvedMode
+          let frameProblem = ''
+          if (mode === 'graph') {
+            const start = await startFrameOf(projectId, context, current)
+            firstFrameFile = start.file
+            resolvedMode = start.mode
+            frameProblem = start.reason || ''
+            if (start.relative) {
+              await projects.updateShot(projectId, current.id, { prevFrameFile: start.relative })
+            }
+          } else {
+            if (current.firstFrame && current.firstFrame.source === 'manual' && current.firstFrame.file) {
+              firstFrameFile = projects.assetPath(projectId, current.firstFrame.file)
+            } else if (previous && previous.tailFile) {
+              firstFrameFile = projects.assetPath(projectId, previous.tailFile)
+            }
+            // Canvas reference: borrow an earlier shot's frame when this one has
+            // none of its own (explicit first frame always wins).
+            if (!firstFrameFile) {
+              firstFrameFile = await borrowedFrameFor(projectId, current, allShots)
+            }
+            resolvedMode = firstFrameFile ? 'link' : 'none'
           }
 
-          // Reference mode needs public URLs; without them fall back visibly.
+          const referenceUrls = referenceUrlsFor(liveProject, current)
           const lockMode =
             referenceUrls.length > 0 ? 'reference' : firstFrameFile ? 'keyframe' : 'text'
           await projects.updateShot(projectId, current.id, { lockMode })
 
           const prompt = composePrompt({ project: liveProject, shot: current, previousShot: previous })
           const seed = seedFor(liveProject, current, index)
+
+          // A wired input that has nothing behind it is a broken run, not a
+          // chance to fall back to text: the user asked for continuity.
+          if (frameProblem) {
+            failures.push({ shotId: current.id, index: current.index || index + 1, reason: frameProblem })
+            await projects.updateShot(projectId, current.id, {
+              status: 'failed',
+              error: frameProblem,
+            })
+            continue
+          }
+
           try {
+            // Written before submitting so the ready callback can promote it;
+            // `signature` itself stays untouched until the render exists.
+            await projects.updateShot(projectId, current.id, { runSignature })
             const task = await submitVideo({
               prompt,
               seconds: String(current.duration || 5),
@@ -2475,7 +2978,13 @@ export function apply(ctx, config = {}) {
       }
     })()
 
-    return { started: true, count: sequence.length }
+    return {
+      started: true,
+      mode,
+      order: sequence.map((shot) => shot.id),
+      count: sequence.length,
+      cached,
+    }
   }
 
   const handler = createHandler(ctx, settings, store, tasks, {
@@ -2486,6 +2995,7 @@ export function apply(ctx, config = {}) {
     cancelChain,
     parseScript,
     submitImage,
+    graphSummary,
     assemble: {
       concat: async (files, outFile, options) => {
         const ffmpeg = await frames.detect()

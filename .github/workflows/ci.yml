@@ -16,6 +16,9 @@ jobs:
         run: |
           node --check index.js
           node --check client.js
+          node --check lib/graph.js
+      - name: Unit tests (graph engine)
+        run: node test/graph.test.mjs
       - name: JSON manifests
         run: |
           node -e "for (const f of ['package.json','locale/en.json','locale/zh.json']) { JSON.parse(require('fs').readFileSync(f,'utf8')); console.log(f, 'ok') }"

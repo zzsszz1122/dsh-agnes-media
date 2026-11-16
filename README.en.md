@@ -57,7 +57,7 @@ One sidebar entry with four tabs:
 |---|---|
 | **Video** | The composer: title, one large input, and a toolbar (`+` reference, video/image switch, model, mode, duration, resolution, `@` cite, submit). This task's result and the history sit underneath. Submits to `POST /v1/video` |
 | **Image** | Prompt, size, seed for a single still |
-| **Canvas** | Node graph: drag to arrange, wheel to zoom, drag empty space to pan, autosaves; videos and images can be **dragged straight in from Explorer** as media nodes |
+| **Canvas** | A ComfyUI-style node graph: drag wires, typed ports, marquee multi-select, undo/redo, a node inspector — wires **decide run order and first-frame source**, so editing the graph changes how the chain runs. Videos and images can be **dragged straight in from Explorer** as media nodes |
 | **Drama** | Three sub-tabs: **Shots** (storyboard table and prompt editing), **Cast** (character reference images and lock status), **Storyboard review** (grid review of an episode's stills) |
 
 Uploading a **single** image does not silently make it the first frame: it lands as 待选 and the composer opens an inline chooser that spells out **first frame** (locks the opening framing, pose and light) versus **reference** (conditions the whole clip's face, palette, props and style without deciding the opening). Submission is blocked until you pick. Dropping several files at once keeps the old rule (first is the frame, the rest are references), and clicking any thumbnail's tag reopens the chooser (one frame at a time).
@@ -150,7 +150,33 @@ To force a run anyway, pass `skipPreflight`.
 
 After a shot finishes, the Host extracts its last frame with ffmpeg and submits the next shot as `mode: keyframe` with a base64 `first_frame`. This needs ffmpeg locally (via `PATH`, `AGNES_FFMPEG`, or the plugin row's `config.ffmpegPath`). When it is missing the UI says so, and downstream shots are marked blocked rather than silently degrading.
 
-> **Canvas edges are annotations.** Connections between nodes visualise "who follows whom"; the actual run order comes from the storyboard table (the shot array). Redrawing an edge does not change generation order or chaining.
+> **Wires drive execution (since 1.1).** The canvas is no longer just a layout view — it is an execution graph. See the next section.
+
+---
+
+## The canvas: a node-graph workflow (1.1)
+
+The 1.0 canvas could only arrange nodes — wires were decoration and the storyboard array decided the run order. 1.1 turns it into an actual **execution graph**, with ComfyUI-aligned semantics:
+
+| Capability | Behaviour |
+|---|---|
+| **Drag wires** | Drag from a node's right-edge output dot to a left-edge input dot. Compatible ports snap and highlight within 24px; incompatible ones are refused. Dropping on empty canvas opens an add-node palette filtered to producers of that type |
+| **Typed ports** | Shots output `video` (VIDEO) / `tail` (IMAGE) / `still` (IMAGE) and accept `first_frame` / `reference` / `prev`. A mismatched wire cannot be drawn and is never executed |
+| **Wires decide the run** | In graph mode the run order is the graph's topological order and the first frame comes from whatever is wired in. An input takes one wire; dragging off a connected input rewires it |
+| **Only changed shots re-run** | Every shot carries a content signature (prompt, duration, seed, cast, upstream signatures…). A shot whose signature is unchanged and which already has a clip is skipped and marked *cached*, so editing one shot does not re-run unrelated ones |
+| **Mute / bypass** | Muted = not executed, and anything downstream that needs it reports a blocker. Bypassed = not executed, but the upstream picture passes straight through it |
+| **Multi-select and undo** | Click / Shift-click / marquee-drag / `Ctrl+A`; the whole selection moves together, `Shift` snaps to a 10px grid; `Ctrl+Z` undoes, `Ctrl+Shift+Z` redoes |
+| **Node inspector** | Double-click a node to edit prompt, camera, duration, seed, cast and reference shots in the right-hand drawer, without switching to Drama mode |
+| **Port colours** | IMAGE `#3b82f6`, VIDEO `#a855f7`, wildcard `#94a3b8` |
+
+**Both modes coexist.** The canvas toolbar switches between *linear* and *graph*:
+
+- **Linear** (the default, 1.0-compatible): shots run in index order and each shot's tail frame feeds the next; the canvas only affects layout.
+- **Graph**: order and first frames come from the wires alone, so you can branch — one shot's tail frame can feed several downstream shots.
+
+Existing projects migrate to canvas v2 on open (old edges become `tail → first_frame` wires) and stay in linear mode, so behaviour is unchanged; the panel only switches to graph mode when you draw your first wire.
+
+Keyboard: `Delete` removes the selected nodes or wire, `.` fits the view, `Space`+drag pans temporarily, `Esc` cancels.
 
 ---
 
@@ -229,8 +255,11 @@ All routes sit under the `/agnes-media/api` prefix and are served by the Host pr
 | Method | Path | Purpose |
 |---|---|---|
 | GET/POST | `/projects` | List / create projects |
-| GET/PATCH/DELETE | `/projects/:id` | Project detail / update / delete |
-| GET · PUT | `/projects/:id/canvas` | Read / save canvas nodes, edges, viewport |
+| GET/PATCH/DELETE | `/projects/:id` | Project detail (including `graph` and per-shot `progress` / `stage` / `signature` / `cached`) / update / delete |
+| GET · PUT | `/projects/:id/canvas` | Read / save canvas v2 (`nodes` / `links` / `viewport` / `mode`) |
+| GET | `/canvas/schema` | Node and port registry (`slotTypes` / `nodeTypes` / `modes`), fetched once on client startup |
+| GET | `/projects/:id/graph` | Graph summary: `mode` / `order` / `cycle` / `skipped` / `blockers` / `cached` |
+| POST | `/projects/:id/graph/validate` | The same payload, validating only (powers the "why can't this run" panel) |
 | GET/POST | `/projects/:id/shots` | List / create shots |
 | PATCH/DELETE | `/projects/:id/shots/:sid` | Update / delete a shot |
 | POST | `/projects/:id/shots/:sid/first-frame` | Upload a manual first frame (base64) |
@@ -241,7 +270,7 @@ All routes sit under the `/agnes-media/api` prefix and are served by the Host pr
 
 | Method | Path | Purpose |
 |---|---|---|
-| POST | `/projects/:id/chain` | Run in order (`{shotIds?, from?, force?, skipPreflight?}`) |
+| POST | `/projects/:id/chain` | Run (`{shotIds?, nodeIds?, from?, force?, skipPreflight?}`); `nodeIds` runs just those nodes and their ancestors |
 | POST | `/projects/:id/chain/cancel` | Cancel the chain and its current task |
 | POST | `/projects/:id/script/parse` | Parse a script into shots (`{text, replace?}`) |
 | POST | `/projects/:id/assemble` | Concatenate the episode with ffmpeg |
@@ -306,6 +335,15 @@ Reference mode only accepts **public HTTPS** image URLs; local files are never s
 **The chain refuses to start**
 The gate found a shot that needs face locking but has no public reference, no approved still and no previous tail frame. Fill the gap, or pass `skipPreflight` to run anyway.
 
+**The canvas refuses to run and lists blockers**
+In graph mode a blocker is a problem with the graph itself; the panel lists each one and jumps to the node. The three usual suspects: an upstream node is muted, two shots are wired into a cycle, or a wire joins incompatible types (putting a `video` output into a `first_frame` input).
+
+**Only one shot re-ran after I edited the canvas**
+That is the 1.1 cache: each shot has a content signature, so shots whose inputs did not change are skipped and marked *cached*. Pass `force` (the panel's "regenerate all") to override.
+
+**Wires have no effect**
+Check the mode switch at the top of the canvas: only **graph** mode takes its order and first frames from the wires. **Linear** mode runs by shot index and leaves the wires as annotations.
+
 **Reference mode was downgraded**
 Upstream rejected the reference images (usually an unreachable URL). The task note records the reason and the shot falls back to first frame or text.
 
@@ -316,7 +354,8 @@ Upstream rejected the reference images (usually an unreachable URL). The task no
 - **Reference mode needs public HTTPS images**: local three-views live only in the project directory and cannot be consumed without hosting; whether a data URI is accepted has not been verified.
 - Chains run sequentially (single concurrency), and a project allows one chain at a time.
 - A task waits at most 40 minutes; history keeps the newest 80 entries and deletes older files.
-- Canvas edges are annotations and do not drive execution order; the canvas has no marquee selection, multi-select or grouping yet.
+- The canvas is a front-end graph executor: it has no **subgraphs / nested workflows** like ComfyUI, and it does not embed the workflow into media metadata.
+- Canvas runs are still serial: independent branches queue rather than run in parallel.
 - Script parsing is rule-based: unusual formats (for example an unnumbered run of dialogue) need tidying in the storyboard table after import.
 
 ---

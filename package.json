@@ -1,6 +1,6 @@
 {
   "name": "dsh-agnes-media",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "Agnes image and video models inside a DeepSeek Harness sidebar panel, with durable background tasks and history.",
   "type": "module",
   "license": "MIT",
@@ -27,7 +27,8 @@
     "dsh": ">=0.2.1-rc.3"
   },
   "scripts": {
-    "check": "node --check index.js && node --check client.js",
+    "check": "node --check index.js && node --check client.js && node --check lib/graph.js",
+    "test": "node test/graph.test.mjs",
     "prepack": "npm run check"
   },
   "publishConfig": {
